@@ -10,12 +10,12 @@ type Piece int
 
 type BoardSquares = [BOARD_SQUARE_NUM]ds.Stack
 
-type PieceSet = [81]*ds.Stack
+type PieceList = [2]*ds.LinkedList
 
 type Board struct {
 	BoardSquares BoardSquares
-	PieceSet     PieceSet
-	Stockpile    [26]int
+	PieceList    PieceList
+	Hand         [26]int
 
 	MarshalSquare [2]int
 	TurnColor     int
@@ -34,29 +34,9 @@ func IndexToSquare(index int) int {
 	return CoordsToSquare(index%9, index/9)
 }
 
-// Takes file and rank and converts to index on playable area of 12x15
+// Takes file and rank and converts to one dimensional index on playable area of 12x15
 func CoordsToSquare(file int, rank int) int {
 	return (file + 37) + (rank * 12)
-}
-
-func (board *Board) printBoard() {
-	for i := 0; i < 15; i++ {
-		for j := 0; j < 12; j++ {
-			index := i*12 + j
-			if index < len(board.BoardSquares) {
-				if board.BoardSquares[index].Length == -1 {
-					fmt.Print(" -1")
-				} else {
-					// fmt.Print(arr[index].Stack.Top)
-					fmt.Print("  0")
-				}
-			} else {
-				// double checks print
-				fmt.Print(" z ")
-			}
-		}
-		fmt.Println()
-	}
 }
 
 //	var outsideVal = ds.StackNode{
@@ -78,9 +58,8 @@ func (board *Board) InitializeBoard() {
 	}
 	board.printBoard()
 
-	// Stockpile
-	board.Stockpile = [26]int{9, 4, 4, 6, 2, 2, 2, 1, 2, 2, 2, 1, 1, 9, 4, 4, 6, 2, 2, 2, 1, 2, 2, 2, 1, 1}
-
+	// Hand
+	board.Hand = [26]int{9, 4, 4, 6, 2, 2, 2, 1, 2, 2, 2, 1, 1, 9, 4, 4, 6, 2, 2, 2, 1, 2, 2, 2, 1, 1}
 }
 
 // func Mailbox() [81]int {
@@ -97,3 +76,23 @@ func (board *Board) InitializeBoard() {
 // 	// }
 // 	return [81]int{}
 // }
+
+func (board *Board) printBoard() {
+	for i := 0; i < 15; i++ {
+		for j := 0; j < 12; j++ {
+			index := i*12 + j
+			if index < len(board.BoardSquares) {
+				if board.BoardSquares[index].Length == -1 {
+					fmt.Print(" -1")
+				} else {
+					// fmt.Print(arr[index].Stack.Top)
+					fmt.Print("  0")
+				}
+			} else {
+				// double checks print
+				fmt.Print(" z ")
+			}
+		}
+		fmt.Println()
+	}
+}

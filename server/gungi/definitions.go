@@ -2,11 +2,9 @@ package gungi
 
 const BOARD_SQUARE_NUM = 180
 
-type Enum = int
-
 // Piece Enums
 const (
-	BPA Enum = iota
+	BPA int = iota
 	BLG
 	BMG
 	BGE
@@ -63,7 +61,7 @@ const (
 
 // File Enums
 const (
-	FILE_A Enum = iota
+	FILE_A int = iota
 	FILE_B
 	FILE_C
 	FILE_D
@@ -77,7 +75,7 @@ const (
 
 // Rank Enums
 const (
-	RANK_1 Enum = iota
+	RANK_1 int = iota
 	RANK_2
 	RANK_3
 	RANK_4
@@ -91,14 +89,14 @@ const (
 
 // Color Enums
 const (
-	BLACK Enum = iota
+	BLACK int = iota
 	WHITE
 	BOTH
 )
 
 // Coordinate Enums
 const (
-	A9 Enum = iota + 37
+	A9 int = iota + 37
 	A8
 	A7
 	A6
@@ -107,7 +105,7 @@ const (
 	A3
 	A2
 	A1
-	B9 Enum = iota + 37 + 3
+	B9 int = iota + 37 + 3
 	B8
 	B7
 	B6
@@ -116,7 +114,7 @@ const (
 	B3
 	B2
 	B1
-	C9 Enum = iota + 37 + 6
+	C9 int = iota + 37 + 6
 	C8
 	C7
 	C6
@@ -125,7 +123,7 @@ const (
 	C3
 	C2
 	C1
-	D9 Enum = iota + 37 + 9
+	D9 int = iota + 37 + 9
 	D8
 	D7
 	D6
@@ -134,7 +132,7 @@ const (
 	D3
 	D2
 	D1
-	E9 Enum = iota + 37 + 12
+	E9 int = iota + 37 + 12
 	E8
 	E7
 	E6
@@ -143,7 +141,7 @@ const (
 	E3
 	E2
 	E1
-	F9 Enum = iota + 37 + 15
+	F9 int = iota + 37 + 15
 	F8
 	F7
 	F6
@@ -152,7 +150,7 @@ const (
 	F3
 	F2
 	F1
-	G9 Enum = iota + 37 + 18
+	G9 int = iota + 37 + 18
 	G8
 	G7
 	G6
@@ -161,7 +159,7 @@ const (
 	G3
 	G2
 	G1
-	H9 Enum = iota + 37 + 21
+	H9 int = iota + 37 + 21
 	H8
 	H7
 	H6
@@ -170,7 +168,7 @@ const (
 	H3
 	H2
 	H1
-	I9 Enum = iota + 37 + 24
+	I9 int = iota + 37 + 24
 	I8
 	I7
 	I6
@@ -184,7 +182,7 @@ const (
 
 // True or False
 const (
-	FALSE Enum = iota
+	FALSE int = iota
 	TRUE
 )
 

@@ -14,12 +14,13 @@ type TestPiece struct {
 	Tes int `json:"tes"`
 }
 
-func TestPush(t *testing.T) {
+func TestStackPush(t *testing.T) {
 	newList := Stack{}
 	newList.Push(TestPiece{Val: 5, Tes: 7})
 	newList.Push(6)
 	newList.Push(2)
 	newList.Push(3)
+	newList.Print()
 	marshal, err := newList.MarshalJSON()
 	if err != nil {
 		log.Println(err)
@@ -34,4 +35,19 @@ func TestPush(t *testing.T) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func TestLinkedListPush(t *testing.T) {
+	newList := LinkedList{}
+	newList.Push(6)
+	newList.Push(2)
+	newList.Push(3)
+	newList.Push(6)
+	newList.Print()
+	log.Println()
+	newList.Remove(newList.Tail)
+	newList.Print()
+	log.Println()
+	newList.Remove(newList.Head.Next)
+	newList.Print()
 }
