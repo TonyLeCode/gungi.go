@@ -18,33 +18,33 @@ type LinkedList struct {
 	Tail *Node
 }
 
-func (list *LinkedList) Push(value interface{}) {
+func (l *LinkedList) Push(value interface{}) {
 	newList := &Node{Value: value}
-	if list.Head == nil {
-		list.Head = newList
-		list.Tail = newList
+	if l.Head == nil {
+		l.Head = newList
+		l.Tail = newList
 	} else {
-		newList.Prev = list.Tail
-		list.Tail.Next = newList
-		list.Tail = newList
+		newList.Prev = l.Tail
+		l.Tail.Next = newList
+		l.Tail = newList
 	}
 }
 
-func (list *LinkedList) Remove(node *Node) {
-	if list.Head == node {
-		list.Head = node.Next
-		list.Head.Prev = nil
-	} else if list.Tail == node {
-		list.Tail = node.Prev
-		list.Tail.Next = nil
+func (l *LinkedList) Remove(node *Node) {
+	if l.Head == node {
+		l.Head = node.Next
+		l.Head.Prev = nil
+	} else if l.Tail == node {
+		l.Tail = node.Prev
+		l.Tail.Next = nil
 	} else {
 		node.Prev.Next = node.Next
 		node.Next.Prev = node.Prev
 	}
 }
 
-func (list *LinkedList) Print() {
-	currentNode := list.Head
+func (l *LinkedList) Print() {
+	currentNode := l.Head
 	for currentNode != nil {
 		log.Println(currentNode.Value)
 		currentNode = currentNode.Next
@@ -58,35 +58,35 @@ type Stack struct {
 	Length int
 }
 
-func (stack *Stack) Push(value interface{}) {
+func (s *Stack) Push(value interface{}) {
 	newStack := &Node{Value: value}
-	if stack.Bottom == nil {
-		stack.Bottom = newStack
-		stack.Top = newStack
+	if s.Bottom == nil {
+		s.Bottom = newStack
+		s.Top = newStack
 	} else {
-		stack.Top.Next = newStack
-		newStack.Prev = stack.Top
-		stack.Top = newStack
+		s.Top.Next = newStack
+		newStack.Prev = s.Top
+		s.Top = newStack
 	}
-	stack.Length++
+	s.Length++
 }
 
-func (stack *Stack) Pop() {
-	if stack.Top == nil {
+func (s *Stack) Pop() {
+	if s.Top == nil {
 		return
 	}
-	stack.Top = stack.Top.Prev
-	if stack.Top != nil {
-		stack.Top.Next = nil
+	s.Top = s.Top.Prev
+	if s.Top != nil {
+		s.Top.Next = nil
 	} else {
-		stack.Bottom = nil
+		s.Bottom = nil
 	}
-	stack.Length--
+	s.Length--
 }
 
-func (stack *Stack) SerializeArray() []interface{} {
+func (s *Stack) SerializeArray() []interface{} {
 	arr := []interface{}{}
-	next := stack.Bottom
+	next := s.Bottom
 	for next != nil {
 		// fmt.Println(next.value)
 		arr = append(arr, next.Value)
@@ -96,9 +96,9 @@ func (stack *Stack) SerializeArray() []interface{} {
 	return arr
 }
 
-func (stack *Stack) MarshalJSON() ([]byte, error) {
+func (s *Stack) MarshalJSON() ([]byte, error) {
 	values := []interface{}{}
-	currentNode := stack.Bottom
+	currentNode := s.Bottom
 	for currentNode != nil {
 		values = append(values, currentNode.Value)
 		currentNode = currentNode.Next
@@ -106,34 +106,34 @@ func (stack *Stack) MarshalJSON() ([]byte, error) {
 	return json.Marshal(values)
 }
 
-func (stack *Stack) UnmarshalJSON(data []byte) error {
+func (s *Stack) UnmarshalJSON(data []byte) error {
 	var values []interface{}
 	if err := json.Unmarshal(data, &values); err != nil {
 		fmt.Println("Error: ", err)
 		return err
 	}
 
-	stack.Length = len(values)
+	s.Length = len(values)
 	for i := range values {
 		value := values[i]
 		node := &Node{Value: value}
 		if i == 0 {
-			stack.Bottom = node
-			stack.Top = node
+			s.Bottom = node
+			s.Top = node
 		} else {
-			stack.Top.Next = node
-			node.Prev = stack.Top
-			stack.Top = node
+			s.Top.Next = node
+			node.Prev = s.Top
+			s.Top = node
 		}
 	}
 	// fmt.Println("unmarshal: ", values)
 	// fmt.Println("unmarshal[0]: ", values[0])
-	fmt.Println("unmarshal: ", stack.Bottom)
+	fmt.Println("unmarshal: ", s.Bottom)
 	return nil
 }
 
-func (stack *Stack) Print() {
-	currentNode := stack.Bottom
+func (s *Stack) Print() {
+	currentNode := s.Bottom
 	for currentNode != nil {
 		log.Println(currentNode.Value)
 		currentNode = currentNode.Next

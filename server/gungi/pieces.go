@@ -4,31 +4,31 @@ import "fmt"
 
 func (piece *Piece) GetMove() {
 	switch int(*piece) {
-	case BPA, WPA:
+	case WHITE_PAWN, BLACK_PAWN:
 		fmt.Println("hello")
-	case BLG, WLG:
+	case WHITE_LIEUTENANT_GENERAL, BLACK_LIEUTENANT_GENERAL:
 		fmt.Println("hello")
-	case BMG, WMG:
+	case WHITE_MAJOR_GENERAL, BLACK_MAJOR_GENERAL:
 		fmt.Println("hello")
-	case BGE, WGE:
+	case WHITE_GENERAL, BLACK_GENERAL:
 		fmt.Println("hello")
-	case BFO, WFO:
+	case WHITE_FORTRESS, BLACK_FORTRESS:
 		fmt.Println("hello")
-	case BKN, WKN:
+	case WHITE_KNIGHT, BLACK_KNIGHT:
 		fmt.Println("hello")
-	case BAR, WAR:
+	case WHITE_ARCHER, BLACK_ARCHER:
 		fmt.Println("hello")
-	case BMU, WMU:
+	case WHITE_MUSKETEER, BLACK_MUSKETEER:
 		fmt.Println("hello")
-	case BSA, WSA:
+	case WHITE_SAMURAI, BLACK_SAMURAI:
 		fmt.Println("hello")
-	case BCN, WCN:
+	case WHITE_CANNON, BLACK_CANNON:
 		fmt.Println("hello")
-	case BSP, WSP:
+	case WHITE_SPY, BLACK_SPY:
 		fmt.Println("hello")
-	case BCP, WCP:
+	case WHITE_CAPTAIN, BLACK_CAPTAIN:
 		fmt.Println("hello")
-	case BMA, WMA:
+	case WHITE_MARSHAL, BLACK_MARSHAL:
 		fmt.Println("hello")
 	default:
 		fmt.Println("false")
