@@ -2,6 +2,10 @@ package gungi
 
 import "fmt"
 
+func GenerateAllMoves() {
+
+}
+
 func (piece *Piece) GetMove() {
 	switch int(*piece) {
 	case WHITE_PAWN, BLACK_PAWN:
@@ -26,7 +30,7 @@ func (piece *Piece) GetMove() {
 		fmt.Println("hello")
 	case WHITE_SPY, BLACK_SPY:
 		fmt.Println("hello")
-	case WHITE_CAPTAIN, BLACK_CAPTAIN:
+	case WHITE_TACTICIAN, BLACK_TACTICIAN:
 		fmt.Println("hello")
 	case WHITE_MARSHAL, BLACK_MARSHAL:
 		fmt.Println("hello")
