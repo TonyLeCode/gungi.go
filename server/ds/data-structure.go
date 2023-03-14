@@ -18,16 +18,17 @@ type LinkedList struct {
 	Tail *Node
 }
 
-func (l *LinkedList) Push(value interface{}) {
-	newList := &Node{Value: value}
+func (l *LinkedList) Push(value interface{}) *Node {
+	newNode := &Node{Value: value}
 	if l.Head == nil {
-		l.Head = newList
-		l.Tail = newList
+		l.Head = newNode
+		l.Tail = newNode
 	} else {
-		newList.Prev = l.Tail
-		l.Tail.Next = newList
-		l.Tail = newList
+		newNode.Prev = l.Tail
+		l.Tail.Next = newNode
+		l.Tail = newNode
 	}
+	return newNode
 }
 
 func (l *LinkedList) Remove(node *Node) {
@@ -59,14 +60,14 @@ type Stack struct {
 }
 
 func (s *Stack) Push(value interface{}) {
-	newStack := &Node{Value: value}
+	newNode := &Node{Value: value}
 	if s.Bottom == nil {
-		s.Bottom = newStack
-		s.Top = newStack
+		s.Bottom = newNode
+		s.Top = newNode
 	} else {
-		s.Top.Next = newStack
-		newStack.Prev = s.Top
-		s.Top = newStack
+		s.Top.Next = newNode
+		newNode.Prev = s.Top
+		s.Top = newNode
 	}
 	s.Length++
 }
