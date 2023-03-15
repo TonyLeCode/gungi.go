@@ -3,6 +3,7 @@ package gungi
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -118,6 +119,64 @@ func (b *Board) SetBoardFromFen(fen string) error {
 	return nil
 }
 
+func (b *Board) BoardToFen() string {
+	var fenString strings.Builder
+	skipIndex := 0
+	for i := 0; i < 81; i++ {
+		square := b.BoardSquares[IndexToSquare(i)]
+
+		if i%9 == 0 && i != 0 {
+			fenString.WriteString(strconv.Itoa(skipIndex) + "/")
+			skipIndex = 0
+		}
+
+		if square == nil {
+			skipIndex++
+		} else if square.Value == -1 {
+			log.Println("out of bounds")
+		} else {
+			stack := square.Value.(*ds.Stack)
+			stackString := ""
+
+			pointer := stack.Bottom
+			for pointer != nil {
+				stackString += EncodeSingleChar(pointer.Value.(int))
+				pointer = pointer.Next
+			}
+
+			if skipIndex != 0 {
+				fenString.WriteString(strconv.Itoa(skipIndex) + ",")
+				skipIndex = 0
+			}
+			fenString.WriteString(stackString)
+
+			if i%8 != 0 || i == 0 {
+				fenString.WriteString(",")
+			}
+		}
+		if i == 80 && skipIndex != 0 {
+			fenString.WriteString(strconv.Itoa(skipIndex))
+		}
+	}
+
+	fenString.WriteString(" ")
+	for i, amount := range b.Hand {
+		if i == 13 {
+			fenString.WriteString("/")
+		}
+		fenString.WriteString(strconv.Itoa(amount))
+	}
+
+	fenString.WriteString(" ")
+	if b.TurnColor == 0 {
+		fenString.WriteString("w")
+	} else {
+		fenString.WriteString("b")
+	}
+
+	return fenString.String()
+}
+
 // Returns color from piece
 func GetColor(piece int) int {
 	if piece <= 12 {
@@ -191,11 +250,6 @@ func (b *Board) RemovePiece(coordinate int) error {
 	}
 	b.StackList.RemoveStack(square)
 	return nil
-}
-
-// TODO
-func (b *Board) BoardToFen() {
-
 }
 
 // func Mailbox() [81]int {
