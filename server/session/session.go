@@ -1,6 +1,6 @@
 package session
 
-import "github.com/TonyLeCode/gungi.go/gungi"
+import "github.com/TonyLeCode/gungi.go/server/gungi"
 
 // var rooms = make(map[string][]*websocket.Conn)
 

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TonyLeCode/gungi.go/ds"
+	"github.com/TonyLeCode/gungi.go/server/ds"
 )
 
 type Piece int
@@ -16,6 +16,11 @@ type BoardSquares [BOARD_SQUARE_NUM]*ds.Node
 
 // 0 = white, 1 = black
 type StackList [2]ds.LinkedList
+
+// type LLStack struct {
+// 	Stack      ds.Stack
+// 	Coordinate int
+// }
 
 type Board struct {
 	BoardSquares BoardSquares
@@ -63,6 +68,7 @@ func (b *Board) InitializeBoard() {
 }
 
 func (b *Board) SetBoardFromFen(fen string) error {
+	//TODO maybe make easier to read with regex
 	b.InitializeBoard()
 	// index 0 holds piece position, index 1 holds hand piece count, index 2 is color turn
 	fields := strings.Split(fen, " ")
@@ -80,6 +86,8 @@ func (b *Board) SetBoardFromFen(fen string) error {
 		// fileIndex must be separate because we will skip indices
 		fileIndex := 0
 		for _, column := range split2 {
+			// TODO make new struct for stacks that include coordinate index
+			// TODO modify all *ds.Stack types to compensate
 			newStack := ds.Stack{}
 			for _, piece := range column {
 				// no separation between stacks
@@ -90,7 +98,6 @@ func (b *Board) SetBoardFromFen(fen string) error {
 					}
 					fileIndex += skipNum - 1
 				} else {
-					// TODO assign pieces to list
 					newStack.Push(DecodeSingleChar(string(piece)))
 				}
 			}
@@ -122,7 +129,7 @@ func (b *Board) SetBoardFromFen(fen string) error {
 func (b *Board) BoardToFen() string {
 	var fenString strings.Builder
 	skipIndex := 0
-	for i := 0; i < 81; i++ {
+	for i := 0; i < PLAYABLE_SQUARE_NUM; i++ {
 		square := b.BoardSquares[IndexToSquare(i)]
 
 		if i%9 == 0 && i != 0 {
@@ -136,11 +143,11 @@ func (b *Board) BoardToFen() string {
 			log.Println("out of bounds")
 		} else {
 			stack := square.Value.(*ds.Stack)
-			stackString := ""
+			var stackString strings.Builder
 
 			pointer := stack.Bottom
 			for pointer != nil {
-				stackString += EncodeSingleChar(pointer.Value.(int))
+				stackString.WriteString(EncodeSingleChar(pointer.Value.(int)))
 				pointer = pointer.Next
 			}
 
@@ -148,7 +155,7 @@ func (b *Board) BoardToFen() string {
 				fenString.WriteString(strconv.Itoa(skipIndex) + ",")
 				skipIndex = 0
 			}
-			fenString.WriteString(stackString)
+			fenString.WriteString(stackString.String())
 
 			if i%8 != 0 || i == 0 {
 				fenString.WriteString(",")
@@ -184,6 +191,13 @@ func GetColor(piece int) int {
 	} else {
 		return 1
 	}
+}
+
+func GetOppositeColor(color int) int {
+	if color == 0 {
+		return 1
+	}
+	return 0
 }
 
 // Switches index of a stack if the color of the top piece changes
@@ -252,21 +266,6 @@ func (b *Board) RemovePiece(coordinate int) error {
 	return nil
 }
 
-// func Mailbox() [81]int {
-// 	// return [81]int{
-// 	// 	37, 38, 39, 40, 41, 42, 43, 44, 45,
-// 	// 	49, 50, 51, 52, 53, 54, 55, 56, 57,
-// 	// 	61, 62, 63, 64, 65, 66, 67, 68, 69,
-// 	// 	73, 74, 75, 76, 77, 78, 79, 80, 81,
-// 	// 	85, 86, 87, 88, 89, 90, 91, 92, 93,
-// 	// 	97, 98, 99, 100, 101, 102, 103, 104, 105,
-// 	// 	109, 110, 111, 112, 113, 114, 115, 116, 117,
-// 	// 	121, 122, 123, 124, 125, 126, 127, 128, 129,
-// 	// 	133, 134, 135, 136, 137, 138, 139, 140, 141,
-// 	// }
-// 	return [81]int{}
-// }
-
 func (b *Board) PrintBoard() {
 	for i := 0; i < 15; i++ {
 		for j := 0; j < 12; j++ {
@@ -301,3 +300,23 @@ func (b *Board) PrintHand() {
 	}
 	fmt.Println()
 }
+
+//9   37,  38,  39,  40,  41,  42,  43,  44,  45,
+
+//8   49,  50,  51,  52,  53,  54,  55,  56,  57,
+
+//7   61,  62,  63,  64,  65,  66,  67,  68,  69,
+
+//6   73,  74,  75,  76,  77,  78,  79,  80,  81,
+
+//5   85,  86,  87,  88,  89,  90,  91,  92,  93,
+
+//4   97,  98,  99, 100, 101, 102, 103, 104, 105,
+
+//3  109, 110, 111, 112, 113, 114, 115, 116, 117,
+
+//2  121, 122, 123, 124, 125, 126, 127, 128, 129,
+
+//1  133, 134, 135, 136, 137, 138, 139, 140, 141,
+
+//    A    B    C    D    E    F    G    H    I

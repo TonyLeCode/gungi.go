@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/TonyLeCode/gungi.go/gungi"
+	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )

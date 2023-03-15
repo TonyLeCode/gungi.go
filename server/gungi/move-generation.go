@@ -2,7 +2,26 @@ package gungi
 
 import "fmt"
 
+func IsSlidingPiece(piece int, tier int) {
+
+}
+
+func (b *Board) IsInCheck() {
+	currentStackNode := b.StackList[GetOppositeColor(b.TurnColor)].Head
+	var slidingPieceList []int
+	for currentStackNode != nil {
+
+	}
+	fmt.Println(currentStackNode)
+
+}
+
 func GenerateAllMoves() {
+	// See is Marshal is in check
+	// See if piece is pinned
+	// Restrain hand placements
+	// See if moving out of stack puts Marshal in check
+	// Check if pawn is already in same file
 
 }
 

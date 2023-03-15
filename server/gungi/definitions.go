@@ -1,6 +1,7 @@
 package gungi
 
 const BOARD_SQUARE_NUM = 180
+const PLAYABLE_SQUARE_NUM = 81
 
 // Piece Enums
 const (

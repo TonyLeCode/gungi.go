@@ -1,4 +1,4 @@
-module github.com/TonyLeCode/gungi.go
+module github.com/TonyLeCode/gungi.go/server
 
 go 1.19
 
