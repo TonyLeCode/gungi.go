@@ -32,6 +32,21 @@ const (
 	BLACK_TACTICIAN
 	BLACK_MARSHAL
 )
+const (
+	PAWN int = iota
+	LIEUTENANT_GENERAL
+	MAJOR_GENERAL
+	GENERAL
+	FORTRESS
+	KNIGHT
+	ARCHER
+	MUSKETEER
+	SAMURAI
+	CANNON
+	SPY
+	TACTICIAN
+	MARSHAL
+)
 
 // board.Stockpile[0] = 9
 // board.Stockpile[1] = 4

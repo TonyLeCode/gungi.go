@@ -17,10 +17,10 @@ type BoardSquares [BOARD_SQUARE_NUM]*ds.Node
 // 0 = white, 1 = black
 type StackList [2]ds.LinkedList
 
-// type LLStack struct {
-// 	Stack      ds.Stack
-// 	Coordinate int
-// }
+type LLStack struct {
+	Stack      ds.Stack
+	Coordinate int
+}
 
 type Board struct {
 	BoardSquares BoardSquares
@@ -87,8 +87,11 @@ func (b *Board) SetBoardFromFen(fen string) error {
 		fileIndex := 0
 		for _, column := range split2 {
 			// TODO make new struct for stacks that include coordinate index
-			// TODO modify all *ds.Stack types to compensate
-			newStack := ds.Stack{}
+			// TODO modify all *LLStack types to compensate
+			// newStack := ds.Stack{}
+			newStack := LLStack{
+				Stack: ds.Stack{},
+			}
 			for _, piece := range column {
 				// no separation between stacks
 				if piece >= '1' && piece <= '9' {
@@ -98,11 +101,12 @@ func (b *Board) SetBoardFromFen(fen string) error {
 					}
 					fileIndex += skipNum - 1
 				} else {
-					newStack.Push(DecodeSingleChar(string(piece)))
+					newStack.Stack.Push(DecodeSingleChar(string(piece)))
 				}
 			}
-			if newStack.Length > 0 {
-				newNode := b.StackList[GetColor(newStack.Top.Value.(int))].Push(&newStack)
+			if newStack.Stack.Length > 0 {
+				newStack.Coordinate = CoordsToSquare(fileIndex, i)
+				newNode := b.StackList[GetColor(newStack.Stack.Top.Value.(int))].Push(&newStack)
 				b.BoardSquares[CoordsToSquare(fileIndex, i)] = newNode
 			}
 			fileIndex += 1
@@ -142,7 +146,7 @@ func (b *Board) BoardToFen() string {
 		} else if square.Value == -1 {
 			log.Println("out of bounds")
 		} else {
-			stack := square.Value.(*ds.Stack)
+			stack := square.Value.(*LLStack).Stack
 			var stackString strings.Builder
 
 			pointer := stack.Bottom
@@ -202,7 +206,7 @@ func GetOppositeColor(color int) int {
 
 // Switches index of a stack if the color of the top piece changes
 func (p *StackList) ShiftStack(node *ds.Node, prevPiece int) {
-	stack := node.Value.(*ds.Stack)
+	stack := node.Value.(*LLStack).Stack
 	piece := stack.Top.Value.(int)
 
 	pieceColor := GetColor(piece)
@@ -219,14 +223,17 @@ func (b *Board) PlacePiece(piece int, coordinate int) error {
 	square := b.BoardSquares[coordinate]
 
 	if square == nil {
-		newStack := ds.Stack{}
-		newStack.Push(piece)
+		newStack := LLStack{
+			Stack:      ds.Stack{},
+			Coordinate: coordinate,
+		}
+		newStack.Stack.Push(piece)
 		node := b.StackList[GetColor(piece)].Push(&newStack)
 		b.BoardSquares[coordinate] = node
 	} else if square.Value == -1 {
 		return errors.New("invalid square")
 	} else {
-		stack := square.Value.(*ds.Stack)
+		stack := square.Value.(*LLStack).Stack
 		prevTop := stack.Top.Value.(int)
 		stack.Push(piece)
 		b.StackList.ShiftStack(square, prevTop)
@@ -237,7 +244,7 @@ func (b *Board) PlacePiece(piece int, coordinate int) error {
 
 // Removes stack from StackList
 func (p *StackList) RemoveStack(node *ds.Node) {
-	stack := node.Value.(*ds.Stack)
+	stack := node.Value.(*LLStack).Stack
 
 	if stack.Length > 1 {
 		stack.Pop()
@@ -258,7 +265,7 @@ func (b *Board) RemovePiece(coordinate int) error {
 		return errors.New("square out of bounds")
 	}
 
-	stack := square.Value.(*ds.Stack)
+	stack := square.Value.(*LLStack).Stack
 	if stack.Length == 1 {
 		b.BoardSquares[coordinate] = nil
 	}
@@ -277,7 +284,7 @@ func (b *Board) PrintBoard() {
 				} else if square.Value == -1 {
 					fmt.Print("  -1")
 				} else {
-					stack := square.Value.(*ds.Stack)
+					stack := square.Value.(*LLStack).Stack
 					if stack.Length != 0 {
 						val := EncodeSingleChar(stack.Top.Value.(int))
 						fmt.Print("   ", val)
