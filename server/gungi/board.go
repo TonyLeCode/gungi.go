@@ -27,8 +27,10 @@ type Board struct {
 	StackList    StackList
 	Hand         [26]int
 
-	TurnColor  int
-	TurnNumber int
+	MarshalCoords [2]int
+	inCheck       int // -1 none, 0 white, 1 black
+	TurnColor     int
+	TurnNumber    int
 
 	MoveList []int
 	History  []History
@@ -61,6 +63,8 @@ func (b *Board) InitializeBoard() {
 		9, 4, 4, 6, 2, 2, 2, 1, 2, 2, 2, 1, 1,
 	}
 
+	b.MarshalCoords = [2]int{}
+	b.inCheck = -1
 	b.TurnColor = 0
 	b.TurnNumber = 0
 
@@ -101,6 +105,12 @@ func (b *Board) SetBoardFromFen(fen string) error {
 					}
 					fileIndex += skipNum - 1
 				} else {
+					switch DecodeSingleChar(string(piece)) {
+					case BLACK_MARSHAL:
+						b.MarshalCoords[1] = CoordsToSquare(fileIndex, i)
+					case WHITE_MARSHAL:
+						b.MarshalCoords[0] = CoordsToSquare(fileIndex, i)
+					}
 					newStack.Stack.Push(DecodeSingleChar(string(piece)))
 				}
 			}
