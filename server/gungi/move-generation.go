@@ -1,6 +1,8 @@
 package gungi
 
 import (
+	"log"
+
 	"github.com/TonyLeCode/gungi.go/server/ds"
 )
 
@@ -25,8 +27,18 @@ func ColorOffset(turnColor int, offset int) int {
 	}
 }
 
+type PseudoMove struct {
+	coordinate int
+	moveList   []int
+}
+
+type XRay struct {
+	coordinate int
+	path       []XRaySquares
+}
+
 // Generates legal moves
-func (b *Board) GetLegalMoves() {
+func (b *Board) GenerateLegalMoves() {
 
 	// See is Marshal is in check
 	// See if piece is pinned
@@ -35,31 +47,144 @@ func (b *Board) GetLegalMoves() {
 	// Check if pawn is already in same file
 
 	// moveList := []PossibleMove{}
+	// enemyMoveList := []PseudoMove{}
+	var enemyXRaySquares []XRay
+	inCheck := false
+
+	marshalSquare := b.BoardSquares[b.MarshalCoords[b.TurnColor]].Value.(*LLStack).Stack
+	marshalHashmap := make(map[int]bool)
+	for _, move := range b.GetPseudoLegalMoves(marshalSquare.Top.Value.(int), b.MarshalCoords[b.TurnColor], marshalSquare.Length) {
+		marshalHashmap[move] = true
+	}
 
 	currentStackNode := b.StackList[GetOppositeColor(b.TurnColor)].Head
 	for currentStackNode != nil {
-		stack := currentStackNode.Value.(LLStack)
+		stack := currentStackNode.Value.(*LLStack)
 		piece := stack.Stack.Top.Value.(int) % 13
 		coord := stack.Coordinate
 		// add sliding pieces for pin check
-		switch piece {
-		case MUSKETEER, SAMURAI, CANNON, SPY, TACTICIAN:
-			// TODO enemy sliding piece
-			// if no piece in between, marshal in check
-			// if in check, marshal must evade out of line, place/move a piece in between, or capture
-			// if enemy piece in between, no restriction
-			// if ally piece in between, it is pinned, piece can only move in line or capture attacking piece
-			b.CheckEnemyRanging(piece, coord)
-		default:
-			// TODO every other piece
-			b.CheckEnemyMoves()
+		if stack.Stack.Length == 3 {
+			switch piece {
+			case MUSKETEER, SAMURAI, CANNON, SPY:
+				// TODO enemy sliding piece
+				// if no piece in between, marshal in check
+				// if in check, marshal must evade out of line, place/move a piece in between, or capture
+				// if enemy piece in between, no restriction
+				// if ally piece in between, it is pinned, piece can only move in line or capture attacking piece
+				moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(piece, coord)
+
+				if tempInCheck {
+					inCheck = true
+				}
+				if tempInPath {
+					enemyXRaySquares = append(enemyXRaySquares, XRay{
+						coordinate: coord,
+						path:       tempXRayMoves,
+					})
+				}
+
+				for _, move := range moves {
+					if marshalHashmap[move] == true {
+						delete(marshalHashmap, move)
+					}
+				}
+
+				// enemyMoveList = append(enemyMoveList, PseudoMove{
+				// 	coordinate: coord,
+				// 	moveList:   moves,
+				// })
+			case TACTICIAN:
+				lowerStack := stack.Stack.Top.Prev
+				lowerPiece := lowerStack.Value.(int)
+				if lowerPiece%13 == TACTICIAN {
+					lowerPiece = lowerStack.Prev.Value.(int)
+				}
+				switch lowerPiece {
+				case MUSKETEER, SAMURAI, CANNON, SPY:
+					moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(lowerPiece, coord)
+
+					if tempInCheck {
+						inCheck = true
+					}
+					if tempInPath {
+						enemyXRaySquares = append(enemyXRaySquares, XRay{
+							coordinate: coord,
+							path:       tempXRayMoves,
+						})
+					}
+
+					for _, move := range moves {
+						if marshalHashmap[move] == true {
+							delete(marshalHashmap, move)
+						}
+					}
+
+					// enemyMoveList = append(enemyMoveList, PseudoMove{
+					// 	coordinate: coord,
+					// 	moveList:   moves,
+					// })
+				default:
+					moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
+
+					for _, move := range moves {
+						if marshalHashmap[move] == true {
+							delete(marshalHashmap, move)
+						}
+					}
+
+					// enemyMoveList = append(enemyMoveList, PseudoMove{
+					// 	coordinate: coord,
+					// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
+					// })
+				}
+			default:
+				// TODO every other piece
+				moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
+				for _, move := range moves {
+					if marshalHashmap[move] == true {
+						delete(marshalHashmap, move)
+					}
+				}
+				// enemyMoveList = append(enemyMoveList, PseudoMove{
+				// 	coordinate: coord,
+				// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
+				// })
+			}
+		} else {
+			// enemyMoveList = append(enemyMoveList, PseudoMove{
+			// 	coordinate: coord,
+			// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
+			// })
 		}
+		b.CheckEnemyMoves()
 		// pseudoMoves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
+		currentStackNode = currentStackNode.Next
+	}
+
+	moveList := []PseudoMove{}
+
+	// Loop through pieces of current player
+	currentStackNode = b.StackList[b.TurnColor].Head
+	for currentStackNode != nil {
+		stack := currentStackNode.Value.(*LLStack)
+
+		if stack.Stack.Top.Value.(int)%13 != MARSHAL {
+			moveList = append(moveList, PseudoMove{
+				coordinate: stack.Coordinate,
+				moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
+			})
+		}
+		// log.Println(pseudoMoves)
+		// log.Println(moveList)
 		currentStackNode = currentStackNode.Next
 	}
 
 	// Look for x-ray attacks for pin potential
 	// Traverse enemy stacklist for ranging piece
+	log.Println("marshal moves: ", marshalHashmap)
+	log.Println("enemy xray: ", enemyXRaySquares)
+	log.Println("inCheck: ", inCheck)
+	log.Println("current player moves: ", moveList)
 
 }
 
@@ -141,8 +266,6 @@ func (b *Board) CheckEnemyRanging(piece int, coord int) ([]int, []XRaySquares, b
 			}
 			moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
 		}
-	case TACTICIAN:
-		// TODO
 	case SAMURAI:
 		offsets := [4]int{-11, -13, 11, 13}
 		for _, offset := range offsets {
