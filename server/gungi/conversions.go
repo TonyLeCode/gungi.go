@@ -13,57 +13,57 @@ func CoordsToSquare(file int, rank int) int {
 func DecodeSingleChar(f string) int {
 	// white is lowercase, black is uppercase
 	switch f {
-	case "p":
-		return 0
-	case "l":
-		return 1
-	case "s":
-		return 2
-	case "g":
-		return 3
-	case "f":
-		return 4
-	case "k":
-		return 5
-	case "y":
-		return 6
-	case "b":
-		return 7
-	case "w":
-		return 8
-	case "c":
-		return 9
-	case "n":
-		return 10
-	case "t":
-		return 11
-	case "m":
-		return 12
 	case "P":
-		return 13
+		return 0
 	case "L":
-		return 14
+		return 1
 	case "S":
-		return 15
+		return 2
 	case "G":
-		return 16
+		return 3
 	case "F":
-		return 17
+		return 4
 	case "K":
-		return 18
+		return 5
 	case "Y":
-		return 19
+		return 6
 	case "B":
-		return 20
+		return 7
 	case "W":
-		return 21
+		return 8
 	case "C":
-		return 22
+		return 9
 	case "N":
-		return 23
+		return 10
 	case "T":
-		return 24
+		return 11
 	case "M":
+		return 12
+	case "p":
+		return 13
+	case "l":
+		return 14
+	case "s":
+		return 15
+	case "g":
+		return 16
+	case "f":
+		return 17
+	case "k":
+		return 18
+	case "y":
+		return 19
+	case "b":
+		return 20
+	case "w":
+		return 21
+	case "c":
+		return 22
+	case "n":
+		return 23
+	case "t":
+		return 24
+	case "m":
 		return 25
 	default:
 		return -1
@@ -73,57 +73,57 @@ func EncodeSingleChar(i int) string {
 	// white is lowercase, black is uppercase
 	switch i {
 	case 0:
-		return "p"
-	case 1:
-		return "l"
-	case 2:
-		return "s"
-	case 3:
-		return "g"
-	case 4:
-		return "f"
-	case 5:
-		return "k"
-	case 6:
-		return "y"
-	case 7:
-		return "b"
-	case 8:
-		return "w"
-	case 9:
-		return "c"
-	case 10:
-		return "n"
-	case 11:
-		return "t"
-	case 12:
-		return "m"
-	case 13:
 		return "P"
-	case 14:
+	case 1:
 		return "L"
-	case 15:
+	case 2:
 		return "S"
-	case 16:
+	case 3:
 		return "G"
-	case 17:
+	case 4:
 		return "F"
-	case 18:
+	case 5:
 		return "K"
-	case 19:
+	case 6:
 		return "Y"
-	case 20:
+	case 7:
 		return "B"
-	case 21:
+	case 8:
 		return "W"
-	case 22:
+	case 9:
 		return "C"
-	case 23:
+	case 10:
 		return "N"
-	case 24:
+	case 11:
 		return "T"
-	case 25:
+	case 12:
 		return "M"
+	case 13:
+		return "p"
+	case 14:
+		return "l"
+	case 15:
+		return "s"
+	case 16:
+		return "g"
+	case 17:
+		return "f"
+	case 18:
+		return "k"
+	case 19:
+		return "y"
+	case 20:
+		return "b"
+	case 21:
+		return "w"
+	case 22:
+		return "c"
+	case 23:
+		return "n"
+	case 24:
+		return "t"
+	case 25:
+		return "m"
 	default:
 		return ""
 	}
