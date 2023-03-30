@@ -48,8 +48,10 @@ func (b *Board) GenerateLegalMoves() {
 
 	// moveList := []PossibleMove{}
 	// enemyMoveList := []PseudoMove{}
-	var enemyXRaySquares []XRay
+	var enemyXRaySquares XRay
 	inCheck := false
+	pinnedPiece := -1
+	inDoubleCheck := false
 
 	marshalSquare := b.BoardSquares[b.MarshalCoords[b.TurnColor]].Value.(*LLStack).Stack
 	marshalHashmap := make(map[int]bool)
@@ -74,17 +76,36 @@ func (b *Board) GenerateLegalMoves() {
 				moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(piece, coord)
 
 				if tempInCheck {
-					inCheck = true
+					if inCheck {
+						inDoubleCheck = true
+					} else {
+						inCheck = true
+					}
 				}
 				if tempInPath {
-					enemyXRaySquares = append(enemyXRaySquares, XRay{
-						coordinate: coord,
-						path:       tempXRayMoves,
-					})
+					piecesInbetween := []int{}
+					for _, move := range tempXRayMoves {
+						if move.inBetween && move.occupied && GetColor(b.BoardSquares[move.coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+							piecesInbetween = append(piecesInbetween, move.coordinate)
+						}
+					}
+					if len(piecesInbetween) <= 1 {
+						enemyXRaySquares = XRay{
+							coordinate: coord,
+							path:       tempXRayMoves,
+						}
+					}
+					if len(piecesInbetween) == 1 && GetColor(b.BoardSquares[piecesInbetween[0]].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+						pinnedPiece = piecesInbetween[0]
+					}
+					// enemyXRaySquares = append(enemyXRaySquares, XRay{
+					// 	coordinate: coord,
+					// 	path:       tempXRayMoves,
+					// })
 				}
 
 				for _, move := range moves {
-					if marshalHashmap[move] == true {
+					if marshalHashmap[move] {
 						delete(marshalHashmap, move)
 					}
 				}
@@ -104,17 +125,32 @@ func (b *Board) GenerateLegalMoves() {
 					moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(lowerPiece, coord)
 
 					if tempInCheck {
-						inCheck = true
+						if inCheck {
+							inDoubleCheck = true
+						} else {
+							inCheck = true
+						}
 					}
 					if tempInPath {
-						enemyXRaySquares = append(enemyXRaySquares, XRay{
-							coordinate: coord,
-							path:       tempXRayMoves,
-						})
+						piecesInbetween := []int{}
+						for _, move := range tempXRayMoves {
+							if move.inBetween && move.occupied && GetColor(b.BoardSquares[move.coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+								piecesInbetween = append(piecesInbetween, move.coordinate)
+							}
+						}
+						if len(piecesInbetween) <= 1 {
+							enemyXRaySquares = XRay{
+								coordinate: coord,
+								path:       tempXRayMoves,
+							}
+						}
+						if len(piecesInbetween) == 1 && GetColor(b.BoardSquares[piecesInbetween[0]].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+							pinnedPiece = piecesInbetween[0]
+						}
 					}
 
 					for _, move := range moves {
-						if marshalHashmap[move] == true {
+						if marshalHashmap[move] {
 							delete(marshalHashmap, move)
 						}
 					}
@@ -125,10 +161,16 @@ func (b *Board) GenerateLegalMoves() {
 					// })
 				default:
 					moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
-
 					for _, move := range moves {
-						if marshalHashmap[move] == true {
+						if marshalHashmap[move] {
 							delete(marshalHashmap, move)
+						}
+						if b.MarshalCoords[b.TurnColor] == move {
+							if inCheck {
+								inDoubleCheck = true
+							} else {
+								inCheck = true
+							}
 						}
 					}
 
@@ -138,11 +180,17 @@ func (b *Board) GenerateLegalMoves() {
 					// })
 				}
 			default:
-				// TODO every other piece
 				moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
 				for _, move := range moves {
-					if marshalHashmap[move] == true {
+					if marshalHashmap[move] {
 						delete(marshalHashmap, move)
+					}
+					if b.MarshalCoords[b.TurnColor] == move {
+						if inCheck {
+							inDoubleCheck = true
+						} else {
+							inCheck = true
+						}
 					}
 				}
 				// enemyMoveList = append(enemyMoveList, PseudoMove{
@@ -151,6 +199,19 @@ func (b *Board) GenerateLegalMoves() {
 				// })
 			}
 		} else {
+			moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
+			for _, move := range moves {
+				if marshalHashmap[move] {
+					delete(marshalHashmap, move)
+				}
+				if b.MarshalCoords[b.TurnColor] == move {
+					if inCheck {
+						inDoubleCheck = true
+					} else {
+						inCheck = true
+					}
+				}
+			}
 			// enemyMoveList = append(enemyMoveList, PseudoMove{
 			// 	coordinate: coord,
 			// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
@@ -161,6 +222,30 @@ func (b *Board) GenerateLegalMoves() {
 		currentStackNode = currentStackNode.Next
 	}
 
+	// If marshal in check or in path of xray, remove moves from marshal
+	xrayHashmap := make(map[int]bool)
+	if len(enemyXRaySquares.path) > 0 {
+		for _, move := range enemyXRaySquares.path {
+			xrayHashmap[move.coordinate] = true
+			if inCheck {
+				if marshalHashmap[move.coordinate] {
+					delete(marshalHashmap, move.coordinate)
+				}
+			}
+		}
+	}
+	xrayInbetweenHashmap := make(map[int]bool)
+	if inCheck && len(enemyXRaySquares.path) > 0 {
+		for _, move := range enemyXRaySquares.path {
+			if move.inBetween {
+				xrayInbetweenHashmap[move.coordinate] = true
+			}
+		}
+	}
+
+	// TODO Handle capturing attacking piece
+	// TODO Handle uncovering attack piece
+
 	moveList := []PseudoMove{}
 
 	// Loop through pieces of current player
@@ -169,9 +254,22 @@ func (b *Board) GenerateLegalMoves() {
 		stack := currentStackNode.Value.(*LLStack)
 
 		if stack.Stack.Top.Value.(int)%13 != MARSHAL {
+			tempMoves := []int{}
+			for _, move := range b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length) {
+				if inCheck {
+					if inDoubleCheck {
+
+					} else if len(enemyXRaySquares.path) > 0 && xrayInbetweenHashmap[move] {
+						tempMoves = append(tempMoves, move)
+					}
+				} else if !(!xrayHashmap[move] && stack.Coordinate == pinnedPiece) {
+					// !(if pinned piece, and move is in path)
+					tempMoves = append(tempMoves, move)
+				}
+			}
 			moveList = append(moveList, PseudoMove{
 				coordinate: stack.Coordinate,
-				moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
+				moveList:   tempMoves,
 			})
 		}
 		// log.Println(pseudoMoves)
@@ -183,7 +281,9 @@ func (b *Board) GenerateLegalMoves() {
 	// Traverse enemy stacklist for ranging piece
 	log.Println("marshal moves: ", marshalHashmap)
 	log.Println("enemy xray: ", enemyXRaySquares)
+	log.Println("enemy xray hashmap: ", xrayHashmap)
 	log.Println("inCheck: ", inCheck)
+	log.Println("inDoubleCheck: ", inDoubleCheck)
 	log.Println("current player moves: ", moveList)
 
 }
@@ -360,51 +460,6 @@ func (b *Board) XRayRangingPiece(coordinate int, offset int) ([]XRaySquares, boo
 
 	return xraySquares, blocked, inPath
 }
-
-// func (b *Board) GetLegalMoves() {
-
-// 	// See is Marshal is in check
-// 	// See if piece is pinned
-// 	// Restrain hand placements
-// 	// See if moving out of stack puts Marshal in check
-// 	// Check if pawn is already in same file
-
-// 	moveList := []PossibleMove{}
-
-// 	// Loop through enemy sliding pieces to check possibility of pins
-// 	currentStackNode := b.StackList[GetOppositeColor(b.TurnColor)].Head
-// 	var slidingPieceList []LLStack
-// 	for currentStackNode != nil {
-// 		stack := currentStackNode.Value.(LLStack)
-
-// 		// add sliding pieces for pin check
-// 		switch stack.Stack.Top.Value.(int) % 13 {
-// 		case MUSKETEER, SAMURAI, CANNON, SPY, TACTICIAN:
-// 			slidingPieceList = append(slidingPieceList, stack)
-// 		}
-
-// 		pseudoMoves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
-// 		log.Println(pseudoMoves)
-// 		log.Println(moveList)
-
-// 		currentStackNode = currentStackNode.Next
-// 	}
-
-// 	// Loop through pieces of current player
-// 	currentStackNode = b.StackList[b.TurnColor].Head
-// 	for currentStackNode != nil {
-// 		stack := currentStackNode.Value.(LLStack)
-
-// 		pseudoMoves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
-// 		log.Println(pseudoMoves)
-// 		log.Println(moveList)
-
-// 		currentStackNode = currentStackNode.Next
-// 	}
-// 	fmt.Println(currentStackNode)
-// 	fmt.Println(slidingPieceList)
-
-// }
 
 // X-rays pieces from marshal to see potentially pinned pieces. Returns if ranging offset in range of a piece, potentially pinned squares, and pseudo valid squares.
 func (b *Board) GetCheckRangingPiece(offset int) (bool, []int, []int) {
@@ -612,5 +667,14 @@ func (b *Board) GetPseudoLegalMoves(piece int, coordinate int, tier int) []int {
 		}
 	}
 
-	return squares
+	tempSquares := []int{}
+	for _, move := range squares {
+		if b.BoardSquares[move] == nil {
+			tempSquares = append(tempSquares, move)
+		} else if b.BoardSquares[move].Value != -1 {
+			tempSquares = append(tempSquares, move)
+		}
+	}
+
+	return tempSquares
 }
