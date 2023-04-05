@@ -6,14 +6,6 @@ import (
 	"github.com/TonyLeCode/gungi.go/server/ds"
 )
 
-func IsSlidingPiece(piece int, tier int) {
-
-}
-
-func (b *Board) IsInCheck() {
-
-}
-
 type PossibleMove struct {
 	Stack   *LLStack
 	ToCoord int
@@ -64,57 +56,10 @@ func (b *Board) GenerateLegalMoves() {
 		stack := currentStackNode.Value.(*LLStack)
 		piece := stack.Stack.Top.Value.(int) % 13
 		coord := stack.Coordinate
-		// add sliding pieces for pin check
-		if stack.Stack.Length == 3 {
-			switch piece {
-			case MUSKETEER, SAMURAI, CANNON, SPY:
-				// TODO enemy sliding piece
-				// if no piece in between, marshal in check
-				// if in check, marshal must evade out of line, place/move a piece in between, or capture
-				// if enemy piece in between, no restriction
-				// if ally piece in between, it is pinned, piece can only move in line or capture attacking piece
-				moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(piece, coord)
 
-				if tempInCheck {
-					if inCheck {
-						inDoubleCheck = true
-					} else {
-						inCheck = true
-					}
-				}
-				if tempInPath {
-					piecesInbetween := []int{}
-					for _, move := range tempXRayMoves {
-						if move.inBetween && move.occupied && GetColor(b.BoardSquares[move.coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
-							piecesInbetween = append(piecesInbetween, move.coordinate)
-						}
-					}
-					if len(piecesInbetween) <= 1 {
-						enemyXRaySquares = XRay{
-							coordinate: coord,
-							path:       tempXRayMoves,
-						}
-					}
-					if len(piecesInbetween) == 1 && GetColor(b.BoardSquares[piecesInbetween[0]].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
-						pinnedPiece = piecesInbetween[0]
-					}
-					// enemyXRaySquares = append(enemyXRaySquares, XRay{
-					// 	coordinate: coord,
-					// 	path:       tempXRayMoves,
-					// })
-				}
-
-				for _, move := range moves {
-					if marshalHashmap[move] {
-						delete(marshalHashmap, move)
-					}
-				}
-
-				// enemyMoveList = append(enemyMoveList, PseudoMove{
-				// 	coordinate: coord,
-				// 	moveList:   moves,
-				// })
-			case TACTICIAN:
+		if stack.Stack.Length == 3 && piece >= 7 && piece <= 11 {
+			// ranging
+			if piece == 11 {
 				lowerStack := stack.Stack.Top.Prev
 				lowerPiece := lowerStack.Value.(int)
 				if lowerPiece%13 == TACTICIAN {
@@ -154,11 +99,6 @@ func (b *Board) GenerateLegalMoves() {
 							delete(marshalHashmap, move)
 						}
 					}
-
-					// enemyMoveList = append(enemyMoveList, PseudoMove{
-					// 	coordinate: coord,
-					// 	moveList:   moves,
-					// })
 				default:
 					moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
 					for _, move := range moves {
@@ -173,30 +113,40 @@ func (b *Board) GenerateLegalMoves() {
 							}
 						}
 					}
-
-					// enemyMoveList = append(enemyMoveList, PseudoMove{
-					// 	coordinate: coord,
-					// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
-					// })
 				}
-			default:
-				moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
+			} else {
+				moves, tempXRayMoves, tempInCheck, tempInPath := b.CheckEnemyRanging(piece, coord)
+
+				if tempInCheck {
+					if inCheck {
+						inDoubleCheck = true
+					} else {
+						inCheck = true
+					}
+				}
+				if tempInPath {
+					piecesInbetween := []int{}
+					for _, move := range tempXRayMoves {
+						if move.inBetween && move.occupied && GetColor(b.BoardSquares[move.coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+							piecesInbetween = append(piecesInbetween, move.coordinate)
+						}
+					}
+					if len(piecesInbetween) <= 1 {
+						enemyXRaySquares = XRay{
+							coordinate: coord,
+							path:       tempXRayMoves,
+						}
+					}
+					if len(piecesInbetween) == 1 && GetColor(b.BoardSquares[piecesInbetween[0]].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+						pinnedPiece = piecesInbetween[0]
+					}
+				}
+
 				for _, move := range moves {
 					if marshalHashmap[move] {
 						delete(marshalHashmap, move)
 					}
-					if b.MarshalCoords[b.TurnColor] == move {
-						if inCheck {
-							inDoubleCheck = true
-						} else {
-							inCheck = true
-						}
-					}
 				}
-				// enemyMoveList = append(enemyMoveList, PseudoMove{
-				// 	coordinate: coord,
-				// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
-				// })
 			}
 		} else {
 			moves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
@@ -212,13 +162,7 @@ func (b *Board) GenerateLegalMoves() {
 					}
 				}
 			}
-			// enemyMoveList = append(enemyMoveList, PseudoMove{
-			// 	coordinate: coord,
-			// 	moveList:   b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length),
-			// })
 		}
-		b.CheckEnemyMoves()
-		// pseudoMoves := b.GetPseudoLegalMoves(stack.Stack.Top.Value.(int), stack.Coordinate, stack.Stack.Length)
 		currentStackNode = currentStackNode.Next
 	}
 
@@ -288,10 +232,6 @@ func (b *Board) GenerateLegalMoves() {
 
 }
 
-func (b *Board) CheckEnemyMoves() {
-
-}
-
 type XRaySquares struct {
 	coordinate int
 	inBetween  bool
@@ -306,9 +246,21 @@ func (b *Board) CheckEnemyRanging(piece int, coord int) ([]int, []XRaySquares, b
 	inPath := false
 	var xraySquares []XRaySquares
 
+	offsets := []int{}
+
 	switch piece % 13 {
 	case MUSKETEER:
-		tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, ColorOffset(b.TurnColor, -12))
+		offsets = []int{-12}
+	case CANNON:
+		offsets = []int{-12, -1, 1, 12}
+	case SPY:
+		offsets = []int{-12, -1, 1, 12, -11, -13, 11, 13}
+	case SAMURAI:
+		offsets = []int{-11, -13, 11, 13}
+	}
+
+	for _, offset := range offsets {
+		tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, offset)
 		if !tempBlocked && tempInPath {
 			inCheck = true
 		}
@@ -316,68 +268,6 @@ func (b *Board) CheckEnemyRanging(piece int, coord int) ([]int, []XRaySquares, b
 			inPath = true
 		}
 		moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
-		// if !tempBlocked && tempInPath {
-		// 	// is inCheck by ranging piece
-		// 	inCheck = true
-		// 	inPath = true
-		// 	for _, move := range tempMoves {
-		// 		if move.inBetween == true {
-		// 			moves = append(moves, move.coordinate)
-		// 		}
-		// 		xraySquares = append(xraySquares, move)
-		// 	}
-		// } else if tempBlocked && tempInPath {
-		// 	blocked = true
-		// 	for _, move := range tempMoves {
-		// 		if move.inBetween == true {
-		// 			moves = append(moves, move.coordinate)
-		// 		}
-		// 		xraySquares = append(xraySquares, move)
-		// 	}
-		// } else {
-		// 	for _, move := range tempMoves {
-		// 		moves = append(moves, move.coordinate)
-		// 		if move.occupied == true {
-		// 			break
-		// 		}
-		// 	}
-		// }
-	case CANNON:
-		offsets := [4]int{-12, -1, 1, 12}
-		for _, offset := range offsets {
-			tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, offset)
-			if !tempBlocked && tempInPath {
-				inCheck = true
-			}
-			if tempInPath {
-				inPath = true
-			}
-			moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
-		}
-	case SPY:
-		offsets := [8]int{-12, -1, 1, 12, -11, -13, 11, 13}
-		for _, offset := range offsets {
-			tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, offset)
-			if !tempBlocked && tempInPath {
-				inCheck = true
-			}
-			if tempInPath {
-				inPath = true
-			}
-			moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
-		}
-	case SAMURAI:
-		offsets := [4]int{-11, -13, 11, 13}
-		for _, offset := range offsets {
-			tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, offset)
-			if !tempBlocked && tempInPath {
-				inCheck = true
-			}
-			if tempInPath {
-				inPath = true
-			}
-			moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
-		}
 	}
 
 	// it's actually impossible to be double checked by two ranging pieces in a move
@@ -388,6 +278,19 @@ func (b *Board) CheckEnemyRanging(piece int, coord int) ([]int, []XRaySquares, b
 	// if >= 1, not pinned
 	return moves, xraySquares, inCheck, inPath
 }
+
+// 	}
+
+// 	for _, offset := range offsets {
+// 		tempMoves, tempBlocked, tempInPath := b.XRayRangingPiece(coord, offset)
+// 		if !tempBlocked && tempInPath {
+// 			inCheck = true
+// 		}
+// 		if tempInPath {
+// 			inPath = true
+// 		}
+// 		moves, xraySquares = XRayHandler(moves, xraySquares, tempMoves, tempBlocked, tempInPath)
+// 	}
 
 // Returns moves, xraysquares, checked, inpath
 func XRayHandler(moves []int, xraySquares []XRaySquares, tempMoves []XRaySquares, tempBlocked bool, tempInPath bool) ([]int, []XRaySquares) {
