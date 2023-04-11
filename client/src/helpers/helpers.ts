@@ -6,4 +6,4 @@ function reverseList<T>(arr: T[]): T[] {
 	return reversed;
 }
 
-export {reverseList}
+export { reverseList };

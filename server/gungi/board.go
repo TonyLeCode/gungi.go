@@ -31,14 +31,10 @@ type Board struct {
 	inCheck       int // -1 none, 0 white, 1 black
 	TurnColor     int
 	TurnNumber    int
+	Ready         [2]bool
 
 	MoveList []int
-	History  []History
-}
-
-type History struct {
-	Move     int
-	MoveType int
+	History  []string
 }
 
 var outsideSquare = ds.Node{
@@ -68,7 +64,7 @@ func (b *Board) InitializeBoard() {
 	b.TurnColor = 0
 	b.TurnNumber = 0
 
-	b.History = []History{}
+	b.History = []string{}
 }
 
 func (b *Board) SetBoardFromFen(fen string) error {
@@ -90,8 +86,6 @@ func (b *Board) SetBoardFromFen(fen string) error {
 		// fileIndex must be separate because we will skip indices
 		fileIndex := 0
 		for _, column := range split2 {
-			// TODO make new struct for stacks that include coordinate index
-			// TODO modify all *LLStack types to compensate
 			// newStack := ds.Stack{}
 			newStack := LLStack{
 				Stack: ds.Stack{},
@@ -254,7 +248,8 @@ func (b *Board) PlacePiece(piece int, coordinate int) error {
 
 // Removes stack from StackList
 func (p *StackList) RemoveStack(node *ds.Node) {
-	stack := node.Value.(*LLStack).Stack
+	stack := &node.Value.(*LLStack).Stack
+	// log.Println(stack)
 
 	if stack.Length > 1 {
 		stack.Pop()
@@ -263,6 +258,7 @@ func (p *StackList) RemoveStack(node *ds.Node) {
 		pieceColor := GetColor(piece)
 		p[pieceColor].Remove(node)
 	}
+	// log.Println(stack)
 }
 
 // Removes top piece from a stack, or removes it if it's the only piece
@@ -275,7 +271,8 @@ func (b *Board) RemovePiece(coordinate int) error {
 		return errors.New("square out of bounds")
 	}
 
-	stack := square.Value.(*LLStack).Stack
+	stack := &square.Value.(*LLStack).Stack
+
 	if stack.Length == 1 {
 		b.BoardSquares[coordinate] = nil
 	}
