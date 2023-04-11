@@ -12,7 +12,7 @@ type Users struct {
 type Session struct {
 	GameId     string
 	BoardState gungi.Board
-	History    gungi.History
+	History    []string
 	Users      Users
 }
 
