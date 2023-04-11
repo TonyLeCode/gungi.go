@@ -10,6 +10,67 @@ func CoordsToSquare(file int, rank int) int {
 	return (file + 37) + (rank * 12)
 }
 
+// Takes index of 12x15 and turns it into 9x9 file and rank
+func SquareToCoords(square int) (int, int) {
+	file := (square / 12) - 2
+	rank := square % 12
+	return file, rank
+}
+
+// Returns index of 12x15 and turns it into board notation
+func CoordsToNotation(square int) (string, string) {
+	file, rank := SquareToCoords(square)
+	return InvertFile(file), RankToLetter(rank)
+}
+
+func RankToLetter(rank int) string {
+	switch rank {
+	case 1:
+		return "A"
+	case 2:
+		return "B"
+	case 3:
+		return "C"
+	case 4:
+		return "D"
+	case 5:
+		return "E"
+	case 6:
+		return "F"
+	case 7:
+		return "G"
+	case 8:
+		return "H"
+	case 9:
+		return "I"
+	}
+	return ""
+}
+
+func InvertFile(file int) string {
+	switch file {
+	case 1:
+		return "9"
+	case 2:
+		return "8"
+	case 3:
+		return "7"
+	case 4:
+		return "6"
+	case 5:
+		return "5"
+	case 6:
+		return "4"
+	case 7:
+		return "3"
+	case 8:
+		return "2"
+	case 9:
+		return "1"
+	}
+	return ""
+}
+
 func DecodeSingleChar(f string) int {
 	// white is lowercase, black is uppercase
 	switch f {

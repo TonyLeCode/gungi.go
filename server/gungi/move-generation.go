@@ -27,59 +27,116 @@ type XRay struct {
 	path       []XRaySquares
 }
 
-// func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int){
-
-// }
-
-func (b *Board) EmptySquare(coord int) bool {
-	if b.BoardSquares[coord] == nil {
-		return true
-	} else {
+func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bool {
+	if (!b.Ready[0] || !b.Ready[1]) && (moveType != PLACE && moveType != READY) {
 		return false
 	}
+
+	isValid := b.ValidateMove(piece, fromCoord, moveType, toCoord)
+	log.Println("isValid: ", isValid)
+	if isValid {
+		switch moveType {
+		case MOVE:
+			b.RemovePiece(fromCoord)
+			b.PlacePiece(piece, toCoord)
+
+			fromFile, fromRank := CoordsToNotation(fromCoord)
+			toFile, toRank := CoordsToNotation(toCoord)
+			str := EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
+			b.History = append(b.History, str)
+		case STACK:
+			b.RemovePiece(fromCoord)
+			b.PlacePiece(piece, toCoord)
+
+			fromFile, fromRank := CoordsToNotation(fromCoord)
+			toFile, toRank := CoordsToNotation(toCoord)
+			str := EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
+			b.History = append(b.History, str)
+		case ATTACK:
+			b.RemovePiece(fromCoord)
+			b.RemovePiece(toCoord)
+			b.PlacePiece(piece, toCoord)
+
+			fromFile, fromRank := CoordsToNotation(fromCoord)
+			toFile, toRank := CoordsToNotation(toCoord)
+			str := EncodeSingleChar(piece) + fromFile + fromRank + "x" + EncodeSingleChar(b.BoardSquares[toCoord].Value.(*LLStack).Stack.Top.Value.(int)) + toFile + toRank
+			b.History = append(b.History, str)
+		case PLACE:
+			b.Hand[piece]--
+			b.PlacePiece(piece, toCoord)
+
+			toFile, toRank := CoordsToNotation(toCoord)
+			str := EncodeSingleChar(piece) + toFile + toRank
+			b.History = append(b.History, str)
+		case READY:
+		}
+
+		if b.Ready[0] == b.Ready[1] {
+			b.TurnColor = GetOppositeColor(b.TurnColor)
+		}
+		b.TurnNumber++
+	}
+
+	return isValid
 }
 
-func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int) {
-	_, inDoubleCheck, _, enemyXRaySquares, attackPiece, filteredMoves := b.GenerateLegalMoves()
+func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int) bool {
+
+	if GetColor(piece) != b.TurnColor {
+		return false
+	}
+
+	inCheck, inDoubleCheck, _, enemyXRaySquares, attackPiece, filteredMoves := b.GenerateLegalMoves()
+
+	toSquare := b.BoardSquares[toCoord]
 
 	isValid := false
 
 	switch moveType {
 	case MOVE:
+		if b.BoardSquares[fromCoord] == nil {
+			return false
+		} else if b.BoardSquares[fromCoord].Value == -1 {
+			return false
+		} else if b.BoardSquares[fromCoord].Value.(*LLStack).Stack.Top.Value != piece {
+			return false
+		}
 		for _, move := range filteredMoves[fromCoord] {
-			if move == toCoord && (b.EmptySquare(toCoord) || b.BoardSquares[toCoord].Value.(*LLStack).Stack.Length == 0) {
+			if move == toCoord && (toSquare == nil || toSquare.Value.(*LLStack).Stack.Length == 0) {
 				isValid = true
 			}
 		}
 		// if b.BoardSquares[fromCoord] == nil
 	case STACK:
+		if b.BoardSquares[fromCoord] == nil {
+			return false
+		} else if b.BoardSquares[fromCoord].Value == -1 {
+			return false
+		} else if b.BoardSquares[fromCoord].Value.(*LLStack).Stack.Top.Value != piece {
+			return false
+		}
 		for _, move := range filteredMoves[fromCoord] {
-			if move == toCoord && (b.EmptySquare(toCoord) || (b.BoardSquares[toCoord].Value.(*LLStack).Stack.Length > 0 && b.BoardSquares[toCoord].Value.(*LLStack).Stack.Length < 3)) {
+			if move == toCoord && toSquare != nil && (toSquare.Value.(*LLStack).Stack.Length > 0 && toSquare.Value.(*LLStack).Stack.Length < 3) {
 				isValid = true
 			}
 		}
 	case ATTACK:
+		if b.BoardSquares[fromCoord] == nil {
+			return false
+		} else if b.BoardSquares[fromCoord].Value == -1 {
+			return false
+		} else if b.BoardSquares[fromCoord].Value.(*LLStack).Stack.Top.Value != piece {
+			return false
+		}
 		for _, move := range filteredMoves[fromCoord] {
-			if move == toCoord && (b.EmptySquare(toCoord) || (b.BoardSquares[toCoord].Value.(*LLStack).Stack.Length > 0 && GetColor(b.BoardSquares[toCoord].Value.(*LLStack).Stack.Top.Value.(int)) != b.TurnColor)) {
+			if move == toCoord && toSquare != nil && toSquare.Value.(*LLStack).Stack.Length > 0 && GetColor(toSquare.Value.(*LLStack).Stack.Top.Value.(int)) != b.TurnColor {
 				isValid = true
 			}
 		}
 	case PLACE:
-		if !inDoubleCheck && (b.EmptySquare(toCoord) || (b.BoardSquares[toCoord].Value.(*LLStack).Stack.Length < 3)) {
-			if attackPiece != -1 && toCoord == attackPiece {
-				isValid = true
-			} else if len(enemyXRaySquares.path) != 0 {
-				for _, move := range enemyXRaySquares.path {
-					if move.coordinate == toCoord && move.inBetween == true {
-						isValid = true
-					}
-				}
-				if toCoord == enemyXRaySquares.coordinate {
-					isValid = true
-				}
-			} else {
-				isValid = true
-			}
+		// TODO make sure pawn isn't already in same file
+		if b.Hand[piece] == 0 {
+			return false
 		}
 
 		invalidSquares := []int{}
@@ -94,31 +151,34 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 		}
 		for _, coord := range invalidSquares {
 			if toCoord == coord {
-
-				isValid = false
+				return false
 			}
 		}
-	case READY:
-	}
 
-	log.Println("inDoubleCheck: ", inDoubleCheck)
-	log.Println("enemyXRaySquares: ", enemyXRaySquares)
-	log.Println("attackPiece: ", attackPiece)
-	log.Println("filteredMoves: ", filteredMoves)
-	log.Println("isValid: ", isValid)
+		if !inDoubleCheck && toSquare == nil || toSquare.Value.(*LLStack).Stack.Length < 3 {
+			if attackPiece != -1 && toCoord == attackPiece {
+				isValid = true
+			} else if len(enemyXRaySquares.path) != 0 && inCheck == true {
+				for _, move := range enemyXRaySquares.path {
+					if move.coordinate == toCoord && move.inBetween {
+						isValid = true
+					}
+				}
+				if toCoord == enemyXRaySquares.coordinate {
+					isValid = true
+				}
+			} else {
+				isValid = true
+			}
+		}
+
+	case READY: // validate that they can't ready twice
+	}
+	return isValid
 }
 
 // Generates legal moves
 func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int) {
-
-	// See is Marshal is in check
-	// See if piece is pinned
-	// Restrain hand placements
-	// See if moving out of stack puts Marshal in check
-	// Check if pawn is already in same file
-
-	// moveList := []PossibleMove{}
-	// enemyMoveList := []PseudoMove{}
 	var enemyXRaySquares XRay
 	inCheck := false
 	pinnedPiece := -1
@@ -219,9 +279,6 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 
 	for _, moves := range moveList {
 		filteredMoves[moves.coordinate] = append(filteredMoves[moves.coordinate], moves.moveList...)
-		// if len(move.moveList) != 0 {
-		// 	filteredMoves = append(filteredMoves, move)
-		// }
 	}
 
 	if len(filteredMoves) == 0 && len(marshalHashmap) == 0 {
