@@ -47,7 +47,10 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, world")
 	})
+
 	e.GET("/websocket", game)
+
+	// e.POST("/user/register", )
 
 	e.Logger.Fatal(e.Start("localhost:5080"))
 }
