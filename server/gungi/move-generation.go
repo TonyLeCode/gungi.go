@@ -2,6 +2,9 @@ package gungi
 
 import (
 	"log"
+	"strings"
+
+	"github.com/TonyLeCode/gungi.go/server/utils"
 )
 
 type PossibleMove struct {
@@ -28,10 +31,6 @@ type XRay struct {
 }
 
 func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bool {
-	if (!b.Ready[0] || !b.Ready[1]) && (moveType != PLACE && moveType != READY) {
-		return false
-	}
-
 	isValid := b.ValidateMove(piece, fromCoord, moveType, toCoord)
 	log.Println("isValid: ", isValid)
 	if isValid {
@@ -69,6 +68,8 @@ func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bo
 			str := EncodeSingleChar(piece) + toFile + toRank
 			b.History = append(b.History, str)
 		case READY:
+			b.Ready[b.TurnColor] = true
+			b.TurnColor = GetOppositeColor(b.TurnColor)
 		}
 
 		if b.Ready[0] == b.Ready[1] {
@@ -80,7 +81,58 @@ func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bo
 	return isValid
 }
 
+func (b *Board) UndoMove() {
+	if len(b.History) == 0 {
+		return
+	}
+	lastMove := b.History[len(b.History)-1]
+	if strings.Contains(lastMove, "-") {
+		// Move and Stack
+		fromPiece := DecodeSingleChar(string(lastMove[0]))
+		fromCoord := CoordsToSquare(LetterToFile(string(lastMove[2]))-1, RevertRank(string(lastMove[1]))-1)
+		toCoord := CoordsToSquare(LetterToFile(string(lastMove[5]))-1, RevertRank(string(lastMove[4]))-1)
+
+		b.RemovePiece(toCoord)
+		b.PlacePiece(fromPiece, fromCoord)
+		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.TurnColor = GetOppositeColor(b.TurnColor)
+		b.TurnNumber--
+	} else if strings.Contains(lastMove, "x") {
+		// Attack
+		fromPiece := DecodeSingleChar(string(lastMove[0]))
+		toPiece := DecodeSingleChar(string(lastMove[4]))
+		fromCoord := CoordsToSquare(LetterToFile(string(lastMove[2]))-1, RevertRank(string(lastMove[1]))-1)
+		toCoord := CoordsToSquare(LetterToFile(string(lastMove[6]))-1, RevertRank(string(lastMove[5]))-1)
+
+		b.RemovePiece(toCoord)
+		b.PlacePiece(toPiece, toCoord)
+		b.PlacePiece(fromPiece, fromCoord)
+		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.TurnColor = GetOppositeColor(b.TurnColor)
+		b.TurnNumber--
+	} else if lastMove == "Ready" {
+		b.TurnColor = GetOppositeColor(b.TurnColor)
+		b.Ready[b.TurnColor] = false
+		b.TurnNumber--
+	} else if len(lastMove) == 3 {
+		// Place from hand
+		piece := DecodeSingleChar(string(lastMove[0]))
+		toCoord := CoordsToSquare(LetterToFile(string(lastMove[2]))-1, RevertRank(string(lastMove[1]))-1)
+
+		b.RemovePiece(toCoord)
+		b.Hand[piece]++
+		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.TurnColor = GetOppositeColor(b.TurnColor)
+		b.TurnNumber--
+	}
+
+	log.Println(lastMove)
+}
+
 func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int) bool {
+	if (!b.Ready[0] || !b.Ready[1]) && (moveType != PLACE && moveType != READY) {
+		return false
+	}
 
 	if GetColor(piece) != b.TurnColor {
 		return false
@@ -106,7 +158,6 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 				isValid = true
 			}
 		}
-		// if b.BoardSquares[fromCoord] == nil
 	case STACK:
 		if b.BoardSquares[fromCoord] == nil {
 			return false
@@ -134,7 +185,6 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 			}
 		}
 	case PLACE:
-		// TODO make sure pawn isn't already in same file
 		if b.Hand[piece] == 0 {
 			return false
 		}
@@ -155,10 +205,25 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 			}
 		}
 
+		if piece%13 == PAWN {
+			fileCoord := toCoord % 12
+			for i := 0; i < 9; i++ {
+				if b.BoardSquares[(12*i)+36+fileCoord] != nil {
+					currentNode := b.BoardSquares[(12*i)+36+fileCoord].Value.(*LLStack).Stack.Bottom
+					for currentNode != nil {
+						if currentNode.Value.(int)%13 == PAWN && GetColor(currentNode.Value.(int)) == b.TurnColor {
+							return false
+						}
+						currentNode = currentNode.Next
+					}
+				}
+			}
+		}
+
 		if !inDoubleCheck && toSquare == nil || toSquare.Value.(*LLStack).Stack.Length < 3 {
 			if attackPiece != -1 && toCoord == attackPiece {
 				isValid = true
-			} else if len(enemyXRaySquares.path) != 0 && inCheck == true {
+			} else if len(enemyXRaySquares.path) != 0 && inCheck {
 				for _, move := range enemyXRaySquares.path {
 					if move.coordinate == toCoord && move.inBetween {
 						isValid = true
@@ -172,7 +237,10 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 			}
 		}
 
-	case READY: // validate that they can't ready twice
+	case READY: //
+		if b.Ready[b.TurnColor] {
+			isValid = false
+		}
 	}
 	return isValid
 }
@@ -434,6 +502,7 @@ func (b *Board) CheckEnemyMoves(marshalHashmap *map[int]bool, inCheck bool, inDo
 
 	currentStackNode := b.StackList[GetOppositeColor(b.TurnColor)].Head
 	for currentStackNode != nil {
+		// log.Println("node: ", currentStackNode.Value)
 		stack := currentStackNode.Value.(*LLStack)
 		piece := stack.Stack.Top.Value.(int) % 13
 		coord := stack.Coordinate

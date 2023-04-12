@@ -210,15 +210,15 @@ func GetOppositeColor(color int) int {
 
 // Switches index of a stack if the color of the top piece changes
 func (p *StackList) ShiftStack(node *ds.Node, prevPiece int) {
-	stack := node.Value.(*LLStack).Stack
-	piece := stack.Top.Value.(int)
+	stack := node.Value.(*LLStack)
+	piece := stack.Stack.Top.Value.(int)
 
 	pieceColor := GetColor(piece)
 	prevPieceColor := GetColor(prevPiece)
 
 	if pieceColor != prevPieceColor {
 		p[prevPieceColor].Remove(node)
-		p[pieceColor].Push(node)
+		p[pieceColor].Push(stack)
 	}
 }
 
@@ -237,7 +237,7 @@ func (b *Board) PlacePiece(piece int, coordinate int) error {
 	} else if square.Value == -1 {
 		return errors.New("invalid square")
 	} else {
-		stack := square.Value.(*LLStack).Stack
+		stack := &square.Value.(*LLStack).Stack
 		prevTop := stack.Top.Value.(int)
 		stack.Push(piece)
 		b.StackList.ShiftStack(square, prevTop)
