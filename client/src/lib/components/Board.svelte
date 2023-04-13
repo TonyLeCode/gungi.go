@@ -1,5 +1,5 @@
 <script>
-	import { reverseList } from '../helpers/helpers';
+	import { reverseList } from '$lib/helpers';
 
 	export const boardState = [
 		'1',

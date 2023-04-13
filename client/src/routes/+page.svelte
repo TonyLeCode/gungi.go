@@ -1,6 +1,6 @@
 <script>
-	import Board from '../components/Board.svelte';
-	import Navbar from '../components/Navbar.svelte';
+	import Board from '$lib/components/Board.svelte';
+	import Navbar from '$lib/components/Navbar.svelte';
 </script>
 
 <svelte:head>
