@@ -1,5 +1,22 @@
-<script>
-	import Navbar from '$lib/components/Navbar.svelte';
+<script lang="ts">
+	import Navbar from "$lib/components/Navbar.svelte";
+  import { supabase } from '$lib/supabaseClient';
+
+  let email: string;
+  let password: string;
+
+  const handleSignIn = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+
+    if (error) {
+      console.log(error);
+    } else {
+      console.log(data);
+    }
+  }
 </script>
 
 <svelte:head>
@@ -7,16 +24,16 @@
 </svelte:head>
 
 <Navbar />
-<div class="login">
+<form class="login" on:submit|preventDefault="{handleSignIn}">
 	<fieldset>
     <label for="email">Email:</label>
-    <input id="email" class="email" type="email" />
+    <input id="email" bind:value="{email}" class="email" type="email" />
     <label for="password">Password:</label>
-    <input id="password" class="password" type="password" />
+    <input id="password" bind:value="{password}" class="password" type="password" />
   </fieldset>
   <button class='login-button'>Register</button>
-  <button class='login-button'>Login</button>
-</div>
+  <button class='login-button' type='submit'>Login</button>
+</form>
 
 <style>
 	input {
