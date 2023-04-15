@@ -21,13 +21,13 @@ func ColorOffset(turnColor int, offset int) int {
 }
 
 type PseudoMove struct {
-	coordinate int
-	moveList   []int
+	Coordinate int
+	MoveList   []int
 }
 
 type XRay struct {
-	coordinate int
-	path       []XRaySquares
+	Coordinate int
+	Path       []XRaySquares
 }
 
 func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bool {
@@ -223,13 +223,13 @@ func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int
 		if !inDoubleCheck && toSquare == nil || toSquare.Value.(*LLStack).Stack.Length < 3 {
 			if attackPiece != -1 && toCoord == attackPiece {
 				isValid = true
-			} else if len(enemyXRaySquares.path) != 0 && inCheck {
-				for _, move := range enemyXRaySquares.path {
-					if move.coordinate == toCoord && move.inBetween {
+			} else if len(enemyXRaySquares.Path) != 0 && inCheck {
+				for _, move := range enemyXRaySquares.Path {
+					if move.Coordinate == toCoord && move.InBetween {
 						isValid = true
 					}
 				}
-				if toCoord == enemyXRaySquares.coordinate {
+				if toCoord == enemyXRaySquares.Coordinate {
 					isValid = true
 				}
 			} else {
@@ -261,7 +261,7 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 	}
 
 	tempAttackPiece, tempXRay, tempPinnedPiece, tempInCheck, tempInDoubleCheck := b.CheckEnemyMoves(&marshalHashmap, inCheck, inDoubleCheck)
-	if len(tempXRay.path) != 0 {
+	if len(tempXRay.Path) != 0 {
 		enemyXRaySquares = tempXRay
 	}
 	if tempPinnedPiece != -1 {
@@ -275,21 +275,21 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 
 	// If marshal in check or in path of xray, remove moves from marshal
 	xrayHashmap := make(map[int]bool)
-	if len(enemyXRaySquares.path) > 0 {
-		for _, move := range enemyXRaySquares.path {
-			xrayHashmap[move.coordinate] = true
+	if len(enemyXRaySquares.Path) > 0 {
+		for _, move := range enemyXRaySquares.Path {
+			xrayHashmap[move.Coordinate] = true
 			if inCheck {
-				if marshalHashmap[move.coordinate] {
-					delete(marshalHashmap, move.coordinate)
+				if marshalHashmap[move.Coordinate] {
+					delete(marshalHashmap, move.Coordinate)
 				}
 			}
 		}
 	}
 	xrayInbetweenHashmap := make(map[int]bool)
-	if inCheck && len(enemyXRaySquares.path) > 0 {
-		for _, move := range enemyXRaySquares.path {
-			if move.inBetween {
-				xrayInbetweenHashmap[move.coordinate] = true
+	if inCheck && len(enemyXRaySquares.Path) > 0 {
+		for _, move := range enemyXRaySquares.Path {
+			if move.InBetween {
+				xrayInbetweenHashmap[move.Coordinate] = true
 			}
 		}
 	}
@@ -323,12 +323,12 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 				if inCheck {
 					if inDoubleCheck {
 
-					} else if len(enemyXRaySquares.path) > 0 && xrayInbetweenHashmap[move] {
+					} else if len(enemyXRaySquares.Path) > 0 && xrayInbetweenHashmap[move] {
 						tempMoves = append(tempMoves, move)
-					} else if move == attackPiece || move == enemyXRaySquares.coordinate {
+					} else if move == attackPiece || move == enemyXRaySquares.Coordinate {
 						tempMoves = append(tempMoves, move)
 					}
-				} else if stack.Coordinate == pinnedPiece && move == enemyXRaySquares.coordinate {
+				} else if stack.Coordinate == pinnedPiece && move == enemyXRaySquares.Coordinate {
 					tempMoves = append(tempMoves, move)
 				} else if !(!xrayHashmap[move] && stack.Coordinate == pinnedPiece) && b.MarshalCoords[b.TurnColor] != move {
 					// !(if pinned piece, and move is in path)
@@ -336,8 +336,8 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 				}
 			}
 			moveList = append(moveList, PseudoMove{
-				coordinate: stack.Coordinate,
-				moveList:   tempMoves,
+				Coordinate: stack.Coordinate,
+				MoveList:   tempMoves,
 			})
 		}
 		currentStackNode = currentStackNode.Next
@@ -346,27 +346,38 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 	filteredMoves := make(map[int][]int)
 
 	for _, moves := range moveList {
-		filteredMoves[moves.coordinate] = append(filteredMoves[moves.coordinate], moves.moveList...)
+		filteredMoves[moves.Coordinate] = append(filteredMoves[moves.Coordinate], moves.MoveList...)
 	}
 
-	if len(filteredMoves) == 0 && len(marshalHashmap) == 0 {
+	// filteredMoves = append(filteredMoves, marshalHashmap)
+	for i := range marshalHashmap {
+		filteredMoves[b.MarshalCoords[b.TurnColor]] = append(filteredMoves[b.MarshalCoords[b.TurnColor]], i)
+	}
+
+	for i, moves := range filteredMoves {
+		if len(moves) == 0 {
+			delete(filteredMoves, i)
+		}
+	}
+
+	if len(filteredMoves) == 0 {
 		checkmate = true
 	}
 
-	// log.Println("marshal moves: ", marshalHashmap)
-	// log.Println("enemy xray: ", enemyXRaySquares)
-	// log.Println("enemy xray hashmap: ", xrayHashmap)
-	// log.Println("inCheck: ", inCheck)
-	// log.Println("inDoubleCheck: ", inDoubleCheck)
-	// log.Println("checkMate: ", checkmate)
-	// log.Println("current player moves: ", filteredMoves)
+	log.Println("marshal moves: ", marshalHashmap)
+	log.Println("enemy xray: ", enemyXRaySquares)
+	log.Println("enemy xray hashmap: ", xrayHashmap)
+	log.Println("inCheck: ", inCheck)
+	log.Println("inDoubleCheck: ", inDoubleCheck)
+	log.Println("checkMate: ", checkmate)
+	log.Println("current player moves: ", filteredMoves)
 	return inCheck, inDoubleCheck, checkmate, enemyXRaySquares, attackPiece, filteredMoves
 }
 
 type XRaySquares struct {
-	coordinate int
-	inBetween  bool
-	occupied   bool
+	Coordinate int
+	InBetween  bool
+	Occupied   bool
 }
 
 // Returns moves, xraysquares, checked, inpath
@@ -429,24 +440,24 @@ func XRayHandler(moves []int, xraySquares []XRaySquares, tempMoves []XRaySquares
 	if !tempBlocked && tempInPath {
 		// is checked by ranging piece
 		for _, move := range tempMoves {
-			if move.inBetween {
-				moves = append(moves, move.coordinate)
+			if move.InBetween {
+				moves = append(moves, move.Coordinate)
 			}
 			xraySquares = append(xraySquares, move)
 		}
 	} else if tempBlocked && tempInPath {
 		// marshal in path but blocked (not in check)
 		for _, move := range tempMoves {
-			if move.inBetween {
-				moves = append(moves, move.coordinate)
+			if move.InBetween {
+				moves = append(moves, move.Coordinate)
 			}
 			xraySquares = append(xraySquares, move)
 		}
 	} else {
 		// otherwise, just add moves normally
 		for _, move := range tempMoves {
-			moves = append(moves, move.coordinate)
-			if move.occupied {
+			moves = append(moves, move.Coordinate)
+			if move.Occupied {
 				break
 			}
 		}
@@ -466,9 +477,9 @@ func (b *Board) XRayRangingPiece(coordinate int, offset int) ([]XRaySquares, boo
 		if currSquare == nil {
 			// get moves in line
 			xraySquares = append(xraySquares, XRaySquares{
-				coordinate: i,
-				inBetween:  !inPath,
-				occupied:   false,
+				Coordinate: i,
+				InBetween:  !inPath,
+				Occupied:   false,
 			})
 		} else if currSquare.Value == -1 {
 			break
@@ -483,9 +494,9 @@ func (b *Board) XRayRangingPiece(coordinate int, offset int) ([]XRaySquares, boo
 				blocked = true
 			}
 			xraySquares = append(xraySquares, XRaySquares{
-				coordinate: i,
-				inBetween:  !inPath,
-				occupied:   true,
+				Coordinate: i,
+				InBetween:  !inPath,
+				Occupied:   true,
 			})
 		}
 		i += offset
@@ -527,14 +538,14 @@ func (b *Board) CheckEnemyMoves(marshalHashmap *map[int]bool, inCheck bool, inDo
 			if tempInPath {
 				piecesInbetween := []int{}
 				for _, move := range tempXRayMoves {
-					if move.inBetween && move.occupied && GetColor(b.BoardSquares[move.coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
-						piecesInbetween = append(piecesInbetween, move.coordinate)
+					if move.InBetween && move.Occupied && GetColor(b.BoardSquares[move.Coordinate].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {
+						piecesInbetween = append(piecesInbetween, move.Coordinate)
 					}
 				}
 				if len(piecesInbetween) <= 1 {
 					enemyXRaySquares = XRay{
-						coordinate: coord,
-						path:       tempXRayMoves,
+						Coordinate: coord,
+						Path:       tempXRayMoves,
 					}
 				}
 				if len(piecesInbetween) == 1 && GetColor(b.BoardSquares[piecesInbetween[0]].Value.(*LLStack).Stack.Top.Value.(int)) == b.TurnColor {

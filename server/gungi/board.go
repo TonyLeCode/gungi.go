@@ -23,6 +23,9 @@ type LLStack struct {
 }
 
 type Board struct {
+	// Players [2]string
+	// Date    date
+
 	BoardSquares BoardSquares
 	StackList    StackList
 	Hand         [26]int
@@ -33,8 +36,7 @@ type Board struct {
 	TurnNumber    int
 	Ready         [2]bool
 
-	MoveList []int
-	History  []string
+	History []string
 }
 
 var outsideSquare = ds.Node{
@@ -132,6 +134,17 @@ func (b *Board) SetBoardFromFen(fen string) error {
 	b.TurnColor = LetterToTurn(fields[2])
 
 	return nil
+}
+
+func (b *Board) SerializeHistory() string {
+	// var serializedHistory strings.Builder
+	// for i, move := range b.History {
+	// 	serializedHistory.WriteString(strconv.Itoa(i+1) + ". " + move + " ")
+	// }
+	// return serializedHistory.String()
+	var serializedHistory string
+	serializedHistory = strings.Join(b.History, " ")
+	return serializedHistory
 }
 
 func (b *Board) BoardToFen() string {
