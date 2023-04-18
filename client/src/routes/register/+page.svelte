@@ -28,7 +28,7 @@
   <title>Gungi.go</title>
 </svelte:head>
 
-<Navbar />
+
 <form class='login' on:submit|preventDefault="{handleSignUp}">
   <fieldset>
     <label for="username">Username:</label>

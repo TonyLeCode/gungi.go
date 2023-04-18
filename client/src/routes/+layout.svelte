@@ -2,6 +2,7 @@
 	import { invalidate } from '$app/navigation'
 	import { onMount } from 'svelte'
 	import type { LayoutData } from './$types'
+  import Navbar from '$lib/components/Navbar.svelte';
 
 	export let data: LayoutData
 
@@ -19,4 +20,6 @@
 	})
 </script>
 
+<Navbar session={session} />
+{session}
 <slot />

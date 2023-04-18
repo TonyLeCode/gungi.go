@@ -1,35 +1,41 @@
 <script lang="ts">
-	import Navbar from "$lib/components/Navbar.svelte";
   import { supabase } from '$lib/supabaseClient';
+  import { fail, redirect } from '@sveltejs/kit';
 
-  let email: string;
-  let password: string;
+  // const handleSignIn = async () => {
+  //   const { data, error } = await supabase.auth.signInWithPassword({
+  //     email: email,
+  //     password: password,
+  //   })
 
-  const handleSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    })
-
-    if (error) {
-      console.log(error);
-    } else {
-      console.log(data);
-    }
-  }
+  //   if (error) {
+  //     console.log(error);
+  //     return fail(500, {
+  //       error: 'Server error. Try again later.',
+  //       values: {
+  //         email
+  //       }
+  //     });
+  //   } else {
+  //     console.log("logged in", data);
+  //   }
+  //   throw redirect(303, '/');
+  // }
 </script>
 
 <svelte:head>
 	<title>Gungi.go</title>
 </svelte:head>
 
-<Navbar />
-<form class="login" on:submit|preventDefault="{handleSignIn}">
+
+<form class="login" method='POST'>
 	<fieldset>
-    <label for="email">Email:</label>
-    <input id="email" bind:value="{email}" class="email" type="email" />
-    <label for="password">Password:</label>
-    <input id="password" bind:value="{password}" class="password" type="password" />
+    <label>Email:
+      <input name='email' class="email" type="email" />
+    </label>
+    <label>Password:
+      <input name='password' class="password" type="password" />
+    </label>
   </fieldset>
   <button class='login-button'>Register</button>
   <button class='login-button' type='submit'>Login</button>
