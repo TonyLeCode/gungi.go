@@ -14,34 +14,25 @@ import (
 )
 
 const getGames = `-- name: GetGames :many
-
-SELECT games.id, games.fen, games.history, games.completed, games.date_started, games.date_finished, games.current_state, users1.raw_user_meta_data -> 'username' as username1, users2.raw_user_meta_data -> 'username' as username2
+SELECT games.id, games.fen, games.completed, games.date_started, games.current_state, users1.raw_user_meta_data -> 'username' as username1, users2.raw_user_meta_data -> 'username' as username2
 FROM games
 JOIN player_games j ON games.id = j.game_id
 JOIN auth.users users1 ON j.user_id = users1.id
 JOIN player_games j2 ON games.id = j2.game_id AND j2.user_id != j.user_id
 JOIN auth.users users2 ON j2.user_id = users2.id
-WHERE users1.id = $1 AND j.color ='w' OR users2.id = $1 AND j.color ='b'
+WHERE ((users1.id = $1 AND j.color ='w') OR (users2.id = $1 AND j.color ='b')) AND games.completed=false
 `
 
 type GetGamesRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Fen          sql.NullString `json:"fen"`
-	History      sql.NullString `json:"history"`
 	Completed    bool           `json:"completed"`
 	DateStarted  time.Time      `json:"date_started"`
-	DateFinished sql.NullTime   `json:"date_finished"`
 	CurrentState string         `json:"current_state"`
 	Username1    interface{}    `json:"username1"`
 	Username2    interface{}    `json:"username2"`
 }
 
-// -- name: GetGames :many
-// SELECT games.*, users.raw_user_meta_data -> 'username' as username
-// FROM games
-// INNER JOIN player_games ON games.id = player_games.game_id
-// INNER JOIN auth.users ON player_games.user_id = users.id
-// WHERE users.id = $1;
 func (q *Queries) GetGames(ctx context.Context, id uuid.UUID) ([]GetGamesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getGames, id)
 	if err != nil {
@@ -54,10 +45,8 @@ func (q *Queries) GetGames(ctx context.Context, id uuid.UUID) ([]GetGamesRow, er
 		if err := rows.Scan(
 			&i.ID,
 			&i.Fen,
-			&i.History,
 			&i.Completed,
 			&i.DateStarted,
-			&i.DateFinished,
 			&i.CurrentState,
 			&i.Username1,
 			&i.Username2,

@@ -4,7 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/TonyLeCode/gungi.go/server/gungi"
+	"github.com/TonyLeCode/gungi.go/server/api"
+	"github.com/TonyLeCode/gungi.go/server/middleware"
+	"github.com/TonyLeCode/gungi.go/server/utils"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
@@ -38,17 +40,29 @@ func game(c echo.Context) error {
 }
 
 func main() {
-	board := gungi.Board{}
-	board.InitializeBoard()
-	board.PrintBoard()
+	// board := gungi.Board{}
+	// board.InitializeBoard()
+	// board.PrintBoard()
+	config, err := utils.LoadConfig("./")
+	if err != nil {
+		log.Fatalln("Cannot load config")
+	}
+
+	db, err := api.NewConnection(config.DB_SOURCE)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	e := echo.New()
+
+	e.Use(middleware.VerifySupabaseTokenMiddleware)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
 	e.GET("/websocket", game)
+	e.GET("/getongoinggamelist", db.GetOngoingGameList)
 
 	// e.POST("/user/register", )
 

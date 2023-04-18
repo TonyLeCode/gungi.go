@@ -53,10 +53,10 @@ func (dbConn *DBConn) GetOngoingGame(c echo.Context) error {
 	return nil
 }
 
-func (dbConn *DBConn) GetGameList(c echo.Context) error {
+func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 	ctx := context.Background()
 
-	sub := c.Param("sub")
+	sub := c.Get("sub").(string)
 	subid, err := uuid.Parse(sub)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "bad request")
