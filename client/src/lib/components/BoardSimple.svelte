@@ -1,16 +1,16 @@
-<script lang='ts'>
+<script lang="ts">
 	import { reverseList } from '$lib/helpers';
-  import { EncodePiece, FenToBoard, GetPieceColor, GetTopStack } from '$lib/utils/utils';
+	import { EncodePiece, FenToBoard, GetPieceColor, GetTopStack } from '$lib/utils/utils';
 
 	export let gameData;
-	console.log(gameData.current_state)
-	const boardState = FenToBoard(gameData.current_state)
-	console.log(boardState)
-	function GetImage(stack: number[]):string{
-		const topPiece = GetTopStack(stack)
-		const encodedPiece = EncodePiece(topPiece).toLowerCase()
-		const color = GetPieceColor(topPiece)
-		return `/pieces/${color}${stack.length}${encodedPiece}.svg`
+	console.log(gameData.current_state);
+	const boardState = FenToBoard(gameData.current_state);
+	console.log(boardState);
+	function GetImage(stack: number[]): string {
+		const topPiece = GetTopStack(stack);
+		const encodedPiece = EncodePiece(topPiece).toLowerCase();
+		const color = GetPieceColor(topPiece);
+		return `/pieces/${color}${stack.length}${encodedPiece}.svg`;
 	}
 </script>
 
@@ -22,7 +22,6 @@
 			{/if}
 		</div>
 	{/each}
-
 </div>
 
 <style>

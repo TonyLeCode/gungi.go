@@ -7,7 +7,6 @@
 	<title>Gungi.go</title>
 </svelte:head>
 
-
 <h1>Gungi.go</h1>
 <Board />
 
