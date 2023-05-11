@@ -13,7 +13,49 @@ import (
 	"github.com/google/uuid"
 )
 
-const getGames = `-- name: GetGames :many
+const getGame = `-- name: GetGame :one
+SELECT 
+  games.id, games.fen, games.history, games.completed, games.date_started, games.date_finished, games.current_state, 
+  user1.raw_user_meta_data ->> 'username' AS player1,
+  user2.raw_user_meta_data ->> 'username' AS player2
+FROM games 
+JOIN player_games AS player_games_1 ON games.id = player_games_1.game_id AND player_games_1.color = 'w' 
+JOIN player_games AS player_games_2 ON games.id = player_games_2.game_id AND player_games_2.color = 'b' 
+JOIN auth.users AS user1 ON user1.id = player_games_1.user_id
+JOIN auth.users AS user2 ON user2.id = player_games_2.user_id
+WHERE games.id = $1
+`
+
+type GetGameRow struct {
+	ID           uuid.UUID      `json:"id"`
+	Fen          sql.NullString `json:"fen"`
+	History      sql.NullString `json:"history"`
+	Completed    bool           `json:"completed"`
+	DateStarted  time.Time      `json:"date_started"`
+	DateFinished sql.NullTime   `json:"date_finished"`
+	CurrentState string         `json:"current_state"`
+	Player1      interface{}    `json:"player1"`
+	Player2      interface{}    `json:"player2"`
+}
+
+func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error) {
+	row := q.db.QueryRowContext(ctx, getGame, id)
+	var i GetGameRow
+	err := row.Scan(
+		&i.ID,
+		&i.Fen,
+		&i.History,
+		&i.Completed,
+		&i.DateStarted,
+		&i.DateFinished,
+		&i.CurrentState,
+		&i.Player1,
+		&i.Player2,
+	)
+	return i, err
+}
+
+const getOngoingGames = `-- name: GetOngoingGames :many
 SELECT games.id, games.fen, games.completed, games.date_started, games.current_state, users1.raw_user_meta_data -> 'username' as username1, users2.raw_user_meta_data -> 'username' as username2
 FROM games
 JOIN player_games j ON games.id = j.game_id
@@ -23,7 +65,7 @@ JOIN auth.users users2 ON j2.user_id = users2.id
 WHERE ((users1.id = $1 AND j.color ='w') OR (users2.id = $1 AND j.color ='b')) AND games.completed=false
 `
 
-type GetGamesRow struct {
+type GetOngoingGamesRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Fen          sql.NullString `json:"fen"`
 	Completed    bool           `json:"completed"`
@@ -33,15 +75,15 @@ type GetGamesRow struct {
 	Username2    interface{}    `json:"username2"`
 }
 
-func (q *Queries) GetGames(ctx context.Context, id uuid.UUID) ([]GetGamesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getGames, id)
+func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoingGamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOngoingGames, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetGamesRow
+	var items []GetOngoingGamesRow
 	for rows.Next() {
-		var i GetGamesRow
+		var i GetOngoingGamesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Fen,

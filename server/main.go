@@ -55,14 +55,17 @@ func main() {
 
 	e := echo.New()
 
-	e.Use(middleware.VerifySupabaseTokenMiddleware)
+	// e.Use(middleware.VerifySupabaseTokenMiddleware)
+	verify := e.Group("", middleware.VerifySupabaseTokenMiddleware)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
-	e.GET("/websocket", game)
-	e.GET("/getongoinggamelist", db.GetOngoingGameList)
+	verify.GET("/websocket", game)
+	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
+
+	e.GET("/getgame/:id", db.GetGame)
 
 	// e.POST("/user/register", )
 

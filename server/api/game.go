@@ -64,7 +64,7 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 
 	queries := db.New(dbConn.conn)
 
-	games, err := queries.GetGames(ctx, subid)
+	games, err := queries.GetOngoingGames(ctx, subid)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
@@ -75,4 +75,23 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 func (dbConn *DBConn) GetRoomList(c echo.Context) error {
 
 	return nil
+}
+
+func (dbConn *DBConn) GetGame(c echo.Context) error {
+	ctx := context.Background()
+
+	id := c.Param("id")
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Internal server error")
+	}
+
+	queries := db.New(dbConn.conn)
+
+	game, err := queries.GetGame(ctx, uuid)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Internal server error")
+	}
+
+	return c.JSON(http.StatusOK, game)
 }
