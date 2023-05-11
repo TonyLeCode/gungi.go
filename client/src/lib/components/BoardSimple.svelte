@@ -3,9 +3,9 @@
 	import { EncodePiece, FenToBoard, GetPieceColor, GetTopStack } from '$lib/utils/utils';
 
 	export let gameData;
-	console.log(gameData.current_state);
+	// console.log(gameData.current_state);
 	const boardState = FenToBoard(gameData.current_state);
-	console.log(boardState);
+	// console.log(boardState);
 	function GetImage(stack: number[]): string {
 		const topPiece = GetTopStack(stack);
 		const encodedPiece = EncodePiece(topPiece).toLowerCase();
@@ -18,7 +18,7 @@
 	{#each boardState as square}
 		<div class="square">
 			{#if square.length > 0}
-				<img class="piece" src={GetImage(square)} alt="" />
+				<img class="piece" draggable='false' src={GetImage(square)} alt="" />
 			{/if}
 		</div>
 	{/each}
@@ -43,5 +43,6 @@
 
 	.piece {
 		padding: 1px;
+		user-select: none;
 	}
 </style>

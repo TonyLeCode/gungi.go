@@ -21,5 +21,10 @@
 </script>
 
 <Navbar {session} />
-{session}
 <slot />
+
+<style>
+	:root{
+		background-color: rgb(250, 250, 250);
+	}
+</style>

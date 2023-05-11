@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { supabase } from '$lib/supabaseClient';
+	// TODO verify unique username
+	//TODO verification
 
 	let email: string;
 	let password: string;

@@ -1,89 +1,7 @@
 <script>
 	import { reverseList } from '$lib/helpers';
 
-	export const boardState = [
-		'1',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-		'',
-	];
+	export const boardState = new Array(81).fill(['']);
 	const fileCoords = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 	const rankCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 </script>
@@ -91,8 +9,8 @@
 <div class="board">
 	{#each boardState as square}
 		<div class="square">
-			{#if square}
-				<img class="piece" src="/pieces/b1中.svg" alt="" />
+			{#if square.length > 0}
+				<img class="piece" src="/pieces/b1b.svg" alt="" />
 			{/if}
 		</div>
 	{/each}
