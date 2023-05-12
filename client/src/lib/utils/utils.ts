@@ -18,7 +18,7 @@ export function FenToBoard(fen: string): number[][] {
 					const skipNumber = Number(piece);
 					fileIndex += skipNumber - 1;
 				} else {
-					newStack.push(DecodePiece(piece));
+					newStack.push(EncodePiece(piece));
 				}
 			});
 			if (newStack.length > 0) {
@@ -28,6 +28,28 @@ export function FenToBoard(fen: string): number[][] {
 		});
 	});
 	return newBoard;
+}
+
+export function FenToHand(fen: string):number[][]{
+	const fields = fen.split(' ')[1];
+	const split = fields.split('/')
+
+	const hands: number[][] = [[],[]]
+
+	for(const x of split[0]){
+		hands[0].push(Number(x))
+	}
+	for(const x of split[1]){
+		hands[1].push(Number(x))
+	}
+	return hands
+}
+
+export function GetImage(stack: number[]): string {
+	const topPiece = GetTopStack(stack);
+	const encodedPiece = DecodePiece(topPiece).toLowerCase();
+	const color = GetPieceColor(topPiece);
+	return `/pieces/${color}${stack.length}${encodedPiece}.svg`;
 }
 
 export function GetPieceColor(piece: number): string {
@@ -46,12 +68,12 @@ export function CoordsToIndex(file: number, rank: number): number {
 	return file + rank * 9;
 }
 
-type DecodePieceEnums = {
+type EncodePieceEnums = {
 	[key: string]: number;
 };
 
-export function DecodePiece(encodedPiece: string): number {
-	const pieceEnums: DecodePieceEnums = {
+export function EncodePiece(decodedPiece: string): number {
+	const pieceEnums: EncodePieceEnums = {
 		P: 0,
 		L: 1,
 		S: 2,
@@ -80,15 +102,15 @@ export function DecodePiece(encodedPiece: string): number {
 		m: 25,
 	};
 
-	return pieceEnums[encodedPiece];
+	return pieceEnums[decodedPiece];
 }
 
-type EncodePieceEnums = {
+type DecodePieceEnums = {
 	[key: string]: string;
 };
 
-export function EncodePiece(encodedPiece: number): string {
-	const pieceEnums: EncodePieceEnums = {
+export function DecodePiece(encodedPiece: number | string): string {
+	const pieceEnums: DecodePieceEnums = {
 		0: 'P',
 		1: 'L',
 		2: 'S',

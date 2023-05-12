@@ -6,7 +6,7 @@ import axios from 'axios';
 export const load: PageServerLoad = async ({ locals: { getSession } }) => {
 	const session = await getSession();
 	const token = session?.access_token;
-	console.log('token', session?.access_token);
+	// console.log('token', session?.access_token);
 	const url = 'http://localhost:5080/getongoinggamelist';
 	// const token = session.
 	const data = await axios({

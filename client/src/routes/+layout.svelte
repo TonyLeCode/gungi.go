@@ -25,6 +25,6 @@
 
 <style>
 	:root{
-		background-color: rgb(250, 250, 250);
+		background-color: rgb(242, 242, 242);
 	}
 </style>

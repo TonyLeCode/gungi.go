@@ -1,17 +1,11 @@
 <script lang="ts">
 	import { reverseList } from '$lib/helpers';
-	import { EncodePiece, FenToBoard, GetPieceColor, GetTopStack } from '$lib/utils/utils';
+	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, GetTopStack } from '$lib/utils/utils';
 
 	export let gameData;
 	// console.log(gameData.current_state);
 	const boardState = FenToBoard(gameData.current_state);
 	// console.log(boardState);
-	function GetImage(stack: number[]): string {
-		const topPiece = GetTopStack(stack);
-		const encodedPiece = EncodePiece(topPiece).toLowerCase();
-		const color = GetPieceColor(topPiece);
-		return `/pieces/${color}${stack.length}${encodedPiece}.svg`;
-	}
 </script>
 
 <div class="board">
@@ -27,6 +21,7 @@
 <style>
 	.board {
 		display: grid;
+		box-shadow: 0px 7px 15px rgba(230, 106, 5, 0.2);
 		grid-template-columns: repeat(9, minmax(20px, 1fr));
 		grid-template-rows: repeat(9, minmax(20px, 1fr));
 		gap: 2px;
