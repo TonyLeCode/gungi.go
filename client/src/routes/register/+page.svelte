@@ -29,41 +29,57 @@
 	<title>Gungi.go</title>
 </svelte:head>
 
-<form class="login" on:submit|preventDefault={handleSignUp}>
-	<fieldset>
-		<label for="username">Username:</label>
-		<input id="username" bind:value={username} type="text" />
-		<label for="email">Email:</label>
-		<input id="email" bind:value={email} type="email" />
-		<label for="password">Password:</label>
-		<input id="password" bind:value={password} type="password" />
-	</fieldset>
-	<button class="register-button" type="submit">Register</button>
-	<button class="register-button">Login</button>
-</form>
+<main>
+	<form class="login" on:submit|preventDefault={handleSignUp}>
+		<fieldset>
+			<label for="username">Username:</label>
+			<input id="username" bind:value={username} type="text" />
+			<label for="email">Email:</label>
+			<input id="email" bind:value={email} type="email" />
+			<label for="password">Password:</label>
+			<input id="password" bind:value={password} type="password" />
+		</fieldset>
+		<button class="button-primary" type="submit">Register</button>
+		<button class="button-primary">Login</button>
+	</form>
+</main>
 
 <style>
-	input {
-		border: 1px solid black;
-		padding: 0.25rem 0.75rem;
+	main{
+		height: calc(100vh - 3rem);
+		display:flex;
+		justify-content: center;
 	}
-
+	input {
+		border: 1.5px solid rgba(var(--primary), 0.25);
+		padding: 0.25rem 0.75rem;
+		background-color: rgb(var(--white));
+	}
+	form{
+	}
+	
 	fieldset {
 		margin: 1rem 0;
 		display: flex;
 		flex-direction: column;
+		gap: .5rem;
 	}
-
+	
 	.login {
+		gap: 1rem;
 		display: flex;
 		flex-direction: column;
 		max-width: 20rem;
 		margin: auto;
-		border: 1px solid black;
-		padding: 2rem;
+		padding: 8rem 6rem;
+		width: 100%;
+		margin-bottom: 12rem;
+		background-color: rgb(var(--white-2));
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		box-sizing: content-box;
 	}
 
-	.register-button {
-		border: 1px solid black;
+	button:nth-last-of-type(1){
+		margin-bottom: 1rem;
 	}
 </style>
