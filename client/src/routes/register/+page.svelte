@@ -40,7 +40,7 @@
 			<input id="password" bind:value={password} type="password" />
 		</fieldset>
 		<button class="button-primary" type="submit">Register</button>
-		<button class="button-primary">Login</button>
+		<a href='/login' class="button-ghost">Login</a>
 	</form>
 </main>
 
@@ -64,6 +64,10 @@
 		flex-direction: column;
 		gap: .5rem;
 	}
+
+	.button-ghost{
+		text-align: center;
+	}
 	
 	.login {
 		gap: 1rem;
@@ -79,7 +83,7 @@
 		box-sizing: content-box;
 	}
 
-	button:nth-last-of-type(1){
+	a{
 		margin-bottom: 1rem;
 	}
 </style>

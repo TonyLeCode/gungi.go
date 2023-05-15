@@ -35,8 +35,8 @@
 			<label for="password">Password:</label>
 			<input name="password" id="password" type="password" />
 		</fieldset>
-		<button class="button-primary">Register</button>
 		<button class="button-primary" type="submit">Login</button>
+		<a href='/register' class="button-ghost">Register</a>
 	</form>
 </main>
 
@@ -61,6 +61,10 @@
 		gap: 0.5rem;
 	}
 
+	.button-ghost{
+		text-align: center;
+	}
+
 	.login {
 		gap: 1rem;
 		display: flex;
@@ -75,7 +79,7 @@
 		box-sizing: content-box;
 	}
 
-	button:nth-last-of-type(1) {
+	a {
 		margin-bottom: 1rem;
 	}
 </style>
