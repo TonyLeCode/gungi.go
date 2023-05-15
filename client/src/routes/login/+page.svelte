@@ -30,10 +30,10 @@
 <main>
 	<form class="login" method="POST">
 		<fieldset>
-			<label for="username">Username:</label>
-				<input name='email' id="email" type="email" />
-				<label for="password">Password:</label>
-				<input name='password' id="password" type="password" />
+			<label for="email">Email:</label>
+			<input name="email" id="email" type="email" />
+			<label for="password">Password:</label>
+			<input name="password" id="password" type="password" />
 		</fieldset>
 		<button class="button-primary">Register</button>
 		<button class="button-primary" type="submit">Login</button>
@@ -41,9 +41,9 @@
 </main>
 
 <style>
-	main{
+	main {
 		height: calc(100vh - 3rem);
-		display:flex;
+		display: flex;
 		justify-content: center;
 	}
 	input {
@@ -51,16 +51,16 @@
 		padding: 0.25rem 0.75rem;
 		background-color: rgb(var(--white));
 	}
-	form{
+	form {
 	}
-	
+
 	fieldset {
 		margin: 1rem 0;
 		display: flex;
 		flex-direction: column;
-		gap: .5rem;
+		gap: 0.5rem;
 	}
-	
+
 	.login {
 		gap: 1rem;
 		display: flex;
@@ -75,7 +75,7 @@
 		box-sizing: content-box;
 	}
 
-	button:nth-last-of-type(1){
+	button:nth-last-of-type(1) {
 		margin-bottom: 1rem;
 	}
 </style>
