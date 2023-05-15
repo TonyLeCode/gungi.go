@@ -35,7 +35,7 @@
 		/* font-size: 1.25rem; */
 	}
 	.name {
-		color: var(--primary);
+		color: rgb(var(--primary));
 		margin-right: 1rem;
 		position: relative;
 		font-weight: 600;
@@ -45,7 +45,7 @@
 		width: 15px;
 		height: 15px;
 		border-radius: 50%;
-		background-color: var(--primary);
+		background-color: rgb(var(--primary));
 		display:block;
 		position:absolute;
 		left: -1.25rem;

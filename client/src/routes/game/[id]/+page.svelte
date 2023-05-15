@@ -111,7 +111,7 @@
 	}
 
 	.name {
-		/* color: var(--primary); */
+		/* color: rgb(var(--primary)); */
 		margin-right: auto;
 		margin-left: .5rem;
 		position: relative;
@@ -120,7 +120,7 @@
 			width: 15px;
 			height: 15px;
 			border-radius: 50%;
-			background-color: var(--primary);
+			background-color: rgb(var(--primary));
 			display:block;
 			position:absolute;
 			left: -1.25rem;
@@ -143,7 +143,7 @@
 		display:flex;
 		flex-direction: column;
 		/* border: 2px solid rgba(255, 77, 7, 0.7); */
-		background-color: var(--white-2);
+		background-color: rgb(var(--white-2));
 		/* background-color: rgb(255, 255, 255); */
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		border-radius: 8px;
