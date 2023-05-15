@@ -22,7 +22,7 @@ a{
 	
 	&:focus{
 		/* outline: 5px solid rgb(var(--primary)); */
-		outline-color: rgb(var(--primary));
+		outline-color: rgba(var(--primary), .5);
 	}
 }
 
@@ -42,7 +42,7 @@ a{
 		box-shadow: none;
 	}
 	&:focus{
-		outline: 2px solid rgb(var(--primary));
+		outline: 2px solid rgba(var(--primary), .5);
 		outline-offset: 2px;
 	}
 	&:disabled{

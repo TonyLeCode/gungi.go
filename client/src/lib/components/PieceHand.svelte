@@ -9,7 +9,7 @@
 
 <div class={`hand ${color === 'b' ? 'dark' : ''}`}>
 	<img src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
-	<div class="amount">
+	<div class="badge" title={String(amount)}>
 		{amount}
 	</div>
 </div>
@@ -32,7 +32,8 @@
 		--bg-color: rgb(var(--white));
 		--fill-color: rgb(var(--primary));
 	}
-	.amount {
+	.badge {
+		user-select: none;
 		text-align: center;
 		font-size: 0.7rem;
 		background-color: var(--bg-color);
