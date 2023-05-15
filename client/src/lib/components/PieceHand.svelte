@@ -7,7 +7,7 @@
 	const decodedPiece = DecodePiece(piece).toLowerCase();
 </script>
 
-<div class={`hand ${color === 'b' ? 'dark' : ''}`}>
+<div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
 	<img src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	<div class="badge" title={String(amount)}>
 		{amount}
@@ -26,10 +26,10 @@
 	.hand {
 		position: relative;
 		--bg-color: rgb(var(--primary));
-		--fill-color: rgb(var(--white));
+		--fill-color: rgb(var(--bg));
 	}
-	.dark {
-		--bg-color: rgb(var(--white));
+	.dark-hand {
+		--bg-color: rgb(var(--bg));
 		--fill-color: rgb(var(--primary));
 	}
 	.badge {

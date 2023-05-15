@@ -95,8 +95,8 @@
 		margin-left: auto;
 		max-width: 36rem;
 		width: 100%;
-		margin-top: auto;
-		margin-bottom: auto;
+		// margin-top: auto;
+		// margin-bottom: auto;
 	}
 
 	/* section {

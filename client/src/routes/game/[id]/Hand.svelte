@@ -80,7 +80,7 @@
 		display: flex;
 		flex-direction: column;
 		/* border: 2px solid rgba(255, 77, 7, 0.7); */
-		background-color: rgb(var(--white-2));
+		background-color: rgb(var(--bg-2));
 		/* background-color: rgb(255, 255, 255); */
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		border-radius: 8px;

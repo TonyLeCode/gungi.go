@@ -49,7 +49,7 @@
 	input {
 		border: 1.5px solid rgba(var(--primary), 0.25);
 		padding: 0.25rem 0.75rem;
-		background-color: rgb(var(--white));
+		background-color: rgb(var(--bg));
 	}
 	form {
 	}
@@ -74,7 +74,7 @@
 		padding: 8rem 6rem;
 		width: 100%;
 		margin-bottom: 12rem;
-		background-color: rgb(var(--white-2));
+		background-color: rgb(var(--bg-2));
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		box-sizing: content-box;
 	}

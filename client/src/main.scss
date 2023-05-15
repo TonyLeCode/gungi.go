@@ -4,78 +4,87 @@
 	/* --primary-2: rgb(255, 109, 65); */
 	--primary-2: 255, 107, 48;
 	--primary-3: 255, 132, 94;
-	--white: 242, 242, 242;
-	--white-2: 245, 245, 245;
-	--black: 73, 73, 73;
-	color: rgb(var(--black));
-	background-color: rgb(var(--white));
+	--bg: 242, 242, 242;
+	--bg-2: 245, 245, 245;
+	--font: 73, 73, 73;
 }
 
-a{
+body{
+	color: rgb(var(--font));
+	background-color: rgb(var(--bg));
+
+}
+
+.dark {
+	--bg: 44, 44, 44;
+	--bg-2: 55, 55, 55;
+	--font: 242, 242, 242;
+}
+
+a {
 	transition: color 100ms;
 	/* border-radius: 1px; */
 	outline-offset: 2px;
-	padding: 0 .5rem;
-	&:hover, &:focus{
+	padding: 0 0.5rem;
+	&:hover,
+	&:focus {
 		color: rgb(var(--primary));
 	}
-	
-	&:focus{
+
+	&:focus {
 		/* outline: 5px solid rgb(var(--primary)); */
-		outline-color: rgba(var(--primary), .5);
+		outline-color: rgba(var(--primary), 0.5);
 	}
 }
 
-.button-primary{
+.button-primary {
 	background-color: rgb(var(--primary));
-	color: rgb(var(--white));
-	padding: .25rem .75rem;
+	color: rgb(var(--bg));
+	padding: 0.25rem 0.75rem;
 	border-radius: 4px;
 	box-shadow: 0px 5px 10px rgba(255, 77, 7, 0.308);
 	transition-duration: 150ms;
 	transition-property: background-color;
-	&:hover:not([disabled]){
+	&:hover:not([disabled]) {
 		background-color: rgb(var(--primary-2));
 	}
-	&:active:not([disabled]){
+	&:active:not([disabled]) {
 		background-color: rgb(var(--primary-3));
 		box-shadow: none;
 	}
-	&:focus{
-		outline: 2px solid rgba(var(--primary), .5);
+	&:focus {
+		outline: 2px solid rgba(var(--primary), 0.5);
 		outline-offset: 2px;
 	}
-	&:disabled{
+	&:disabled {
 		background-color: rgb(184, 184, 184);
 		box-shadow: none;
 	}
 }
 
-.button-ghost{
-	background-color: rgb(var(--white));
+.button-ghost {
+	background-color: rgb(var(--bg));
 	color: rgb(var(--primary));
-	padding: .25rem .75rem;
+	padding: 0.25rem 0.75rem;
 	border-radius: 4px;
-	box-shadow: 0px 5px 10px rgba(161, 161, 161, 0.2);
+	box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.08);
 	outline: 1px solid rgb(var(--primary));
 	outline-offset: -1px;
 	transition-duration: 150ms;
 	transition-property: background-color;
-	&:hover:not([disabled]){
-		background-color: rgba(var(--primary), .2);
+	&:hover:not([disabled]) {
+		background-color: rgba(var(--primary), 0.2);
 	}
-	&:active:not([disabled]){
-		background-color: rgba(var(--primary), .4);
+	&:active:not([disabled]) {
+		background-color: rgba(var(--primary), 0.4);
 		box-shadow: none;
 	}
-	&:focus{
+	&:focus {
 		outline: 2px solid rgb(var(--primary));
 		outline-offset: 2px;
 	}
-	&:disabled{
+	&:disabled {
 		background-color: rgb(184, 184, 184);
 		box-shadow: none;
 	}
 }
-
-
