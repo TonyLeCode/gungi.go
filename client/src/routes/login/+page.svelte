@@ -31,9 +31,9 @@
 	<form class="login" method="POST">
 		<fieldset>
 			<label for="username">Username:</label>
-				<input id="email" type="email" />
+				<input name='email' id="email" type="email" />
 				<label for="password">Password:</label>
-				<input id="password" type="password" />
+				<input name='password' id="password" type="password" />
 		</fieldset>
 		<button class="button-primary">Register</button>
 		<button class="button-primary" type="submit">Login</button>
