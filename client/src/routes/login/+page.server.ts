@@ -19,6 +19,6 @@ export const actions = {
 		} else {
 			console.log('logged in', data);
 		}
-		throw redirect(303, '/home');
+		throw redirect(303, '/overview');
 	},
 } satisfies Actions;

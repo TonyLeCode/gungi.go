@@ -75,9 +75,9 @@
 				</div>
 			</div>
 			<div class="buttons">
-				<button>resign</button>
-				<button>request undo</button>
-				<button disabled>confirm move</button>
+				<button class='button-primary'>resign</button>
+				<button class='button-primary'>request undo</button>
+				<button class='button-primary' disabled>confirm move</button>
 			</div>
 		</div>
 	</aside>
@@ -89,7 +89,6 @@
 		max-width: 90rem;
 		margin: 0 auto;
 	}
-
 	.buttons {
 		/* background-color: red; */
 		display: flex;
@@ -106,26 +105,13 @@
 		padding: 1rem 0;
 	}
 
-	button{
-		background-color: rgb(255, 77, 7);
-		color: white;
-		padding: .25rem .75rem;
-		border-radius: 4px;
-		box-shadow: 0px 5px 10px rgba(255, 77, 7, 0.308);
-	}
-
-	button:disabled{
-		background-color: rgb(184, 184, 184);
-		box-shadow: none;
-	}
-
 	.game-state {
 		text-align: center;
 		margin-bottom: 1rem;
 	}
 
 	.name {
-		/* color: rgb(255, 77, 7); */
+		/* color: var(--primary); */
 		margin-right: auto;
 		margin-left: .5rem;
 		position: relative;
@@ -135,7 +121,7 @@
 		width: 15px;
 		height: 15px;
 		border-radius: 50%;
-		background-color: rgb(255, 77, 7);
+		background-color: var(--primary);
 		display:block;
 		position:absolute;
 		left: -1.25rem;
@@ -147,7 +133,7 @@
 	.side-menu {
 		/* background-color: gray; */
 		margin-left: auto;
-		max-width: 35rem;
+		max-width: 36rem;
 		width: 100%;
 		margin-top: auto;
 		margin-bottom: auto;
@@ -157,11 +143,11 @@
 		display:flex;
 		flex-direction: column;
 		/* border: 2px solid rgba(255, 77, 7, 0.7); */
-		background-color: rgb(245, 245, 245);
+		background-color: var(--white-2);
 		/* background-color: rgb(255, 255, 255); */
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
-		border-radius: 16px;
-		padding: 1rem 1rem;
+		border-radius: 8px;
+		padding: 1.5rem 2rem;
 	}
 
 	.hands {
@@ -181,6 +167,7 @@
 		display: flex;
 		gap: 1rem;
 		padding: .5rem 1rem;
+		padding-bottom: 1rem;
 		/* justify-content: space-between; */
 	}
 	/* section {

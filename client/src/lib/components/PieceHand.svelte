@@ -21,16 +21,16 @@
 		box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.17);
 	}
 	img:hover {
-		outline: rgb(255, 77, 7) 5px solid;
+		outline: var(--primary) 5px solid;
 	}
 	.hand {
 		position: relative;
-		--bg-color: rgb(255, 77, 7);
-		--fill-color: rgb(250, 250, 250);
+		--bg-color: var(--primary);
+		--fill-color: var(--white);
 	}
 	.dark {
-		--bg-color: rgb(250, 250, 250);
-		--fill-color: rgb(255, 77, 7);
+		--bg-color: var(--white);
+		--fill-color: var(--primary);
 	}
 	.amount {
 		text-align: center;

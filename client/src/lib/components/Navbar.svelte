@@ -10,7 +10,7 @@
 	<a class="brand" href="/">Gungi</a>
 	<ul class="nav-list">
 		{#if session}
-			<a href="/home">home</a>
+			<a href="/overview">overview</a>
 			<a href="/play">play</a>
 			<!-- <a href="/games">games</a> -->
 			<!-- TODO learning, puzzles, resources, library -->
@@ -35,7 +35,7 @@
 		/* font-size: 1.25rem; */
 	}
 	.name {
-		color: rgb(255, 77, 7);
+		color: var(--primary);
 		margin-right: 1rem;
 		position: relative;
 		font-weight: 600;
@@ -45,7 +45,7 @@
 		width: 15px;
 		height: 15px;
 		border-radius: 50%;
-		background-color: rgb(255, 77, 7);
+		background-color: var(--primary);
 		display:block;
 		position:absolute;
 		left: -1.25rem;
@@ -65,7 +65,7 @@
 	}
 	.nav-list {
 		display: flex;
-		gap: 1rem;
+		gap: .5rem;
 		margin-left: 2rem;
 	}
 	.nav-account{

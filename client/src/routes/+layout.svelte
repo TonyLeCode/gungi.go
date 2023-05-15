@@ -22,9 +22,3 @@
 
 <Navbar {session} />
 <slot />
-
-<style>
-	:root{
-		background-color: rgb(242, 242, 242);
-	}
-</style>
