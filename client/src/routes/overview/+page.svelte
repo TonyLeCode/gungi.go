@@ -88,4 +88,8 @@
 		padding: 1rem;
 		justify-content: center;
 	}
+
+	.gameList a {
+		padding: 0;
+	}
 </style>
