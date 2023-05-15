@@ -83,7 +83,7 @@
 	</aside>
 </main>
 
-<style>
+<style lang='scss'>
 	main {
 		display: flex;
 		max-width: 90rem;
@@ -115,19 +115,19 @@
 		margin-right: auto;
 		margin-left: .5rem;
 		position: relative;
-	}
-	.name::before{
-		content: '';
-		width: 15px;
-		height: 15px;
-		border-radius: 50%;
-		background-color: var(--primary);
-		display:block;
-		position:absolute;
-		left: -1.25rem;
-		margin: auto;
-		top: 0;
-		bottom: 0;
+		&::before{
+			content: '';
+			width: 15px;
+			height: 15px;
+			border-radius: 50%;
+			background-color: var(--primary);
+			display:block;
+			position:absolute;
+			left: -1.25rem;
+			margin: auto;
+			top: 0;
+			bottom: 0;
+		}
 	}
 
 	.side-menu {

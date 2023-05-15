@@ -15,14 +15,14 @@ a{
 	/* border-radius: 1px; */
 	outline-offset: 2px;
 	padding: 0 .5rem;
-}
-a:hover, a:focus{
-	color: var(--primary);
-}
-
-a:focus{
-	/* outline: 5px solid var(--primary); */
-	outline-color: var(--primary);
+	&:hover, &:focus{
+		color: var(--primary);
+	}
+	
+	&:focus{
+		/* outline: 5px solid var(--primary); */
+		outline-color: var(--primary);
+	}
 }
 
 .button-primary{
