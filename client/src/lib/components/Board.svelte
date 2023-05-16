@@ -1,17 +1,15 @@
 <script lang="ts">
 	import { reverseList } from '$lib/helpers';
+  import type { DragAndDropType } from '$lib/utils/dragAndDrop';
   import { DecodePiece, DecodePieceFull, FenToBoard, FenToHand, GetImage, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
 
 	// export const boardState = new Array(81).fill(['']);
 	export let gameData;
 	export let reversed: boolean;
-	export let use: any;
-	export let mouseOver: any;
-	export let mouseLeave: any;
-	export let obj: any;
+	export let dragAndDropObj: DragAndDropType;
 
-	function temp(a, b){
-		return function temp2(c){
+	function temp(a:any, b:any){
+		return function temp2(c:any){
 			// console.log(a)
 			// // console.log(DecodePieceFull(piece))
 			// console.log(b)
@@ -45,9 +43,9 @@
 
 <div class="board">
 	{#each boardState as square, index}
-		<div class="square" on:mouseover={() => {mouseOver(index)}} on:mouseleave={mouseLeave} on:focus={() => {console.log('')}}>
+		<div class="square" on:mouseover={() => {dragAndDropObj.mouseOver(index)}} on:mouseleave={dragAndDropObj.mouseLeave} on:focus={() => {console.log('')}}>
 			{#if square.length > 0}
-			<img draggable="false" use:use on:mousedown={() => {obj.callback = temp(square[square.length-1], index)}} class="piece" src={GetImage(square)} alt="" />
+			<img draggable="false" use:dragAndDropObj.dragAndDropAction on:mousedown={() => {dragAndDropObj.callback = temp(square[square.length-1], index)}} class="piece" src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img draggable="false" class='piece-under' src={GetImage2(square.length-1, square[square.length-2])} alt="" />
 				{/if}

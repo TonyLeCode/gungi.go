@@ -16,7 +16,7 @@
 	// }
 	//FenToBoard on board size
 
-	let [dragAndDropObj, dragAndDropAction, mouseOver, mouseLeave] = dragAndDrop();
+	let dragAndDropObj = dragAndDrop();
 
 	function countPiecesOnBoard(fen: string) {
 		const pieces = fen.split(' ')[0];
@@ -45,10 +45,7 @@
 <main>
 	<section>
 		<Board
-			use={dragAndDropAction}
-			obj={dragAndDropObj}
-			{mouseOver}
-			{mouseLeave}
+			dragAndDropObj={dragAndDropObj}
 			gameData={data.data}
 			reversed={playerColor !== 'w'}
 		/>
@@ -79,8 +76,7 @@
 		</div>
 		{#if menuState === 0}
 			<Hand
-				use={dragAndDropAction}
-				obj={dragAndDropObj}
+				dragAndDropObj={dragAndDropObj}
 				reversed={playerColor !== 'w'}
 				{playerColor}
 				player1={data.data.player1}

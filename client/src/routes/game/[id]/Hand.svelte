@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PieceHand from '$lib/components/PieceHand.svelte';
+  import type { DragAndDropType } from '$lib/utils/dragAndDrop';
 
 	export let playerColor: string;
 	export let player1: string;
@@ -7,8 +8,7 @@
 	export let hands: number[][];
 	export let onBoardBlack: number | undefined;
 	export let onBoardWhite: number | undefined;
-	export let use: any;
-	export let obj: any;
+	export let dragAndDropObj: DragAndDropType;
 	export let reversed: boolean;
 </script>
 
@@ -28,8 +28,8 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 1 : 0] as amount, i}
 				{#if amount != 0}
-					<PieceHand use={use}
-					obj={obj}
+					<PieceHand
+					dragAndDropObj={dragAndDropObj}
 					reversed={reversed} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
 				{/if}
 			{/each}
@@ -48,8 +48,8 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 0 : 1] as amount, i}
 				{#if amount != 0}
-					<PieceHand use={use}
-					obj={obj}
+					<PieceHand
+					dragAndDropObj={dragAndDropObj}
 					reversed={reversed} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
 				{/if}
 			{/each}
