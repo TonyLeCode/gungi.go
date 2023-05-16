@@ -1,10 +1,34 @@
 <script lang="ts">
 	import { reverseList } from '$lib/helpers';
-  import { FenToBoard, FenToHand, GetImage } from '$lib/utils/utils';
+  import { DecodePiece, DecodePieceFull, FenToBoard, FenToHand, GetImage, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
 
 	// export const boardState = new Array(81).fill(['']);
 	export let gameData;
 	export let reversed: boolean;
+	export let use: any;
+	export let mouseOver: any;
+	export let mouseLeave: any;
+	export let obj: any;
+
+	function temp(a){
+		return function temp2(b){
+			// console.log(a)
+			// // console.log(DecodePieceFull(piece))
+			// console.log(b)
+			let correctedIndex = b;
+			if(reversed){
+				correctedIndex = 80-b
+			}
+			const [file, rank] = IndexToCoords(correctedIndex)
+			alert(`Destination: ${file.toUpperCase()}${rank} \nPiece: ${DecodePieceFull(a)}`)
+		}
+	}
+
+	function GetImage2(tier: number, piece: number): string {
+	const encodedPiece = DecodePiece(piece).toLowerCase();
+	const color = GetPieceColor(piece);
+	return `/pieces/${color}${tier}${encodedPiece}.svg`;
+}
 
 	function reverseIfBlack<T>(arr:T[]):T[]{
 		if(reversed){
@@ -14,13 +38,17 @@
 	let boardState = reverseIfBlack(FenToBoard(gameData.current_state));
 	let fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	let rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+	console.log(boardState)
 </script>
 
 <div class="board">
-	{#each boardState as square}
-		<div class="square">
+	{#each boardState as square, index}
+		<div class="square" on:mouseover={() => {mouseOver(index)}} on:mouseleave={mouseLeave}>
 			{#if square.length > 0}
-			<img class="piece" src={GetImage(square)} alt="" />
+			<img draggable="false" use:use on:mousedown={() => {obj.callback = temp(square[square.length-1])}} class="piece" src={GetImage(square)} alt="" />
+				{#if square.length > 1}
+					<img draggable="false" class='piece-under' src={GetImage2(square.length-1, square[square.length-2])} alt="" />
+				{/if}
 			{/if}
 		</div>
 	{/each}
@@ -60,6 +88,7 @@
 
 	.square {
 		background-color: rgb(254 215 170);
+		position: relative;
 	}
 
 	.file {
@@ -81,6 +110,17 @@
 
 	.piece {
 		padding: 0.375rem;
+		position: relative;
+		z-index: 2;
+	}
+	.piece-under{
+		padding: 0.375rem;
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		z-index: 1;
+		user-select: none;
 	}
 	.piece:hover {
 		background-color: rgba(255, 77, 7, 0.479);

@@ -5,6 +5,7 @@
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
+  import { dragAndDrop } from '$lib/utils/dragAndDrop';
 
 	export let data;
 	// console.log(data?.params.id);
@@ -14,6 +15,9 @@
 	// 	console.log(`/pieces/w1${encoded}.svg`)
 	// }
 	//FenToBoard on board size
+
+	let [dragAndDropObj, dragAndDropAction, mouseOver, mouseLeave] = dragAndDrop();
+
 	function countPiecesOnBoard(fen: string) {
 		const pieces = fen.split(' ')[0];
 		const matchW = pieces.match(/[A-Z]/g);
@@ -40,7 +44,7 @@
 
 <main>
 	<section>
-		<Board gameData={data.data} reversed={playerColor !== 'w'} />
+		<Board use={dragAndDropAction} obj={dragAndDropObj} mouseOver={mouseOver} mouseLeave={mouseLeave} gameData={data.data} reversed={playerColor !== 'w'} />
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
