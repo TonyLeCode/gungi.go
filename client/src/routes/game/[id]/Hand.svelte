@@ -7,6 +7,9 @@
 	export let hands: number[][];
 	export let onBoardBlack: number | undefined;
 	export let onBoardWhite: number | undefined;
+	export let use: any;
+	export let obj: any;
+	export let reversed: boolean;
 </script>
 
 <div class="hands">
@@ -25,7 +28,9 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 1 : 0] as amount, i}
 				{#if amount != 0}
-					<PieceHand color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
+					<PieceHand use={use}
+					obj={obj}
+					reversed={reversed} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>
@@ -43,7 +48,9 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 0 : 1] as amount, i}
 				{#if amount != 0}
-					<PieceHand color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
+					<PieceHand use={use}
+					obj={obj}
+					reversed={reversed} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>

@@ -3,7 +3,6 @@ interface DragAndDropType {
 	initialMouseY: number;
 	offsetX: number;
 	offsetY: number;
-	dragObj: unknown;
 	dragElement: HTMLElement | null;
   callback: DragAndDropCallback;
   hoverItem: unknown;
@@ -16,7 +15,6 @@ export function dragAndDrop() {
 		initialMouseY: 0,
     offsetX: 0,
     offsetY: 0,
-		dragObj: null,
 		dragElement: null,
     callback: null,
     hoverItem: null
@@ -61,6 +59,7 @@ export function dragAndDrop() {
       dragAndDropObj.dragElement.style.zIndex = '2';
       // console.log(data)
       dragAndDropObj.dragElement = null;
+      dragAndDropObj.hoverItem = null
     }
   }
   
@@ -73,7 +72,7 @@ export function dragAndDrop() {
     // draggingIndex = itemIndex;
     dragAndDropObj.dragElement = target;
     dragAndDropObj.dragElement.style.pointerEvents = 'none';
-    dragAndDropObj.dragElement.style.zIndex = '10';
+    dragAndDropObj.dragElement.style.zIndex = '3';
     document.addEventListener('mousemove', dragMouse);
     document.addEventListener('mouseup', releaseElement);
   }

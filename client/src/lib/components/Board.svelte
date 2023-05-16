@@ -10,17 +10,20 @@
 	export let mouseLeave: any;
 	export let obj: any;
 
-	function temp(a){
-		return function temp2(b){
+	function temp(a, b){
+		return function temp2(c){
 			// console.log(a)
 			// // console.log(DecodePieceFull(piece))
 			// console.log(b)
-			let correctedIndex = b;
+			let correctedIndexB = b;
+			let correctedIndexC = c;
 			if(reversed){
-				correctedIndex = 80-b
+				correctedIndexB = 80-b
+				correctedIndexC = 80-c
 			}
-			const [file, rank] = IndexToCoords(correctedIndex)
-			alert(`Destination: ${file.toUpperCase()}${rank} \nPiece: ${DecodePieceFull(a)}`)
+			const [file, rank] = IndexToCoords(correctedIndexB)
+			const [file2, rank2] = IndexToCoords(correctedIndexC)
+			alert(`From: ${file.toUpperCase()}${rank} \nDestination: ${file2.toUpperCase()}${rank2} \nPiece: ${DecodePieceFull(a)}`)
 		}
 	}
 
@@ -38,14 +41,13 @@
 	let boardState = reverseIfBlack(FenToBoard(gameData.current_state));
 	let fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	let rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
-	console.log(boardState)
 </script>
 
 <div class="board">
 	{#each boardState as square, index}
-		<div class="square" on:mouseover={() => {mouseOver(index)}} on:mouseleave={mouseLeave}>
+		<div class="square" on:mouseover={() => {mouseOver(index)}} on:mouseleave={mouseLeave} on:focus={() => {console.log('')}}>
 			{#if square.length > 0}
-			<img draggable="false" use:use on:mousedown={() => {obj.callback = temp(square[square.length-1])}} class="piece" src={GetImage(square)} alt="" />
+			<img draggable="false" use:use on:mousedown={() => {obj.callback = temp(square[square.length-1], index)}} class="piece" src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img draggable="false" class='piece-under' src={GetImage2(square.length-1, square[square.length-2])} alt="" />
 				{/if}
@@ -68,8 +70,8 @@
 
 <style>
 	img{
-		/* box-shadow: 0px 7px 15px rgba(230, 106, 5, 0.527); */
-		/* border-radius: 50%; */
+		/* box-shadow: 0px 7px 15px rgba(230, 106, 5, 0.527);
+		border-radius: 50%; */
 	}
 
 	.board {
@@ -112,6 +114,7 @@
 		padding: 0.375rem;
 		position: relative;
 		z-index: 2;
+		user-select: none;
 	}
 	.piece-under{
 		padding: 0.375rem;

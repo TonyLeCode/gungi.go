@@ -32,5 +32,6 @@
 	}
   a{
     color: rgb(255, 94, 0);
+		padding: 0;
   }
 </style>

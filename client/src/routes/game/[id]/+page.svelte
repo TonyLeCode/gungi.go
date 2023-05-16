@@ -5,7 +5,7 @@
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
-  import { dragAndDrop } from '$lib/utils/dragAndDrop';
+	import { dragAndDrop } from '$lib/utils/dragAndDrop';
 
 	export let data;
 	// console.log(data?.params.id);
@@ -44,19 +44,44 @@
 
 <main>
 	<section>
-		<Board use={dragAndDropAction} obj={dragAndDropObj} mouseOver={mouseOver} mouseLeave={mouseLeave} gameData={data.data} reversed={playerColor !== 'w'} />
+		<Board
+			use={dragAndDropAction}
+			obj={dragAndDropObj}
+			{mouseOver}
+			{mouseLeave}
+			gameData={data.data}
+			reversed={playerColor !== 'w'}
+		/>
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
 			{turnColor === 'w' ? 'White' : 'Black'} To Play
 		</div>
 		<div class="tabs">
-			<button class="button-ghost" on:click={() => {menuState = 0}}>hand</button>
-			<button class="button-ghost" on:click={() => {menuState = 1}}>chat</button>
-			<button class="button-ghost" on:click={() => {menuState = 2}}>move history</button>
+			<button
+				class="button-ghost"
+				on:click={() => {
+					menuState = 0;
+				}}>hand</button
+			>
+			<button
+				class="button-ghost"
+				on:click={() => {
+					menuState = 1;
+				}}>chat</button
+			>
+			<button
+				class="button-ghost"
+				on:click={() => {
+					menuState = 2;
+				}}>move history</button
+			>
 		</div>
 		{#if menuState === 0}
 			<Hand
+				use={dragAndDropAction}
+				obj={dragAndDropObj}
+				reversed={playerColor !== 'w'}
 				{playerColor}
 				player1={data.data.player1}
 				player2={data.data.player2}
