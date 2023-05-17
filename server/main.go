@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/TonyLeCode/gungi.go/server/api"
 	"github.com/TonyLeCode/gungi.go/server/middleware"
 	"github.com/TonyLeCode/gungi.go/server/utils"
+	"github.com/TonyLeCode/gungi.go/server/websocket"
 	"github.com/labstack/echo/v4"
+	"github.com/lesismal/nbio/nbhttp"
 	// "nhooyr.io/websocket"
 )
 
@@ -63,7 +69,27 @@ func main() {
 
 	e.GET("/getgame/:id", db.GetGame)
 
+	e.GET("/room", websocket.GameRoom)
+
 	// e.POST("/user/register", )
 
-	e.Logger.Fatal(e.Start("localhost:5080"))
+	// e.Logger.Fatal(e.Start("localhost:5080"))
+	svr := nbhttp.NewServer(nbhttp.Config{
+		Network: "tcp",
+		Addrs:   []string{"localhost:8080"},
+	}, e, nil)
+	err = svr.Start()
+	if err != nil {
+		log.Fatalf("nbio.Start failed: %v\n", err)
+	}
+
+	log.Println("serving [labstack/echo] on [nbio]")
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+	<-interrupt
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	svr.Shutdown(ctx)
 }
