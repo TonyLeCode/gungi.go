@@ -1,9 +1,10 @@
 <script lang="ts">
-	import Navbar from '$lib/components/Navbar.svelte';
 	import { supabase } from '$lib/supabaseClient';
+	import Modal from './Modal.svelte';
 	// TODO verify unique username
 	//TODO verification
 
+	export let showModal: boolean;
 	let email: string;
 	let password: string;
 	let username: string;
@@ -29,8 +30,8 @@
 	<title>Gungi.go</title>
 </svelte:head>
 
-<main>
-	<form class="login" on:submit|preventDefault={handleSignUp}>
+<Modal bind:showModal>
+	<form class="login" action="/register" on:submit|preventDefault={handleSignUp}>
 		<fieldset>
 			<label for="username">Username:</label>
 			<input id="username" bind:value={username} type="text" />
@@ -40,50 +41,35 @@
 			<input id="password" bind:value={password} type="password" />
 		</fieldset>
 		<button class="button-primary" type="submit">Register</button>
-		<a href='/login' class="button-ghost">Login</a>
+		<a href="/login" class="button-ghost">Login</a>
 	</form>
-</main>
+</Modal>
 
 <style>
-	main{
-		height: calc(100vh - 3rem);
-		display:flex;
-		justify-content: center;
-	}
 	input {
 		border: 1.5px solid rgba(var(--primary), 0.25);
 		padding: 0.25rem 0.75rem;
 		background-color: rgb(var(--bg));
 	}
-	form{
-	}
-	
 	fieldset {
 		margin: 1rem 0;
 		display: flex;
 		flex-direction: column;
-		gap: .5rem;
+		gap: 0.5rem;
 	}
 
-	.button-ghost{
+	.button-ghost {
 		text-align: center;
 	}
-	
+
 	.login {
 		gap: 1rem;
 		display: flex;
 		flex-direction: column;
-		max-width: 20rem;
-		margin: auto;
-		padding: 8rem 6rem;
-		width: 100%;
-		margin-bottom: 12rem;
-		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
-		box-sizing: content-box;
+		min-width: 20rem;
 	}
 
-	a{
+	a {
 		margin-bottom: 1rem;
 	}
 </style>
