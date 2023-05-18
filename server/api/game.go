@@ -62,7 +62,7 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "bad request")
 	}
 
-	queries := db.New(dbConn.conn)
+	queries := db.New(dbConn.PostgresDB)
 
 	games, err := queries.GetOngoingGames(ctx, subid)
 	if err != nil {
@@ -86,7 +86,7 @@ func (dbConn *DBConn) GetGame(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	queries := db.New(dbConn.conn)
+	queries := db.New(dbConn.PostgresDB)
 
 	game, err := queries.GetGame(ctx, uuid)
 	if err != nil {

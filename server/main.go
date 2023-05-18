@@ -10,7 +10,6 @@ import (
 	"github.com/TonyLeCode/gungi.go/server/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
-	"github.com/redis/go-redis/v9"
 	// "nhooyr.io/websocket"
 )
 
@@ -47,16 +46,25 @@ func main() {
 		log.Fatalln("Cannot load config")
 	}
 
-	postgresDB, err := api.NewConnection(config.DB_SOURCE)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	dbs := api.DBConn{}
+	dbs.PostgresConnect(config.DB_SOURCE)
+	dbs.RedisConnect()
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	// postgresDB, err := api.NewConnection(config.DB_SOURCE)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// redisClient := redis.NewClient(&redis.Options{
+	// 	Addr:     "localhost:6379",
+	// 	Password: "",
+	// 	DB:       0,
+	// })
+
+	// dbs := &db.DBs{
+	// 	PostgresDB:  postgresDB,
+	// 	RedisClient: redisClient,
+	// }
 
 	e := echo.New()
 	m := melody.New()
@@ -69,11 +77,11 @@ func main() {
 	})
 
 	// verify.GET("/websocket", game)
-	verify.GET("/getongoinggamelist", postgresDB.GetOngoingGameList)
+	verify.GET("/getongoinggamelist", dbs.GetOngoingGameList)
 
-	e.GET("/getgame/:id", postgresDB.GetGame)
+	e.GET("/getgame/:id", dbs.GetGame)
 
-	e.GET("/room", websocket.GameRoom(m))
+	e.GET("/room", websocket.GameRoom(m, dbs.RedisClient))
 
 	// e.POST("/user/register", )
 

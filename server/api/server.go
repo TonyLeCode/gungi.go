@@ -5,25 +5,42 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 )
 
-// Connection struct for receiver functions
 type DBConn struct {
-	conn *sql.DB
+	PostgresDB  *sql.DB
+	RedisClient *redis.Client
 }
 
 // Create a connection to database
-func NewConnection(dbSource string) (*DBConn, error) {
+func (dbs *DBConn) PostgresConnect(dbSource string) error {
 	conn, err := sql.Open("postgres", dbSource)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 
 	err = conn.Ping()
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
-	log.Println("DB Connected...")
+	log.Println("Postgres Connected...")
 
-	return &DBConn{conn: conn}, nil
+	dbs.PostgresDB = conn
+
+	return nil
+}
+func (dbs *DBConn) RedisConnect() error {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	log.Println("Redis Connected...")
+
+	dbs.RedisClient = redisClient
+
+	return nil
 }
