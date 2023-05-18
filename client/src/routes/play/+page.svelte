@@ -1,15 +1,33 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import CreateGameDialogue from './CreateGameDialogue.svelte';
+	import RoomDialogue from './RoomDialogue.svelte';
+  import RoomList from './RoomList.svelte';
+	type Info = {
+		name: string;
+		description: string;
+		type: string;
+		color: string;
+		rules: string;
+	};
 
+	let showCreateGameDialogue = false;
+	let showRoomDialogue = false;
+	let roomDialogueInfo: Info = {
+		name: 'test',
+		description: 'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
+		type: 'correspondence',
+		color: 'random',
+		rules: 'default',
+	};
 	const url = (route: string) => 'ws://' + '127.0.0.1:8080/' + route;
 
-  let text = 'not connected yet...';
+	let text = 'not connected yet...';
 	onMount(() => {
 		const ws = new WebSocket(url('room'));
 
-
 		ws.addEventListener('open', (event) => {
-      text = 'connected!'
+			text = 'connected!';
 			setTimeout(() => {
 				ws.send('hello!');
 			}, 1750);
@@ -27,19 +45,28 @@
 	<div>
 		{text}
 	</div>
+
+	<div>
+		<button
+			on:click={() => {
+				showCreateGameDialogue = true;
+			}}
+			class="button-primary">Create Game</button
+		>
+	</div>
+
+	<h2>Live Games</h2>
+	<RoomList bind:showRoomDialogue bind:roomDialogueInfo />
+	<h2>Correspondence Games</h2>
+	<CreateGameDialogue bind:showModal={showCreateGameDialogue} />
+	<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} />
 </main>
 
-<style>
+<style lang="scss">
 	main {
 		max-width: 70rem;
 		margin: auto;
-    min-height: 60vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+		padding: 0.5rem;
 	}
-	div {
-		text-align: center;
-		font-size: 4rem;
-	}
+	
 </style>
