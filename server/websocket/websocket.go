@@ -1,10 +1,12 @@
 package websocket
 
 import (
+	"context"
 	"log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
+	"github.com/redis/go-redis/v9"
 )
 
 type PlayerMove struct {
@@ -16,13 +18,21 @@ type PlayerMove struct {
 	}
 }
 
-func GameRoom(m *melody.Melody) echo.HandlerFunc {
+func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 	m.HandleConnect(func(s *melody.Session) {
 		m.Broadcast([]byte("Connected"))
 		log.Println("Connected")
 	})
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		ctx := context.Background()
 		m.Broadcast(msg)
+		if string(msg) == "lol" {
+			val, err := r.Get(ctx, "foo").Result()
+			if err != nil {
+				log.Println(err)
+			}
+			log.Println(val)
+		}
 		log.Println("Broadcasted: ", string(msg))
 	})
 	return func(c echo.Context) error {
