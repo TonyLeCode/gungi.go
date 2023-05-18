@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
-  import RoomList from './RoomList.svelte';
+	import RoomList from './RoomList.svelte';
 	type Info = {
 		name: string;
 		description: string;
@@ -10,6 +10,39 @@
 		color: string;
 		rules: string;
 	};
+
+	let roomList: Info[] = [
+		{
+			name: 'Ornable',
+			description:
+				'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
+			type: 'correspondence',
+			color: 'random',
+			rules: 'default',
+		},
+		{
+			name: 'Madahachi',
+			description:
+				'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
+			type: 'correspondence',
+			color: 'random',
+			rules: 'default',
+		},
+		{
+			name: 'test',
+			description:
+				'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
+			type: 'live',
+			color: 'random',
+			rules: 'default',
+		},
+	];
+	$: liveRoomList = roomList.filter((room) => {
+		return room.type === 'live';
+	});
+	$: correspondenceRoomList = roomList.filter((room) => {
+		return room.type === 'correspondence';
+	});
 
 	let showCreateGameDialogue = false;
 	let showRoomDialogue = false;
@@ -56,8 +89,9 @@
 	</div>
 
 	<h2>Live Games</h2>
-	<RoomList bind:showRoomDialogue bind:roomDialogueInfo />
+	<RoomList bind:showRoomDialogue bind:roomDialogueInfo roomList={liveRoomList} />
 	<h2>Correspondence Games</h2>
+	<RoomList bind:showRoomDialogue bind:roomDialogueInfo roomList={correspondenceRoomList} />
 	<CreateGameDialogue bind:showModal={showCreateGameDialogue} />
 	<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} />
 </main>
@@ -68,5 +102,4 @@
 		margin: auto;
 		padding: 0.5rem;
 	}
-	
 </style>

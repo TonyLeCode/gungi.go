@@ -45,6 +45,7 @@
 		padding: 0;
 		border-radius: 4px;
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		color: inherit;
 		&[open] {
 			animation: fly-down 250ms ease-out;
 		}

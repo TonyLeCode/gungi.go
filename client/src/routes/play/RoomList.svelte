@@ -6,37 +6,28 @@
 		color: string;
 		rules: string;
 	};
-  export let roomList;
+  export let roomList: Info[];
 
   export let showRoomDialogue:boolean;
   export let roomDialogueInfo: Info;
 </script>
 
 <ul class="room-list">
-  <li>
-    <button
-      on:click={() => {
-        showRoomDialogue = true;
-      }}
-      class="room"
-    >
-      <div>PlayerName</div>
-      <div class="ruleset">Ruleset</div>
-      <div>DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription</div>
-    </button>
-  </li>
-  <li>
-    <button
-      on:click={() => {
-        showRoomDialogue = true;
-      }}
-      class="room"
-    >
-      <div>PlayerName</div>
-      <div class="ruleset">Ruleset</div>
-      <div>DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription</div>
-    </button>
-  </li>
+  {#each roomList as room}
+    <li>
+      <button
+        on:click={() => {
+          roomDialogueInfo = room;
+          showRoomDialogue = true;
+        }}
+        class="room"
+      >
+        <div>{room.name}</div>
+        <div class="ruleset">{room.rules}</div>
+        <div>{room.description}</div>
+      </button>
+    </li>
+  {/each}
 </ul>
 
 <style lang='scss'>
@@ -44,7 +35,7 @@
 		display: grid;
 		min-height: 4.5rem;
 		word-break: break-all;
-		gap: 1rem;
+		gap: .75rem;
 	}
 	.room {
 		text-align: left;
@@ -73,5 +64,6 @@
 	}
 	.ruleset {
 		font-weight: 300;
+    text-transform: capitalize;
 	}
 </style>
