@@ -53,7 +53,7 @@
 		color: 'random',
 		rules: 'default',
 	};
-	const url = (route: string) => 'ws://' + '127.0.0.1:8080/' + route;
+	const url = (route: string) => `ws://${import.meta.env.VITE_API_URL}/${route}`;
 
 	let text = 'not connected yet...';
 	onMount(() => {
@@ -67,9 +67,9 @@
 		});
 		ws.addEventListener('message', (event) => {
 			console.log('got message! ', event);
-			const data = JSON.parse(event.data);
-			console.log(data);
-			text = data.data;
+			// const data = JSON.parse(event.data);
+			// console.log(data);
+			text = event.data;
 		});
 	});
 </script>

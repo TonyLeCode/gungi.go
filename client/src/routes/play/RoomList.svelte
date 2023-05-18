@@ -46,7 +46,7 @@
 		padding: 0.5rem 2rem;
 		border-radius: 4px;
 		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
 		transition-duration: 150ms;
 		transition-property: background-color;
 		&:hover {
