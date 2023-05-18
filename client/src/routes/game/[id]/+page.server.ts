@@ -1,7 +1,9 @@
+import { VITE_API_URL } from './../../../../.svelte-kit/ambient.d';
 import axios from 'axios';
 
 export async function load({params}){
-  const url = `http://localhost:5080/getgame/${params.id}`
+  const url = `${import.meta.env.VITE_API_URL}/getgame/${params.id}`
+  console.log(url)
   const data = await axios({
 		method: 'get',
 		url: url,
