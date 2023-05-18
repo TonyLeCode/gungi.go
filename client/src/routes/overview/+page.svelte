@@ -8,19 +8,19 @@
 		fen: {
 			String: string;
 			Valid: boolean;
-		}
+		};
 		id: string;
 		username1: string;
 		username2: string;
 	}
 
-	function isTurn(game: Game){
-		const fields = game.current_state.split(' ')
-		const turnColor = fields[2]
+	function isTurn(game: Game) {
+		const fields = game.current_state.split(' ');
+		const turnColor = fields[2];
 		const turnPlayer = () => {
-			return turnColor === 'w' ? game.username1 : game.username2
-		}
-		return turnPlayer() === data.session?.user.user_metadata.username
+			return turnColor === 'w' ? game.username1 : game.username2;
+		};
+		return turnPlayer() === data.session?.user.user_metadata.username;
 		// if(data.session){
 		// 	return data.session.user.user_metadata.username === user
 		// } else {
@@ -42,12 +42,16 @@
 		<h2>Current Games</h2>
 		<ul class="gameList">
 			{#each data.data as game}
-				<li class:your-turn={isTurn(game)}><a href={`/game/${game.id}`}><BoardSimple gameData={game} /></a></li>
+				<li class:your-turn={isTurn(game)}>
+					<div class="name name-1">{game.username1}</div>
+					<a href={`/game/${game.id}`}><BoardSimple gameData={game} /></a>
+					<div class="name name-2">{game.username2}</div>
+				</li>
 			{/each}
+			<!-- <BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
 			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
 			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
-			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
-			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
+			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} /> -->
 		</ul>
 	</section>
 	<section>
@@ -70,15 +74,16 @@
 
 	li {
 		border-radius: 4px;
+		position: relative;
 	}
-	
+
 	li:hover {
-		outline: rgb(240, 80, 17) solid .6rem;
+		outline: rgb(240, 80, 17) solid 4px;
 		/* box-sizing: content-box; */
 	}
 
 	.your-turn {
-		outline: rgba(255, 136, 81, 0.829) solid .5rem;
+		outline: rgba(255, 136, 81, 0.829) solid 2px;
 	}
 
 	.gameList {
@@ -87,9 +92,24 @@
 		grid-template-columns: repeat(auto-fit, 20rem);
 		padding: 1rem;
 		justify-content: center;
+		margin-top: 1rem;
 	}
 
 	.gameList a {
 		padding: 0;
+	}
+
+	.name {
+		position: absolute;
+	}
+	.name-1 {
+		top: -1.5rem;
+		left: 0;
+		/* background-color: red; */
+		z-index: 10;
+	}
+	.name-2 {
+		right: 0;
+		top: -1.5rem;
 	}
 </style>

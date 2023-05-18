@@ -20,5 +20,8 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Gungi.go</title>
+</svelte:head>
 <Navbar {session} />
 <slot />
