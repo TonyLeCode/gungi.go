@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
+
 	type Info = {
+		roomid: string;
 		host: string;
 		description: string;
 		type: string;
@@ -13,8 +16,8 @@
 </script>
 
 <ul class="room-list">
-	{#each roomList ?? [] as room}
-		<li>
+	{#each roomList ?? [] as room, index (room.roomid)}
+		<li class='fly-up' style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 			<button
 				on:click={() => {
 					roomDialogueInfo = room;
@@ -35,7 +38,8 @@
 		display: grid;
 		min-height: 4.5rem;
 		word-break: break-all;
-		gap: 0.75rem;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
 	}
 	.room {
 		text-align: left;

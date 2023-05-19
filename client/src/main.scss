@@ -88,3 +88,17 @@ a, .a {
 		box-shadow: none;
 	}
 }
+
+.fly-up {
+	animation: fly-up 250ms ease-out;
+	animation-fill-mode: both;
+}
+
+@keyframes fly-up {
+	from {
+		transform: translateY(0.5rem);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
