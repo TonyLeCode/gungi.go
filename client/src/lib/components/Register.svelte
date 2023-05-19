@@ -34,11 +34,11 @@
 	<form class="login" action="/register" on:submit|preventDefault={handleSignUp}>
 		<fieldset>
 			<label for="username">Username:</label>
-			<input id="username" bind:value={username} type="text" />
+			<input bind:value={username} type="text" />
 			<label for="email">Email:</label>
-			<input id="email" bind:value={email} type="email" />
+			<input bind:value={email} type="email" />
 			<label for="password">Password:</label>
-			<input id="password" bind:value={password} type="password" />
+			<input bind:value={password} type="password" />
 		</fieldset>
 		<button class="button-primary" type="submit">Register</button>
 		<a href="/login" class="button-ghost">Login</a>
