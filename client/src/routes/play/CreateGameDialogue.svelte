@@ -2,35 +2,57 @@
 	import Modal from '$lib/components/Modal.svelte';
 
 	export let showModal: boolean;
+	export let host: string;
+	export let ws: WebSocket;
+
+	let type = 'correspondence';
+	let ruleset = 'default';
+	let color = 'random';
+	let description: string;
+
+	function handleCreateGame(e:Event) {
+		e.preventDefault();
+		const payload = {
+			type: 'createRoom',
+			payload: {
+				host: host,
+				description: description,
+				type: type,
+				color: color,
+				rules: ruleset,
+			},
+		};
+		ws.send(JSON.stringify(payload));
+		showModal = false;
+	}
 </script>
 
-
 <Modal bind:showModal>
-	<div class="options">
-    <h3>Create Game</h3>
+	<form class="options" on:submit={handleCreateGame}>
+		<h3>Create Game</h3>
 		<fieldset class="type">
 			<legend>Type:</legend>
 			<label>
-				<input type="radio" name="type" value="live" />
+				<input bind:group={type} type="radio" name="type" value="live" />
 				Live
 			</label>
 			<label>
-				<input type="radio" name="type" value="correspondence" checked />
+				<input bind:group={type} type="radio" name="type" value="correspondence" />
 				Correspondence
 			</label>
 		</fieldset>
 		<fieldset class="color">
 			<legend>Color:</legend>
 			<label>
-				<input type="radio" name="color" value="white" />
+				<input bind:group={color} type="radio" name="color" value="white" />
 				White
 			</label>
 			<label>
-				<input type="radio" name="color" value="black" />
+				<input bind:group={color} type="radio" name="color" value="black" />
 				Black
 			</label>
 			<label>
-				<input type="radio" name="color" value="random" checked />
+				<input bind:group={color} type="radio" name="color" value="random" checked />
 				Random
 			</label>
 		</fieldset>
@@ -45,7 +67,7 @@
 			</label> -->
 			<label class="ruleset">
 				Ruleset:
-				<select name="ruleset">
+				<select name="ruleset" bind:value={ruleset}>
 					<option value="default">Default</option>
 					<option value="universal-music">Universal Music</option>
 					<option value="revised">Revised</option>
@@ -55,19 +77,19 @@
 		<fieldset>
 			<label class="description">
 				Description:
-				<textarea name="description" cols="30" rows="2" maxlength="50" />
+				<textarea bind:value={description} name="description" cols="30" rows="2" maxlength="50" />
 			</label>
 		</fieldset>
-	</div>
-	<button class="button-primary">Create Challenge</button>
+		<button class="button-primary">Create Challenge</button>
+	</form>
 </Modal>
 
 <style lang="scss">
-  h3{
-    font-size: 1.25rem;
-    font-weight: 600;
+	h3 {
+		font-size: 1.25rem;
+		font-weight: 600;
 		text-align: center;
-  }
+	}
 	textarea {
 		resize: none;
 	}
@@ -83,7 +105,7 @@
 	.select,
 	.color,
 	.ruleset,
-  .type {
+	.type {
 		display: flex;
 		flex-direction: column;
 	}
@@ -95,7 +117,7 @@
 		flex-direction: column;
 		gap: 1rem;
 	}
-	button{
+	button {
 		width: 100%;
 	}
 </style>

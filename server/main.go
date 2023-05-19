@@ -48,7 +48,11 @@ func main() {
 
 	dbs := api.DBConn{}
 	dbs.PostgresConnect(config.DB_SOURCE)
-	dbs.RedisConnect()
+	defer dbs.PostgresDB.Close()
+	dbs.RedisConnect(config.REDIS_CONN_STRING)
+	defer dbs.RedisClient.Close()
+
+	websocket.InitializeRooms(dbs.RedisClient)
 
 	// postgresDB, err := api.NewConnection(config.DB_SOURCE)
 	// if err != nil {

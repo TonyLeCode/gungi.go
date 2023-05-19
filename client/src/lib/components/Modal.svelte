@@ -2,8 +2,9 @@
 	export let showModal: boolean;
 
 	let dialog: HTMLDialogElement;
-	$: console.log(showModal);
-	$: if (dialog && showModal) dialog.showModal();
+	$: showModal = showModal
+	// $: if (dialog && showModal) dialog.showModal();
+	$: dialog && showModal ? dialog.showModal() : dialog?.close();
 </script>
 
 <dialog

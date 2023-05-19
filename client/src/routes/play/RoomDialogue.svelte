@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
 	type Info = {
-		name: string;
+		host: string;
 		description: string;
 		type: string;
 		color: string;
@@ -17,22 +17,22 @@
 		<h3>Challenge</h3>
 		<div class="grid">
 			<div class='label'>Host:</div>
-			<div class="name">{info.name}</div>
+			<div class="name">{info?.host}</div>
 			<div class='label'>Description:</div>
 			<div>
-				{info.description}
+				{info?.description}
 			</div>
 			<div class='label'>Type:</div>
 			<div>
-				{info.type}
+				{info?.type}
 			</div>
 			<div class='label'>Host Color:</div>
 			<div>
-				{info.color}
+				{info?.color}
 			</div>
 			<div class='label'>Rules:</div>
 			<div>
-				{info.rules}
+				{info?.rules}
 			</div>
 		</div>
 		<button class="button-primary">Accept</button>

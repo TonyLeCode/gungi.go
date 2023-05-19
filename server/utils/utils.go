@@ -13,6 +13,7 @@ func RemoveIndexStr(s []string, index int) []string {
 type Config struct {
 	DB_SOURCE           string `mapstructure:"DB_SOURCE"`
 	SUPABASE_JWT_SECRET string `mapstructure:"SUPABASE_JWT_SECRET"`
+	REDIS_CONN_STRING   string `mapstructure:"REDIS_CONN_STRING"`
 	// CLIENT_ID         string `mapstructure:"CLIENT_ID"`
 }
 

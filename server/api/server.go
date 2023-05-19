@@ -32,12 +32,13 @@ func (dbs *DBConn) PostgresConnect(dbSource string) error {
 
 	return nil
 }
-func (dbs *DBConn) RedisConnect() error {
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+func (dbs *DBConn) RedisConnect(dbSource string) error {
+	opt, err := redis.ParseURL(dbSource)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	redisClient := redis.NewClient(opt)
 	log.Println("Redis Connected...")
 
 	dbs.RedisClient = redisClient
