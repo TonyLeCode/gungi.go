@@ -89,8 +89,18 @@ a, .a {
 	}
 }
 
+.fly-up-fade {
+	animation: fly-up 250ms ease-out, fade 150ms ease-out;
+	animation-fill-mode: both;
+}
+
 .fly-up {
 	animation: fly-up 250ms ease-out;
+	animation-fill-mode: both;
+}
+
+.fade {
+	animation: fade 150ms ease-out;
 	animation-fill-mode: both;
 }
 
@@ -100,5 +110,14 @@ a, .a {
 	}
 	to {
 		transform: translateY(0);
+	}
+}
+
+@keyframes fade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
 	}
 }
