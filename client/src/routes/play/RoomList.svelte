@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
-
 	type Info = {
 		roomid: string;
 		host: string;
@@ -9,31 +7,64 @@
 		color: string;
 		rules: string;
 	};
+	export let username: string;
+
 	export let roomList: Info[];
+	export let heading: string;
 
 	export let showRoomDialogue: boolean;
 	export let roomDialogueInfo: Info;
+
+	export let ws: WebSocket;
+
+	function handleCancel(roomid: string){
+		const payload = {
+			type: "cancel",
+			payload: roomid,
+		}
+		ws.send(JSON.stringify(payload))
+	}
 </script>
 
-<ul class="room-list">
-	{#each roomList ?? [] as room, index (room.roomid)}
-		<li class='fly-up' style={`animation-delay:${String((index + 1) * 25)}ms;`}>
-			<button
-				on:click={() => {
-					roomDialogueInfo = room;
-					showRoomDialogue = true;
-				}}
-				class="room"
-			>
-				<div>{room.host}</div>
-				<div class="ruleset">{room.rules}</div>
-				<div>{room.description}</div>
-			</button>
-		</li>
-	{/each}
-</ul>
+<h2 class="fly-up-fade">{heading}</h2>
+{#if roomList.length != 0}
+	<ul class="room-list">
+		{#each roomList ?? [] as room, index (room.roomid)}
+			<li class="fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
+				<button
+					disabled={room.host === username ? true : false}
+					on:click={() => {
+						roomDialogueInfo = room;
+						showRoomDialogue = true;
+					}}
+					class="room"
+				>
+					<div>{room.host}</div>
+					<div class="ruleset">{room.rules}</div>
+					<div>{room.description}</div>
+				</button>
+				{#if room.host === username}
+					<button on:click={() => {handleCancel(room.roomid)}} class="cancel button-ghost">Cancel</button>
+				{/if}
+			</li>
+		{/each}
+	</ul>
+{:else}
+	<p class="empty fly-up-fade">Looks like there are no live games available</p>
+{/if}
 
 <style lang="scss">
+	h2 {
+		margin-bottom: 0.5rem;
+	}
+	li {
+		position: relative;
+	}
+	.empty {
+		margin-bottom: 2rem;
+		font-weight: 300;
+		animation-delay: 50ms;
+	}
 	.room-list {
 		display: grid;
 		min-height: 4.5rem;
@@ -55,11 +86,11 @@
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
 		transition-duration: 150ms;
 		transition-property: background-color;
-		&:hover {
+		&:hover:not([disabled]) {
 			background-color: rgb(var(--primary));
 			color: rgb(var(--bg-2));
 		}
-		&:active {
+		&:active:not([disabled]) {
 			background-color: rgb(var(--primary-3));
 			color: rgb(var(--bg-2));
 		}
@@ -67,9 +98,22 @@
 			outline: 2px solid rgba(var(--primary), 0.5);
 			outline-offset: 2px;
 		}
+		&:disabled {
+			background-color: rgb(225, 225, 225);
+			font-weight: 300;
+		}
 	}
 	.ruleset {
 		font-weight: 300;
 		text-transform: capitalize;
+	}
+	.cancel {
+		position: absolute;
+		left: -6rem;
+		word-break: normal;
+		margin: auto;
+		height: min-content;
+		top: 0;
+		bottom: 0;
 	}
 </style>

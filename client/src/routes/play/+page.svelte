@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
 	import RoomList from './RoomList.svelte';
-  import { fly } from 'svelte/transition';
 
 	export let data;
-
 	$: username = data.session?.user.user_metadata.username;
 
 	type Info = {
@@ -18,115 +16,122 @@
 		rules: string;
 	};
 
-	// let roomList: Info[] = [
-	// 	{
-	// 		roomid: '',
-	// 		host: 'Ornable',
-	// 		description:
-	// 			'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
-	// 		type: 'correspondence',
-	// 		color: 'random',
-	// 		rules: 'default',
-	// 	},
-	// 	{
-	// 		roomid: '',
-	// 		host: 'Madahachi',
-	// 		description:
-	// 			'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
-	// 		type: 'correspondence',
-	// 		color: 'random',
-	// 		rules: 'default',
-	// 	},
-	// 	{
-	// 		roomid: '',
-	// 		host: 'test',
-	// 		description:
-	// 			'DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription',
-	// 		type: 'live',
-	// 		color: 'random',
-	// 		rules: 'default',
-	// 	},
-	// ];
 	let roomList: Info[] = [];
+	$: roomList = roomList.sort((a, b) => (a.host === username ? -1 : 1));
 	let showLive = true;
 	let showCorrespondence = true;
-
-	$: liveRoomList = roomList?.filter((room) => {
-		return room.type === 'live';
-	});
-	$: correspondenceRoomList = roomList?.filter((room) => {
-		return room.type === 'correspondence';
-	});
+	$: liveRoomList = roomList?.filter((room) => room.type === 'live');
+	$: correspondenceRoomList = roomList?.filter((room) => room.type === 'correspondence');
 
 	let showCreateGameDialogue = false;
 	let showRoomDialogue = false;
 	let roomDialogueInfo: Info;
 
-	const url = (route: string) => `ws://${import.meta.env.VITE_API_URL}/${route}`;
-
-	let text = 'not connected yet...';
 	let ws: WebSocket;
+	let wsConnectionState = 0;
 	onMount(() => {
+		const url = (route: string) => `ws://${import.meta.env.VITE_API_URL}/${route}`;
 		ws = new WebSocket(url('room'));
 
 		ws.addEventListener('open', (event) => {
-			text = 'connected!';
-			// setTimeout(() => {
-			// 	ws.send(JSON.stringify(payload));
-			// }, 1750);
+			const msg = {
+				type: 'auth',
+				payload: `Bearer ${data.session?.access_token}`,
+			};
+			ws.send(JSON.stringify(msg));
 		});
 		ws.addEventListener('message', (event) => {
-			// console.log('got message! ', event);
-			const data = JSON.parse(event.data);
-			if (data?.type === 'roomList') {
-				roomList = JSON.parse(data.payload);
+			console.log(event);
+			try {
+				const data = JSON.parse(event.data);
+				switch (data.type) {
+					case 'roomList':
+						roomList = JSON.parse(data.payload);
+						break;
+					case 'auth':
+						data.payload == '1' ? (wsConnectionState = 1) : ws.close();
+						const testMsg = {
+							type: 'cancel',
+							payload: 'lol',
+						};
+						ws.send(JSON.stringify(testMsg));
+					// setTimeout(() => {
+					// 	wsConnectionState = 1;
+					// }, 150);
+				}
+			} catch (e) {
+				console.log(event?.data);
+				console.error('Error: ', e);
 			}
-			console.log('got message! ', data);
-			// const data = JSON.parse(event.data);
-			// console.log(data);
 		});
+		ws.addEventListener('error', (event) => {
+			console.log(event);
+			console.error('Error: ', event);
+			wsConnectionState = 2;
+		});
+		ws.addEventListener('close', (event) => {
+			console.log(event);
+			wsConnectionState = 3;
+		});
+
+		return () => {
+			ws.close;
+		};
 	});
 </script>
 
 <main>
-	<div>
-		{text}
-	</div>
-	<section class="options">
-		<div class="filter">
-			<label>
-				<input bind:checked={showLive} type="checkbox" />
-				Live
-			</label>
-			<label>
-				<input bind:checked={showCorrespondence} type="checkbox" />
-				Correspondence
-			</label>
-			<button
-				on:click={() => {
-					showCreateGameDialogue = true;
-				}}
-				class="create-game button-primary">Create Game</button
-			>
-		</div>
-	</section>
-
-	{#if showLive}
-		<h2 class="fly-up">Live Games</h2>
-		<RoomList bind:showRoomDialogue bind:roomDialogueInfo roomList={liveRoomList} />
+	{#if wsConnectionState === 0}
+		<p class="status-msg fly-up-fade">Loading...</p>
+	{:else if wsConnectionState === 1}
+		<section class="options">
+			<div class="filter">
+				<label>
+					<input bind:checked={showLive} type="checkbox" />
+					Live
+				</label>
+				<label>
+					<input bind:checked={showCorrespondence} type="checkbox" />
+					Correspondence
+				</label>
+				<button
+					on:click={() => {
+						showCreateGameDialogue = true;
+					}}
+					class="button-primary">Create Game</button
+				>
+			</div>
+		</section>
+		{#if showLive}
+			<RoomList
+				bind:showRoomDialogue
+				bind:roomDialogueInfo
+				ws={ws}
+				roomList={liveRoomList}
+				heading="Live Games"
+				{username}
+			/>
+		{/if}
+		{#if showCorrespondence}
+			<RoomList
+				bind:showRoomDialogue
+				bind:roomDialogueInfo
+				ws={ws}
+				roomList={correspondenceRoomList}
+				heading="Correspondence Games"
+				{username}
+			/>
+		{/if}
+		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} {ws} />
+		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} />
+	{:else if wsConnectionState === 2}
+		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
+	{:else if wsConnectionState === 3}
+		<p class="status-msg fly-up-fade">Not connected, please refresh or try again later</p>
 	{/if}
-	{#if showCorrespondence}
-		<h2 class="fly-up">Correspondence Games</h2>
-		<RoomList bind:showRoomDialogue bind:roomDialogueInfo roomList={correspondenceRoomList} />
-	{/if}
-	<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} {ws} />
-	<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} />
 </main>
 
 <style lang="scss">
-	h2 {
-		margin-bottom: 0.5rem;
-	}
 	main {
 		max-width: 70rem;
 		margin: auto;
@@ -137,8 +142,9 @@
 		display: flex;
 		margin: 0 2rem;
 	}
-	.create-game {
-		// margin-left: auto;
+	.status-msg {
+		margin-top: 3rem;
+		text-align: center;
 	}
 	.filter {
 		justify-content: center;
