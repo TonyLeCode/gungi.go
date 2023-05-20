@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/TonyLeCode/gungi.go/server/auth"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
@@ -44,6 +45,11 @@ type MsgResponse struct {
 	Payload interface{} `json:"payload"`
 }
 
+type MsgAuth struct {
+	Type    string `json:"type"`
+	Payload string `json:"payload"`
+}
+
 //	type SerializedGameRoomMsg struct {
 //		Type    string `json:"type"`
 //		Payload string `json:"payload"`
@@ -66,30 +72,12 @@ func InitializeRooms(r *redis.Client) error {
 
 func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 	m.HandleConnect(func(s *melody.Session) {
-		ctx := context.Background()
-		InitializeRooms(r)
-		val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-
-		roomList := MsgResponse{
-			Type:    "roomList",
-			Payload: val,
-		}
-		payload, err := json.Marshal(roomList)
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			return q == s
-		})
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-
 		log.Println("Connected")
+	})
+
+	m.HandleDisconnect(func(s *melody.Session) {
+		// log.Println(s.Keys)
+		log.Println("Disconnect")
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
@@ -103,6 +91,7 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 
 		switch unmarshal.Type {
 		case "createRoom":
+			// TODO username and validate
 			var roomPayload GameRoomType
 			err = json.Unmarshal(unmarshal.Payload, &roomPayload)
 			if err != nil {
@@ -125,12 +114,12 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 
 			InitializeRooms(r)
 
-			val, err := r.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
+			_, err = r.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
 
-			val, err = r.Do(ctx, "JSON.GET", "game_rooms").Result()
+			val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
@@ -142,11 +131,137 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 			payload, err := json.Marshal(roomList)
 			if err != nil {
 				log.Println("Error: ", err)
+			} else {
+				m.Broadcast(payload)
 			}
-			m.Broadcast(payload)
+
+		case "auth":
+
+			var authMsg MsgAuth
+			err := json.Unmarshal(msg, &authMsg)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			claims, err := auth.AuthenticateSupabaseToken(authMsg.Payload)
+			if err != nil {
+				log.Println(err)
+				authResponse := MsgResponse{
+					Type:    "auth",
+					Payload: "0",
+				}
+				payload, err := json.Marshal(authResponse)
+				if err != nil {
+					log.Println("Error: ", err)
+				} else {
+					log.Println("payload: ", payload)
+					err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+						return q == s
+					})
+					if err != nil {
+						log.Println("Error: ", err)
+					}
+				}
+			} else {
+				metadata := claims["user_metadata"].(map[string]interface{})
+				username := metadata["username"].(string)
+				s.Set("username", username)
+
+				ctx := context.Background()
+				InitializeRooms(r)
+				val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+				if err != nil {
+					log.Println("Error: ", err)
+				}
+
+				roomList := MsgResponse{
+					Type:    "roomList",
+					Payload: val,
+				}
+				payload, err := json.Marshal(roomList)
+				if err != nil {
+					log.Println("Error: ", err)
+				}
+
+				err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+					username1, _ := q.Get("username")
+					username2, _ := s.Get("username")
+					return username1 == username2
+				})
+				if err != nil {
+					log.Println("Error: ", err)
+				}
+
+				authResponse := MsgResponse{
+					Type:    "auth",
+					Payload: "1",
+				}
+				payload, err = json.Marshal(authResponse)
+				if err != nil {
+					log.Println("Error: ", err)
+				} else {
+					err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+						username1, _ := q.Get("username")
+						username2, _ := s.Get("username")
+						return username1 == username2
+					})
+					if err != nil {
+						log.Println("Error: ", err)
+					}
+				}
+			}
+
+		case "cancel":
+			//TODO verify
+			var roomid string
+			err = json.Unmarshal(unmarshal.Payload, &roomid)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			var roomList []SerializedGameRoom
+			err = json.Unmarshal([]byte(val.(string)), &roomList)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			var filteredRoomList []SerializedGameRoom
+			for _, room := range roomList {
+				if room.RoomID.String() != roomid {
+					filteredRoomList = append(filteredRoomList, room)
+				}
+			}
+
+			marshalled, err := json.Marshal(filteredRoomList)
+			log.Println()
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			_, err = r.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
+			if err != nil {
+				log.Println("Error: ", err)
+			} else {
+				newRoomList := MsgResponse{
+					Type:    "roomList",
+					Payload: string(marshalled),
+				}
+				payload, err := json.Marshal(newRoomList)
+				if err != nil {
+					log.Println("Error: ", err)
+				} else {
+					m.Broadcast(payload)
+				}
+			}
+
 		}
 
-		m.Broadcast(msg)
+		// m.Broadcast(msg)
 	})
 
 	return func(c echo.Context) error {
@@ -155,7 +270,7 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 			log.Println(err)
 			return err
 		}
-		log.Println("Successfully Connected")
+		// log.Println("Successfully Connected")
 		return nil
 	}
 }

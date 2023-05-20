@@ -72,6 +72,7 @@ func main() {
 
 	e := echo.New()
 	m := melody.New()
+	m.Config.MaxMessageSize = 1024
 
 	// e.Use(middleware.VerifySupabaseTokenMiddleware)
 	verify := e.Group("", middleware.VerifySupabaseTokenMiddleware)
