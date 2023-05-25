@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import type { LayoutData } from './$types';
 	import Navbar from '$lib/components/Navbar.svelte';
+  import Notifications from '$lib/components/Notifications.svelte';
 
 	export let data: LayoutData;
 
@@ -23,5 +24,6 @@
 <svelte:head>
 	<title>Gungi.go</title>
 </svelte:head>
+<Notifications />
 <Navbar {session} />
 <slot />

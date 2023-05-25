@@ -46,6 +46,9 @@
 <Login bind:showModal={showLoginModal} />
 
 <style>
+	a{
+		padding: 0 0.5rem;
+	}
 	.brand {
 		font-weight: 600;
 		/* font-size: 1.25rem; */

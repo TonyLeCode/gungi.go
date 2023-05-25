@@ -3,6 +3,8 @@
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
 	import RoomList from './RoomList.svelte';
+	import { AddNotification, type notificationType } from '$lib/store/notification';
+	import {nanoid} from 'nanoid'
 
 	export let data;
 	$: username = data.session?.user.user_metadata.username;
@@ -55,6 +57,16 @@
 							payload: 'lol',
 						};
 						ws.send(JSON.stringify(testMsg));
+						break;
+					case 'accepted':
+						console.log(data.payload);
+						AddNotification({
+							id: nanoid(),
+							title: 'Game Accepted',
+							type: 'default',
+							msg: `Go to <a class="a-primary" href="/game/${data.payload}">game<a>`,
+						} as notificationType);
+						break;
 					// setTimeout(() => {
 					// 	wsConnectionState = 1;
 					// }, 150);
@@ -75,9 +87,17 @@
 		});
 
 		return () => {
-			ws.close;
+			ws.close();
 		};
 	});
+
+	function accept(roomid: string) {
+		const msg = {
+			type: 'accept',
+			payload: roomid,
+		};
+		ws.send(JSON.stringify(msg));
+	}
 </script>
 
 <main>
@@ -106,7 +126,7 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				ws={ws}
+				{ws}
 				roomList={liveRoomList}
 				heading="Live Games"
 				{username}
@@ -116,14 +136,14 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				ws={ws}
+				{ws}
 				roomList={correspondenceRoomList}
 				heading="Correspondence Games"
 				{username}
 			/>
 		{/if}
 		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} {ws} />
-		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} />
+		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
 	{:else if wsConnectionState === 2}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
 	{:else if wsConnectionState === 3}

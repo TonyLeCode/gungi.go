@@ -25,7 +25,6 @@ a, .a {
 	transition: color 100ms;
 	/* border-radius: 1px; */
 	outline-offset: 2px;
-	padding: 0 0.5rem;
 	&:hover,
 	&:focus {
 		color: rgb(var(--primary));
@@ -34,6 +33,17 @@ a, .a {
 	&:focus {
 		/* outline: 5px solid rgb(var(--primary)); */
 		outline-color: rgba(var(--primary), 0.5);
+	}
+}
+
+.a-primary {
+	color: rgb(var(--primary));
+	&:hover,
+	&:focus {
+		color: rgb(var(--primary-2));
+	}
+	&:focus {
+		outline-color: rgba(var(--primary-2), 0.5);
 	}
 }
 
