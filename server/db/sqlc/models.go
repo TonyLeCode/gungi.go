@@ -57,6 +57,8 @@ type Game struct {
 	DateStarted  time.Time      `json:"date_started"`
 	DateFinished sql.NullTime   `json:"date_finished"`
 	CurrentState string         `json:"current_state"`
+	Ruleset      string         `json:"ruleset"`
+	Type         string         `json:"type"`
 }
 
 type PlayerGame struct {

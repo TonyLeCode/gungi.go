@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/google/uuid"
+	"github.com/tabbed/pqtype"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -94,4 +96,75 @@ func (dbConn *DBConn) GetGame(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, game)
+}
+
+func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType string, username1 string, username2 string) (string, error) {
+	ctx := context.Background()
+
+	queries := db.New(dbConn.PostgresDB)
+
+	var nullRawUser1 pqtype.NullRawMessage
+	var nullRawUser2 pqtype.NullRawMessage
+
+	if username1 != "" {
+		nullRawUser1.Valid = true
+		nullRawUser1.RawMessage = []byte(username1)
+	} else {
+		nullRawUser1.Valid = false
+	}
+
+	if username2 != "" {
+		nullRawUser2.Valid = true
+		nullRawUser2.RawMessage = []byte(username2)
+	} else {
+		nullRawUser2.Valid = false
+	}
+
+	userID_1, err := queries.GetIdFromUsername(ctx, nullRawUser1)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	userID_2, err := queries.GetIdFromUsername(ctx, nullRawUser2)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	gameQuery := db.CreateGameParams{
+		CurrentState: currentState,
+		Ruleset:      ruleset,
+		Type:         gameType,
+	}
+
+	gameID, err := queries.CreateGame(ctx, gameQuery)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	junctionQuery1 := db.GameJunctionParams{
+		UserID: userID_1,
+		GameID: gameID,
+		Color:  "w",
+	}
+
+	junctionQuery2 := db.GameJunctionParams{
+		UserID: userID_2,
+		GameID: gameID,
+		Color:  "b",
+	}
+
+	err = queries.GameJunction(ctx, junctionQuery1)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	err = queries.GameJunction(ctx, junctionQuery2)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	return gameID.String(), nil
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
 	type Info = {
+		roomid: string;
 		host: string;
 		description: string;
 		type: string;
@@ -10,6 +11,7 @@
 
 	export let showModal: boolean;
 	export let info: Info;
+	export let accept: (roomid: string) => void;
 </script>
 
 <Modal bind:showModal>
@@ -35,7 +37,10 @@
 				{info?.rules}
 			</div>
 		</div>
-		<button class="button-primary">Accept</button>
+		<button on:click={() => {
+			accept(info.roomid)
+			showModal = false;
+			}} class="button-primary">Accept</button>
 	</div>
 </Modal>
 

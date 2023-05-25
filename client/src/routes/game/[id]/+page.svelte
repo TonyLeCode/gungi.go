@@ -22,7 +22,7 @@
 		const pieces = fen.split(' ')[0];
 		const matchW = pieces.match(/[A-Z]/g);
 		const matchB = pieces.match(/[a-z]/g);
-		return [matchW?.length, matchB?.length];
+		return [matchW?.length ?? 0, matchB?.length ?? 0];
 	}
 	function reverseNameIfBlack(isBlack: boolean): string {
 		return !isBlack ? data.data.player1 : data.data.player2;
@@ -98,6 +98,9 @@
 		display: flex;
 		max-width: 90rem;
 		margin: 0 auto;
+	}
+	section {
+		width: 100%;
 	}
 
 	.tabs {

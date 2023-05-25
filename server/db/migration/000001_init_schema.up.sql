@@ -7,6 +7,8 @@ create table
     date_started timestamp with time zone not null default now(),
     date_finished timestamp with time zone null,
     current_state text not null,
+    ruleset text not null default 'default'::text,
+    type text not null default ''::text,
     constraint games_pkey primary key (id),
     constraint games_id_key unique (id)
   );

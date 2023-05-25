@@ -86,7 +86,7 @@ func main() {
 
 	e.GET("/getgame/:id", dbs.GetGame)
 
-	e.GET("/room", websocket.GameRoom(m, dbs.RedisClient))
+	e.GET("/room", websocket.GameRoom(m, &dbs))
 
 	// e.POST("/user/register", )
 

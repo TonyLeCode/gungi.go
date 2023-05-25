@@ -101,6 +101,7 @@
 		&:disabled {
 			background-color: rgb(225, 225, 225);
 			font-weight: 300;
+			box-shadow: none;
 		}
 	}
 	.ruleset {

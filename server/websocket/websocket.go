@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math/rand"
+	"time"
 
+	"github.com/TonyLeCode/gungi.go/server/api"
 	"github.com/TonyLeCode/gungi.go/server/auth"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -70,7 +73,7 @@ func InitializeRooms(r *redis.Client) error {
 	return nil
 }
 
-func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
+func GameRoom(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 	m.HandleConnect(func(s *melody.Session) {
 		log.Println("Connected")
 	})
@@ -112,14 +115,14 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 				log.Println("Error: ", err)
 			}
 
-			InitializeRooms(r)
+			InitializeRooms(dbs.RedisClient)
 
-			_, err = r.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
+			_, err = dbs.RedisClient.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
 
-			val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+			val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
@@ -168,8 +171,8 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 				s.Set("username", username)
 
 				ctx := context.Background()
-				InitializeRooms(r)
-				val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+				InitializeRooms(dbs.RedisClient)
+				val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
 				if err != nil {
 					log.Println("Error: ", err)
 				}
@@ -219,7 +222,7 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 				log.Println("Error: ", err)
 			}
 
-			val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+			val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
@@ -238,12 +241,11 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 			}
 
 			marshalled, err := json.Marshal(filteredRoomList)
-			log.Println()
 			if err != nil {
 				log.Println("Error: ", err)
 			}
 
-			_, err = r.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
+			_, err = dbs.RedisClient.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
 			if err != nil {
 				log.Println("Error: ", err)
 			} else {
@@ -256,6 +258,98 @@ func GameRoom(m *melody.Melody, r *redis.Client) echo.HandlerFunc {
 					log.Println("Error: ", err)
 				} else {
 					m.Broadcast(payload)
+				}
+			}
+
+		case "accept":
+			var roomid string
+			err = json.Unmarshal(unmarshal.Payload, &roomid)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			var roomList []SerializedGameRoom
+			err = json.Unmarshal([]byte(val.(string)), &roomList)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			var acceptedRoom SerializedGameRoom
+			var filteredRoomList []SerializedGameRoom
+			for _, room := range roomList {
+				if room.RoomID.String() != roomid {
+					filteredRoomList = append(filteredRoomList, room)
+				} else {
+					acceptedRoom = room
+				}
+			}
+
+			marshalled, err := json.Marshal(filteredRoomList)
+			if err != nil {
+				log.Println("Error: ", err)
+			}
+
+			_, err = dbs.RedisClient.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
+			if err != nil {
+				log.Println("Error: ", err)
+			} else {
+				newRoomList := MsgResponse{
+					Type:    "roomList",
+					Payload: string(marshalled),
+				}
+				payload, err := json.Marshal(newRoomList)
+				if err != nil {
+					log.Println("Error: ", err)
+				} else {
+					m.Broadcast(payload)
+				}
+			}
+
+			// Create new game
+			var user1 string
+			var user2 string
+			sessionUsername, _ := s.Get("username")
+			if acceptedRoom.Color == "w" {
+				user1 = acceptedRoom.Host
+				user2 = sessionUsername.(string)
+			} else if acceptedRoom.Color == "b" {
+				user1 = sessionUsername.(string)
+				user2 = acceptedRoom.Host
+			} else {
+				rand.Seed(time.Now().UnixNano())
+				randBool := rand.Intn(2) == 0
+				if randBool {
+					user1 = acceptedRoom.Host
+					user2 = sessionUsername.(string)
+				} else {
+					user1 = sessionUsername.(string)
+					user2 = acceptedRoom.Host
+				}
+			}
+			gameID, err := dbs.CreateGame("9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w", acceptedRoom.Rules, acceptedRoom.Type, user1, user2)
+			if err != nil {
+				log.Println("Error: ", err)
+			} else {
+				acceptResponse := MsgResponse{
+					Type:    "accepted",
+					Payload: gameID,
+				}
+				payload, err := json.Marshal(acceptResponse)
+				if err != nil {
+					log.Println("Error: ", err)
+				}
+
+				err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+					username, _ := q.Get("username")
+					return username == user1 || username == user2
+				})
+				if err != nil {
+					log.Println("Error: ", err)
 				}
 			}
 

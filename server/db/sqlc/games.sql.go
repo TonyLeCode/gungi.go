@@ -11,11 +11,47 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tabbed/pqtype"
 )
+
+const createGame = `-- name: CreateGame :one
+INSERT INTO games (current_state, ruleset, type)
+VALUES ($1, $2, $3)
+RETURNING id
+`
+
+type CreateGameParams struct {
+	CurrentState string `json:"current_state"`
+	Ruleset      string `json:"ruleset"`
+	Type         string `json:"type"`
+}
+
+func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createGame, arg.CurrentState, arg.Ruleset, arg.Type)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const gameJunction = `-- name: GameJunction :exec
+INSERT INTO player_games (user_id, game_id, color)
+VALUES ($1, $2, $3)
+`
+
+type GameJunctionParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	GameID uuid.UUID `json:"game_id"`
+	Color  string    `json:"color"`
+}
+
+func (q *Queries) GameJunction(ctx context.Context, arg GameJunctionParams) error {
+	_, err := q.db.ExecContext(ctx, gameJunction, arg.UserID, arg.GameID, arg.Color)
+	return err
+}
 
 const getGame = `-- name: GetGame :one
 SELECT 
-  games.id, games.fen, games.history, games.completed, games.date_started, games.date_finished, games.current_state, 
+  games.id, games.fen, games.history, games.completed, games.date_started, games.date_finished, games.current_state, games.ruleset, games.type, 
   user1.raw_user_meta_data ->> 'username' AS player1,
   user2.raw_user_meta_data ->> 'username' AS player2
 FROM games 
@@ -34,6 +70,8 @@ type GetGameRow struct {
 	DateStarted  time.Time      `json:"date_started"`
 	DateFinished sql.NullTime   `json:"date_finished"`
 	CurrentState string         `json:"current_state"`
+	Ruleset      string         `json:"ruleset"`
+	Type         string         `json:"type"`
 	Player1      interface{}    `json:"player1"`
 	Player2      interface{}    `json:"player2"`
 }
@@ -49,10 +87,24 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 		&i.DateStarted,
 		&i.DateFinished,
 		&i.CurrentState,
+		&i.Ruleset,
+		&i.Type,
 		&i.Player1,
 		&i.Player2,
 	)
 	return i, err
+}
+
+const getIdFromUsername = `-- name: GetIdFromUsername :one
+SELECT id FROM auth.users
+WHERE raw_user_meta_data ->> 'username' = $1
+`
+
+func (q *Queries) GetIdFromUsername(ctx context.Context, rawUserMetaData pqtype.NullRawMessage) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getIdFromUsername, rawUserMetaData)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getOngoingGames = `-- name: GetOngoingGames :many

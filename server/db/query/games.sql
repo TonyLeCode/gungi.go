@@ -18,3 +18,16 @@ JOIN player_games AS player_games_2 ON games.id = player_games_2.game_id AND pla
 JOIN auth.users AS user1 ON user1.id = player_games_1.user_id
 JOIN auth.users AS user2 ON user2.id = player_games_2.user_id
 WHERE games.id = $1;
+
+-- name: CreateGame :one
+INSERT INTO games (current_state, ruleset, type)
+VALUES ($1, $2, $3)
+RETURNING id;
+
+-- name: GetIdFromUsername :one
+SELECT id FROM auth.users
+WHERE raw_user_meta_data ->> 'username' = $1;
+
+-- name: GameJunction :exec
+INSERT INTO player_games (user_id, game_id, color)
+VALUES ($1, $2, $3);
