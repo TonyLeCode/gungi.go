@@ -46,6 +46,9 @@
 <Login bind:showModal={showLoginModal} />
 
 <style>
+	nav{
+		user-select: none;
+	}
 	a{
 		padding: 0 0.5rem;
 	}

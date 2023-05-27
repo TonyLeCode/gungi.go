@@ -1,10 +1,11 @@
 <script lang="ts">
-	import Board from '$lib/components/Board.svelte';
-	import { DecodePiece, DecodePieceFull, FenToHand, IndexToCoords } from '$lib/utils/utils.js';
+	import Board from './Board.svelte';
+	import { DecodePiece, DecodePieceFull, FenToHand, GetPieceColor, IndexToCoords } from '$lib/utils/utils.js';
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
 	import { dragAndDrop, drop } from '$lib/utils/dragAndDrop';
+	import MoveDialogue from './MoveDialogue.svelte';
 
 	export let data;
 	// console.log(data?.params.id);
@@ -14,6 +15,7 @@
 	// 	console.log(`/pieces/w1${encoded}.svg`)
 	// }
 	//FenToBoard on board size
+	let showMoveDialogue = false;
 
 	function countPiecesOnBoard(fen: string) {
 		const pieces = fen.split(' ')[0];
@@ -25,6 +27,9 @@
 		return !isBlack ? data.data.player1 : data.data.player2;
 	}
 
+	let moveDialogueText = '';
+	let disableAttackDialogue = false;
+	let disableStackDialogue = false;
 	let menuState = 0;
 	// countPiecesOnBoard(data.data.current_state)
 	$: hands = FenToHand(data.data.current_state);
@@ -36,24 +41,46 @@
 
 	function handleDropEvent(event: CustomEvent) {
 		// console.log(event.detail);
+		disableAttackDialogue = false;
+		disableStackDialogue = false;
+
 		const { dragItem, hoverItem } = event.detail;
 		let fromCoord = '';
 		if (dragItem.coordIndex) {
 			const [file, rank] = IndexToCoords(dragItem.coordIndex);
-			fromCoord = `From: ${file.toUpperCase()}${rank} \n`
-		} else if (dragItem.from){
-			fromCoord = 'From: Hand \n'
+			fromCoord = `From: ${file.toUpperCase()}${rank} \n`;
+		} else if (dragItem.from) {
+			fromCoord = 'From: Hand \n';
 		}
 		const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
 		let destinationPieceText = 'No piece at destination';
 		if (hoverItem.piece != null) {
 			destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`;
 		}
-		alert(
-			`${fromCoord}From Piece: ${DecodePieceFull(
+
+		if (dragItem.coordIndex) {
+			const [file, rank] = IndexToCoords(dragItem.coordIndex);
+			const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
+			moveDialogueText = `${DecodePieceFull(
 				dragItem.piece
-			)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
-		);
+			)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
+		}
+		if (GetPieceColor(hoverItem?.piece) == playerColor) {
+			disableAttackDialogue = true;
+		}
+		console.log(hoverItem.stack)
+		if (hoverItem.stack?.length == 3){
+			disableStackDialogue = true;
+		}
+		if(hoverItem.stack?.length != 0){
+			showMoveDialogue = true;
+		} else {
+			alert(
+				`${fromCoord}From Piece: ${DecodePieceFull(
+					dragItem.piece
+				)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
+			);
+		}
 	}
 </script>
 
@@ -63,7 +90,14 @@
 
 <main>
 	<section>
-		<Board {dragAndDrop} {drop} {playerColor} on:drop={handleDropEvent} gameData={data.data} reversed={playerColor !== 'w'} />
+		<Board
+			{dragAndDrop}
+			{drop}
+			{playerColor}
+			on:drop={handleDropEvent}
+			gameData={data.data}
+			reversed={playerColor !== 'w'}
+		/>
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
@@ -107,6 +141,12 @@
 			<Replay />
 		{/if}
 	</aside>
+	<MoveDialogue
+		bind:showModal={showMoveDialogue}
+		{disableAttackDialogue}
+		{disableStackDialogue}
+		text={moveDialogueText}
+	/>
 </main>
 
 <style lang="scss">
@@ -117,6 +157,10 @@
 	}
 	section {
 		width: 100%;
+		user-select: none;
+	}
+	aside{
+		user-select: none;
 	}
 
 	.tabs {

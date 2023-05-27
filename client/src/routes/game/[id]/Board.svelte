@@ -47,6 +47,7 @@
 		const items = {
 			coordIndex: correctedIndex,
 			piece: piece,
+			stack: boardState[index],
 		}
 		return {
 			mouseEnterItem: items,
@@ -83,7 +84,7 @@
 			}}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class="piece" src={GetImage(square)} alt="" />
+				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} style={`${PieceIsPlayerColor(square[square.length-1], playerColor) ? 'cursor: pointer' : ''}`} class="piece" src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img
 						draggable="false"
