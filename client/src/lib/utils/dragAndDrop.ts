@@ -1,96 +1,164 @@
-export interface DragAndDropType {
-	initialMouseX: number;
-	initialMouseY: number;
-	offsetX: number;
-	offsetY: number;
-	dragElement: HTMLElement | null;
-	callback: DragAndDropCallback;
-	hoverItem: unknown;
-	mouseLeave: () => void;
-	mouseOver: (item: unknown) => void;
-	dragMouse: (e: MouseEvent) => void;
-	releaseElement: () => void;
-	startDragMouse: (e: MouseEvent) => void;
-	dragAndDropAction: (node: HTMLElement) => void;
+// export interface DragAndDropType {
+// 	initialMouseX: number;
+// 	initialMouseY: number;
+// 	offsetX: number;
+// 	offsetY: number;
+// 	dragElement: HTMLElement | null;
+// 	callback: DragAndDropCallback;
+// 	hoverItem: unknown;
+// 	mouseLeave: () => void;
+// 	mouseOver: (item: unknown) => void;
+// 	dragMouse: (e: MouseEvent) => void;
+// 	releaseElement: () => void;
+// 	startDragMouse: (e: MouseEvent) => void;
+// 	dragAndDropAction: (node: HTMLElement) => void;
+// }
+// type DragAndDropCallback = ((item: unknown) => void) | null;
+
+interface dragAndDropOptions {
+	startEvent?: (...args: unknown[]) => unknown;
+	dragEvent?: (...args: unknown[]) => unknown;
+	releaseEvent?: (...args: unknown[]) => unknown;
+	setDragItem?: unknown;
 }
-type DragAndDropCallback = ((item: unknown) => void) | null;
+interface dropOptions {
+	mouseEnterEvent?: (...args: unknown[]) => unknown;
+	mouseLeaveEvent?: (...args: unknown[]) => unknown;
+	mouseEnterItem?: unknown;
+}
 
-export function dragAndDrop() {
-	const dragAndDropObj: DragAndDropType = {
-		initialMouseX: 0,
-		initialMouseY: 0,
-		offsetX: 0,
-		offsetY: 0,
-		dragElement: null,
-		callback: null,
-		hoverItem: null,
-		mouseLeave: function () {
-			if (dragAndDropObj.dragElement) {
-				dragAndDropObj.hoverItem = null;
+export type dragAndDropFunction = (node: HTMLElement, options?: dragAndDropOptions) => {
+  destroy: () => void;
+};
+
+export type dropFunction = (node: HTMLElement, options?: dropOptions) => {
+  destroy: () => void;
+};
+
+let initX = 0;
+let initY = 0;
+let offsetX = 0;
+let offsetY = 0;
+let dragElement: HTMLElement | null;
+let dragItem: unknown;
+let hoverItem: unknown;
+
+export function drop(node: HTMLElement, options = {} as dropOptions) {
+	const { mouseEnterEvent, mouseLeaveEvent, mouseEnterItem } = options;
+	function mouseLeave() {
+		if (dragElement && mouseLeaveEvent && typeof mouseLeaveEvent === 'function') {
+			const items = {
+				dragItem: dragItem,
+				hoverItem: hoverItem
 			}
-		},
-		mouseOver: function (item: unknown) {
-			if (dragAndDropObj.dragElement) {
-				dragAndDropObj.hoverItem = item;
+			mouseLeaveEvent(items);
+		}
+		if (dragElement) {
+			hoverItem = null;
+		}
+	}
+	function mouseEnter() {
+		if (dragElement && mouseEnterItem != null) {
+			hoverItem = mouseEnterItem;
+		}
+
+		if (dragElement && mouseEnterEvent && typeof mouseEnterEvent === 'function') {
+			const items = {
+				dragItem: dragItem,
+				hoverItem: hoverItem
 			}
-		},
+			mouseEnterEvent(items);
+		}
+	}
+	node.addEventListener('mouseleave', mouseLeave);
+	node.addEventListener('mouseenter', mouseEnter);
 
-		dragMouse: function (e: MouseEvent) {
-			// console.log(dragAndDropObj.hoverItem)
-			if (dragAndDropObj.dragElement) {
-				const dx = e.clientX + dragAndDropObj.offsetX - dragAndDropObj.initialMouseX;
-				const dy = e.clientY + dragAndDropObj.offsetY - dragAndDropObj.initialMouseY;
-				dragAndDropObj.dragElement.style.left = `${dx}px`;
-				dragAndDropObj.dragElement.style.top = `${dy}px`;
-			}
-		},
-
-		releaseElement: function () {
-			if (dragAndDropObj.dragElement) {
-				dragAndDropObj.dragElement.style.left = '0';
-				dragAndDropObj.dragElement.style.top = '0';
-				document.removeEventListener('mousemove', this.dragMouse);
-				document.removeEventListener('mouseup', this.releaseElement);
-				dragAndDropObj.dragElement.style.pointerEvents = 'auto';
-				// if (hoveringItemIndex != null) {
-				// 	data[hoveringItemIndex].push(data[draggingIndex].pop());
-				// 	data = data;
-				// }
-				if (dragAndDropObj.callback && dragAndDropObj.hoverItem !== null) {
-					dragAndDropObj.callback(dragAndDropObj.hoverItem);
-					// dragAndDropObj.callback();
-				}
-				dragAndDropObj.dragElement.style.zIndex = '2';
-				// console.log(data)
-				dragAndDropObj.dragElement = null;
-				dragAndDropObj.hoverItem = null;
-			}
-		},
-
-		startDragMouse: function (e: MouseEvent) {
-			dragAndDropObj.initialMouseX = e.clientX;
-			dragAndDropObj.initialMouseY = e.clientY;
-			const target = e.target as HTMLElement;
-			dragAndDropObj.offsetX = e.offsetX - target.offsetWidth / 2;
-			dragAndDropObj.offsetY = e.offsetY - target.offsetHeight / 2;
-			// draggingIndex = itemIndex;
-			dragAndDropObj.dragElement = target;
-			dragAndDropObj.dragElement.style.pointerEvents = 'none';
-			dragAndDropObj.dragElement.style.zIndex = '3';
-			document.addEventListener('mousemove', this.dragMouse);
-			document.addEventListener('mouseup', this.releaseElement);
-		},
-
-		dragAndDropAction: function (node: HTMLElement) {
-			node.addEventListener('mousedown', this.startDragMouse);
+	return {
+		destroy() {
+			node.removeEventListener('mouseleave', mouseLeave);
+			node.removeEventListener('mouseenter', mouseEnter);
 		},
 	};
-	dragAndDropObj.mouseLeave = dragAndDropObj.mouseLeave.bind(dragAndDropObj);
-	dragAndDropObj.mouseOver = dragAndDropObj.mouseOver.bind(dragAndDropObj);
-	dragAndDropObj.dragMouse = dragAndDropObj.dragMouse.bind(dragAndDropObj);
-	dragAndDropObj.releaseElement = dragAndDropObj.releaseElement.bind(dragAndDropObj);
-	dragAndDropObj.startDragMouse = dragAndDropObj.startDragMouse.bind(dragAndDropObj);
-	dragAndDropObj.dragAndDropAction = dragAndDropObj.dragAndDropAction.bind(dragAndDropObj);
+}
 
-	return dragAndDropObj;
+export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOptions) {
+	const { startEvent, dragEvent, releaseEvent, setDragItem } = options;
+
+	function releaseMouse() {
+		if (dragElement) {
+			dragElement.style.left = '0';
+			dragElement.style.top = '0';
+			document.removeEventListener('mousemove', dragMouse);
+			document.removeEventListener('mouseup', releaseMouse);
+			dragElement.style.pointerEvents = 'auto';
+
+			if (releaseEvent && typeof releaseEvent === 'function') {
+				const items = {
+					dragItem: dragItem,
+					hoverItem: hoverItem
+				}
+				releaseEvent(items);
+			}
+
+			dragElement.style.zIndex = '2';
+			dragElement = null;
+			hoverItem = null;
+			if(setDragItem) {
+				dragItem = null
+			}
+		}
+	}
+
+	function dragMouse(e: MouseEvent) {
+		// console.log(dragAndDropObj.hoverItem)
+		if (dragElement) {
+			const dx = e.clientX + offsetX - initX;
+			const dy = e.clientY + offsetY - initY;
+			dragElement.style.left = `${dx}px`;
+			dragElement.style.top = `${dy}px`;
+
+			if (dragEvent && typeof dragEvent === 'function') {
+				const items = {
+					dragItem: dragItem,
+					hoverItem: hoverItem
+				}
+				dragEvent(items);
+			}
+		}
+	}
+
+	function startDragMouse(e: MouseEvent) {
+		initX = e.clientX;
+		initY = e.clientY;
+		const target = e.target as HTMLElement;
+		offsetX = e.offsetX - target?.offsetWidth / 2;
+		offsetY = e.offsetY - target?.offsetHeight / 2;
+		// draggingIndex = itemIndex;
+		dragElement = target;
+		dragElement.style.pointerEvents = 'none';
+		dragElement.style.zIndex = '3';
+		document.addEventListener('mousemove', dragMouse);
+		document.addEventListener('mouseup', releaseMouse);
+
+		if(setDragItem) {
+			dragItem = setDragItem
+		}
+
+		if (startEvent && typeof startEvent === 'function') {
+			const items = {
+				dragItem: dragItem,
+				hoverItem: hoverItem
+			}
+			startEvent(items);
+		}
+	}
+
+	node.addEventListener('mousedown', startDragMouse);
+	return {
+		destroy() {
+			node.removeEventListener('mousedown', startDragMouse);
+			document.removeEventListener('mousemove', dragMouse);
+			document.removeEventListener('mouseup', releaseMouse);
+		},
+	};
 }

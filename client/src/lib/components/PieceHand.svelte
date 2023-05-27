@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { DragAndDropType } from '$lib/utils/dragAndDrop';
+  import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
 	import { DecodePiece, DecodePieceFull, IndexToCoords } from '$lib/utils/utils';
 
 	export let color: string;
 	export let piece: number;
 	export let amount: number;
 	export let reversed: boolean;
-	export let dragAndDropObj: DragAndDropType;
+	export let dragAndDrop: dragAndDropFunction;
 	const decodedPiece = DecodePiece(piece).toLowerCase();
 	function temp(a:any){
 		return function temp2(c:any){
@@ -24,7 +24,7 @@
 </script>
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
-	<img class='piece' draggable="false" use:dragAndDropObj.dragAndDropAction on:mousedown={() => {dragAndDropObj.callback = temp(piece)}} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+	<img class='piece' draggable="false" use:dragAndDrop src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{#if amount > 1}
 		<img class='piece-under' draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{/if}

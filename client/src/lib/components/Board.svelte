@@ -1,53 +1,94 @@
 <script lang="ts">
 	import { reverseList } from '$lib/helpers';
-  import type { DragAndDropType } from '$lib/utils/dragAndDrop';
-  import { DecodePiece, DecodePieceFull, FenToBoard, FenToHand, GetImage, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
+	import type { dragAndDropFunction, dropFunction } from '$lib/utils/dragAndDrop';
+	import {
+		DecodePiece,
+		DecodePieceFull,
+		FenToBoard,
+		FenToHand,
+		GetImage,
+		GetPieceColor,
+		IndexToCoords,
+	} from '$lib/utils/utils';
 
 	// export const boardState = new Array(81).fill(['']);
 	export let gameData;
 	export let reversed: boolean;
-	export let dragAndDropObj: DragAndDropType;
+	export let dragAndDrop: dragAndDropFunction;
+	export let drop: dropFunction;
 
-	function temp(a:any, b:any){
-		return function temp2(c:any){
+	function temp(a: any, b: any) {
+		return function temp2(c: any) {
 			// console.log(a)
 			// // console.log(DecodePieceFull(piece))
 			// console.log(b)
 			let correctedIndexB = b;
 			let correctedIndexC = c;
-			if(reversed){
-				correctedIndexB = 80-b
-				correctedIndexC = 80-c
+			if (reversed) {
+				correctedIndexB = 80 - b;
+				correctedIndexC = 80 - c;
 			}
-			const [file, rank] = IndexToCoords(correctedIndexB)
-			const [file2, rank2] = IndexToCoords(correctedIndexC)
-			alert(`From: ${file.toUpperCase()}${rank} \nDestination: ${file2.toUpperCase()}${rank2} \nPiece: ${DecodePieceFull(a)}`)
-		}
+			const [file, rank] = IndexToCoords(correctedIndexB);
+			const [file2, rank2] = IndexToCoords(correctedIndexC);
+			alert(
+				`From: ${file.toUpperCase()}${rank} \nDestination: ${file2.toUpperCase()}${rank2} \nPiece: ${DecodePieceFull(
+					a
+				)}`
+			);
+		};
 	}
 
 	function GetImage2(tier: number, piece: number): string {
-	const encodedPiece = DecodePiece(piece).toLowerCase();
-	const color = GetPieceColor(piece);
-	return `/pieces/${color}${tier}${encodedPiece}.svg`;
-}
+		const encodedPiece = DecodePiece(piece).toLowerCase();
+		const color = GetPieceColor(piece);
+		return `/pieces/${color}${tier}${encodedPiece}.svg`;
+	}
 
-	function reverseIfBlack<T>(arr:T[]):T[]{
-		if(reversed){
-			return reverseList(arr)
-		} else return arr
+	function reverseIfBlack<T>(arr: T[]): T[] {
+		if (reversed) {
+			return reverseList(arr);
+		} else return arr;
 	}
 	let boardState = reverseIfBlack(FenToBoard(gameData.current_state));
 	let fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	let rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+
+	function dropEvent(index: number) {
+		let correctedIndex = index
+		if(reversed){
+			correctedIndex = 80 - index
+		}
+		//TODO temporary
+		function a() {
+			console.log(correctedIndex);
+			const [file, rank] = IndexToCoords(correctedIndex);
+			console.log("File: ", file, " Rank: ", rank)
+		}
+		return {
+			mouseEnterItem: correctedIndex,
+			mouseEnterEvent: a,
+		};
+	}
 </script>
 
 <div class="board">
 	{#each boardState as square, index}
-		<div class="square" on:mouseover={() => {dragAndDropObj.mouseOver(index)}} on:mouseleave={dragAndDropObj.mouseLeave} on:focus={() => {console.log('')}}>
+		<div
+			class="square"
+			use:drop={dropEvent(index)}
+			on:focus={() => {
+				console.log('');
+			}}
+		>
 			{#if square.length > 0}
-			<img draggable="false" use:dragAndDropObj.dragAndDropAction on:mousedown={() => {dragAndDropObj.callback = temp(square[square.length-1], index)}} class="piece" src={GetImage(square)} alt="" />
+				<img draggable="false" use:dragAndDrop class="piece" src={GetImage(square)} alt="" />
 				{#if square.length > 1}
-					<img draggable="false" class='piece-under' src={GetImage2(square.length-1, square[square.length-2])} alt="" />
+					<img
+						draggable="false"
+						class="piece-under"
+						src={GetImage2(square.length - 1, square[square.length - 2])}
+						alt=""
+					/>
 				{/if}
 			{/if}
 		</div>
@@ -67,7 +108,7 @@
 </div>
 
 <style>
-	img{
+	img {
 		/* box-shadow: 0px 7px 15px rgba(230, 106, 5, 0.527);
 		border-radius: 50%; */
 	}
@@ -114,7 +155,7 @@
 		z-index: 2;
 		user-select: none;
 	}
-	.piece-under{
+	.piece-under {
 		padding: 0.375rem;
 		position: absolute;
 		left: 0;

@@ -5,7 +5,7 @@
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
-	import { dragAndDrop } from '$lib/utils/dragAndDrop';
+	import { dragAndDrop, drop } from '$lib/utils/dragAndDrop';
 
 	export let data;
 	// console.log(data?.params.id);
@@ -15,8 +15,6 @@
 	// 	console.log(`/pieces/w1${encoded}.svg`)
 	// }
 	//FenToBoard on board size
-
-	let dragAndDropObj = dragAndDrop();
 
 	function countPiecesOnBoard(fen: string) {
 		const pieces = fen.split(' ')[0];
@@ -36,6 +34,8 @@
 	$: turnPlayer = turnColor === 'w' ? data.data.player1 : data.data.player2;
 	$: playerColor = data.data.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
 	$: console.log(playerColor);
+
+	// function 
 </script>
 
 <svelte:head>
@@ -44,11 +44,7 @@
 
 <main>
 	<section>
-		<Board
-			dragAndDropObj={dragAndDropObj}
-			gameData={data.data}
-			reversed={playerColor !== 'w'}
-		/>
+		<Board {dragAndDrop} {drop} gameData={data.data} reversed={playerColor !== 'w'} />
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
@@ -76,7 +72,7 @@
 		</div>
 		{#if menuState === 0}
 			<Hand
-				dragAndDropObj={dragAndDropObj}
+				{dragAndDrop}
 				reversed={playerColor !== 'w'}
 				{playerColor}
 				player1={data.data.player1}
