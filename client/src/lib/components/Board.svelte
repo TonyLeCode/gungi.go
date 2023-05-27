@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import { reverseList } from '$lib/helpers';
-	import type { dragAndDropFunction, dropFunction } from '$lib/utils/dragAndDrop';
+	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
 	import {
 		DecodePiece,
 		DecodePieceFull,
@@ -16,6 +17,8 @@
 	export let reversed: boolean;
 	export let dragAndDrop: dragAndDropFunction;
 	export let drop: dropFunction;
+
+	const dispatch = createEventDispatcher();
 
 	function temp(a: any, b: any) {
 		return function temp2(c: any) {
@@ -53,35 +56,60 @@
 	let fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	let rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
 
-	function dropEvent(index: number) {
+	function dropEvent(items: dragAndDropItems){
+		dispatch('drop', items)
+	}
+
+	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index
+		let piece;
+		if(square.length > 0){
+			piece = square[square.length-1]
+		}
 		if(reversed){
 			correctedIndex = 80 - index
 		}
 		//TODO temporary
 		function a() {
-			console.log(correctedIndex);
 			const [file, rank] = IndexToCoords(correctedIndex);
+			console.log(items, correctedIndex)
 			console.log("File: ", file, " Rank: ", rank)
 		}
+
+		const items = {
+			coordIndex: correctedIndex,
+			piece: piece,
+		}
 		return {
-			mouseEnterItem: correctedIndex,
+			mouseEnterItem: items,
 			mouseEnterEvent: a,
 		};
 	}
+
+	function dndOptions(index: number, piece: number){
+		const square = {
+			coordIndex: index,
+			piece: piece,
+		}
+		return {
+			releaseEvent: dropEvent,
+			setDragItem: square,
+		} as dragAndDropOptions
+	}
+
 </script>
 
 <div class="board">
 	{#each boardState as square, index}
 		<div
 			class="square"
-			use:drop={dropEvent(index)}
+			use:drop={dropOptions(index, square)}
 			on:focus={() => {
 				console.log('');
 			}}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:dragAndDrop class="piece" src={GetImage(square)} alt="" />
+				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class="piece" src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img
 						draggable="false"

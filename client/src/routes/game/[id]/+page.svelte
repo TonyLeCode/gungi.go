@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Board from '$lib/components/Board.svelte';
 	import PieceHand from '$lib/components/PieceHand.svelte';
-	import { DecodePiece, FenToHand } from '$lib/utils/utils.js';
+	import { DecodePiece, DecodePieceFull, FenToHand, IndexToCoords } from '$lib/utils/utils.js';
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
@@ -35,7 +35,21 @@
 	$: playerColor = data.data.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
 	$: console.log(playerColor);
 
-	// function 
+	function handleDropEvent(event: CustomEvent) {
+		console.log(event.detail);
+		const { dragItem, hoverItem } = event.detail;
+		const [file, rank] = IndexToCoords(dragItem.coordIndex);
+		const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
+		let destinationPieceText = 'No piece at destination';
+		if(hoverItem.piece != null){
+			destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`
+		}
+		alert(
+			`From: ${file.toUpperCase()}${rank} \nFrom Piece: ${DecodePieceFull(
+				dragItem.piece
+			)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
+		);
+	}
 </script>
 
 <svelte:head>
@@ -44,7 +58,7 @@
 
 <main>
 	<section>
-		<Board {dragAndDrop} {drop} gameData={data.data} reversed={playerColor !== 'w'} />
+		<Board {dragAndDrop} {drop} on:drop={handleDropEvent} gameData={data.data} reversed={playerColor !== 'w'} />
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">

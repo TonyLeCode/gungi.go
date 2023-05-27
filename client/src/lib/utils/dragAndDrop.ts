@@ -15,16 +15,21 @@
 // }
 // type DragAndDropCallback = ((item: unknown) => void) | null;
 
-interface dragAndDropOptions {
+export interface dragAndDropOptions {
 	startEvent?: (...args: unknown[]) => unknown;
 	dragEvent?: (...args: unknown[]) => unknown;
 	releaseEvent?: (...args: unknown[]) => unknown;
 	setDragItem?: unknown;
 }
-interface dropOptions {
+export interface dropOptions {
 	mouseEnterEvent?: (...args: unknown[]) => unknown;
 	mouseLeaveEvent?: (...args: unknown[]) => unknown;
 	mouseEnterItem?: unknown;
+}
+
+export type dragAndDropItems = {
+	dragItem: unknown;
+	hoverItem: unknown
 }
 
 export type dragAndDropFunction = (node: HTMLElement, options?: dragAndDropOptions) => {
@@ -50,7 +55,7 @@ export function drop(node: HTMLElement, options = {} as dropOptions) {
 			const items = {
 				dragItem: dragItem,
 				hoverItem: hoverItem
-			}
+			} as dragAndDropItems
 			mouseLeaveEvent(items);
 		}
 		if (dragElement) {
@@ -66,7 +71,7 @@ export function drop(node: HTMLElement, options = {} as dropOptions) {
 			const items = {
 				dragItem: dragItem,
 				hoverItem: hoverItem
-			}
+			} as dragAndDropItems
 			mouseEnterEvent(items);
 		}
 	}
@@ -96,7 +101,7 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 				const items = {
 					dragItem: dragItem,
 					hoverItem: hoverItem
-				}
+				} as dragAndDropItems
 				releaseEvent(items);
 			}
 
@@ -121,7 +126,7 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 				const items = {
 					dragItem: dragItem,
 					hoverItem: hoverItem
-				}
+				} as dragAndDropItems
 				dragEvent(items);
 			}
 		}
@@ -148,7 +153,7 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 			const items = {
 				dragItem: dragItem,
 				hoverItem: hoverItem
-			}
+			} as dragAndDropItems
 			startEvent(items);
 		}
 	}
