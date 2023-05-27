@@ -60,6 +60,10 @@ export function GetPieceColor(piece: number): string {
 	}
 }
 
+export function PieceIsPlayerColor(piece: number, playerColor: string): boolean {
+	return GetPieceColor(piece) === playerColor
+}
+
 export function GetTopStack(stack: number[]): number {
 	return stack[stack.length - 1];
 }

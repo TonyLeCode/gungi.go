@@ -1,30 +1,40 @@
 <script lang="ts">
-  import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
-	import { DecodePiece, DecodePieceFull, IndexToCoords } from '$lib/utils/utils';
+	import { createEventDispatcher } from 'svelte';
+  import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions } from '$lib/utils/dragAndDrop';
+	import { DecodePiece, DecodePieceFull, GetPieceColor, IndexToCoords, PieceIsPlayerColor } from '$lib/utils/utils';
 
 	export let color: string;
 	export let piece: number;
 	export let amount: number;
 	export let reversed: boolean;
 	export let dragAndDrop: dragAndDropFunction;
+	export let playerColor: string;
+
+	const dispatch = createEventDispatcher();
+
 	const decodedPiece = DecodePiece(piece).toLowerCase();
-	function temp(a:any){
-		return function temp2(c:any){
-			// console.log(a)
-			// // console.log(DecodePieceFull(piece))
-			// console.log(b)
-			let correctedIndexC = c;
-			if(reversed){
-				correctedIndexC = 80-c
-			}
-			const [file2, rank2] = IndexToCoords(correctedIndexC)
-			alert(`Destination: ${file2.toUpperCase()}${rank2} \nPiece: ${DecodePieceFull(a)}`)
+
+	function dropEvent(items?: dragAndDropItems){
+		if(items?.hoverItem){
+			dispatch('drop', items)
 		}
+	}
+
+	function dndOptions(piece: number) {
+		const items = {
+			piece: piece,
+			from: 'hand'
+		}
+		return {
+			releaseEvent: dropEvent,
+			setDragItem: items,
+			active: color == playerColor
+		};
 	}
 </script>
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
-	<img class='piece' draggable="false" use:dragAndDrop src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+	<img class='piece' draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{#if amount > 1}
 		<img class='piece-under' draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{/if}

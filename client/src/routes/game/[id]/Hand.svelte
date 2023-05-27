@@ -1,6 +1,6 @@
 <script lang="ts">
-	import PieceHand from '$lib/components/PieceHand.svelte';
-  import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
+	import PieceHand from './PieceHand.svelte';
+	import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
 
 	export let playerColor: string;
 	export let player1: string;
@@ -28,9 +28,7 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 1 : 0] as amount, i}
 				{#if amount != 0}
-					<PieceHand
-					{dragAndDrop}
-					reversed={reversed} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
+					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>
@@ -48,9 +46,7 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 0 : 1] as amount, i}
 				{#if amount != 0}
-					<PieceHand
-					{dragAndDrop}
-					reversed={reversed} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
+					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>
@@ -62,20 +58,20 @@
 	</div>
 </div>
 
-<style lang='scss'>
-  .name {
+<style lang="scss">
+	.name {
 		/* color: rgb(var(--primary)); */
 		margin-right: auto;
-		margin-left: .5rem;
+		margin-left: 0.5rem;
 		position: relative;
-		&::before{
+		&::before {
 			content: '';
 			width: 15px;
 			height: 15px;
 			border-radius: 50%;
 			background-color: rgb(var(--primary));
-			display:block;
-			position:absolute;
+			display: block;
+			position: absolute;
 			left: -1.25rem;
 			margin: auto;
 			top: 0;

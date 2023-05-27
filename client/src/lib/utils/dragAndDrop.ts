@@ -1,35 +1,19 @@
-// export interface DragAndDropType {
-// 	initialMouseX: number;
-// 	initialMouseY: number;
-// 	offsetX: number;
-// 	offsetY: number;
-// 	dragElement: HTMLElement | null;
-// 	callback: DragAndDropCallback;
-// 	hoverItem: unknown;
-// 	mouseLeave: () => void;
-// 	mouseOver: (item: unknown) => void;
-// 	dragMouse: (e: MouseEvent) => void;
-// 	releaseElement: () => void;
-// 	startDragMouse: (e: MouseEvent) => void;
-// 	dragAndDropAction: (node: HTMLElement) => void;
-// }
-// type DragAndDropCallback = ((item: unknown) => void) | null;
-
 export interface dragAndDropOptions {
-	startEvent?: (...args: unknown[]) => unknown;
-	dragEvent?: (...args: unknown[]) => unknown;
-	releaseEvent?: (...args: unknown[]) => unknown;
+	startEvent?: (items?: dragAndDropItems) => void;
+	dragEvent?: (items?: dragAndDropItems) => void;
+	releaseEvent?: (items?: dragAndDropItems) => void;
 	setDragItem?: unknown;
+	active?: boolean;
 }
 export interface dropOptions {
-	mouseEnterEvent?: (...args: unknown[]) => unknown;
-	mouseLeaveEvent?: (...args: unknown[]) => unknown;
+	mouseEnterEvent?: (items?: dragAndDropItems) => void;
+	mouseLeaveEvent?: (items?: dragAndDropItems) => void;
 	mouseEnterItem?: unknown;
 }
 
-export type dragAndDropItems = {
-	dragItem: unknown;
-	hoverItem: unknown
+export interface dragAndDropItems {
+	dragItem?: unknown;
+	hoverItem?: unknown;
 }
 
 export type dragAndDropFunction = (node: HTMLElement, options?: dragAndDropOptions) => {
@@ -87,7 +71,7 @@ export function drop(node: HTMLElement, options = {} as dropOptions) {
 }
 
 export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOptions) {
-	const { startEvent, dragEvent, releaseEvent, setDragItem } = options;
+	const { startEvent, dragEvent, releaseEvent, setDragItem, active = true } = options;
 
 	function releaseMouse() {
 		if (dragElement) {
@@ -115,7 +99,6 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 	}
 
 	function dragMouse(e: MouseEvent) {
-		// console.log(dragAndDropObj.hoverItem)
 		if (dragElement) {
 			const dx = e.clientX + offsetX - initX;
 			const dy = e.clientY + offsetY - initY;
@@ -138,7 +121,6 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 		const target = e.target as HTMLElement;
 		offsetX = e.offsetX - target?.offsetWidth / 2;
 		offsetY = e.offsetY - target?.offsetHeight / 2;
-		// draggingIndex = itemIndex;
 		dragElement = target;
 		dragElement.style.pointerEvents = 'none';
 		dragElement.style.zIndex = '3';
@@ -158,7 +140,7 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 		}
 	}
 
-	node.addEventListener('mousedown', startDragMouse);
+	active && node.addEventListener('mousedown', startDragMouse);
 	return {
 		destroy() {
 			node.removeEventListener('mousedown', startDragMouse);

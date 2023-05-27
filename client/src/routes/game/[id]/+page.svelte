@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Board from '$lib/components/Board.svelte';
-	import PieceHand from '$lib/components/PieceHand.svelte';
 	import { DecodePiece, DecodePieceFull, FenToHand, IndexToCoords } from '$lib/utils/utils.js';
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
@@ -36,16 +35,22 @@
 	$: console.log(playerColor);
 
 	function handleDropEvent(event: CustomEvent) {
-		console.log(event.detail);
+		// console.log(event.detail);
 		const { dragItem, hoverItem } = event.detail;
-		const [file, rank] = IndexToCoords(dragItem.coordIndex);
+		let fromCoord = '';
+		if (dragItem.coordIndex) {
+			const [file, rank] = IndexToCoords(dragItem.coordIndex);
+			fromCoord = `From: ${file.toUpperCase()}${rank} \n`
+		} else if (dragItem.from){
+			fromCoord = 'From: Hand \n'
+		}
 		const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
 		let destinationPieceText = 'No piece at destination';
-		if(hoverItem.piece != null){
-			destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`
+		if (hoverItem.piece != null) {
+			destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`;
 		}
 		alert(
-			`From: ${file.toUpperCase()}${rank} \nFrom Piece: ${DecodePieceFull(
+			`${fromCoord}From Piece: ${DecodePieceFull(
 				dragItem.piece
 			)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
 		);
@@ -58,7 +63,7 @@
 
 <main>
 	<section>
-		<Board {dragAndDrop} {drop} on:drop={handleDropEvent} gameData={data.data} reversed={playerColor !== 'w'} />
+		<Board {dragAndDrop} {drop} {playerColor} on:drop={handleDropEvent} gameData={data.data} reversed={playerColor !== 'w'} />
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
@@ -86,6 +91,7 @@
 		</div>
 		{#if menuState === 0}
 			<Hand
+				on:drop={handleDropEvent}
 				{dragAndDrop}
 				reversed={playerColor !== 'w'}
 				{playerColor}
