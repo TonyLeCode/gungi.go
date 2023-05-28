@@ -105,21 +105,21 @@
 		<div class="game-state">
 			{turnColor === 'w' ? 'White' : 'Black'} To Play
 		</div>
-		<div class="tabs">
+		<div class='tabs'>
 			<button
-				class="button-ghost"
+			class={`tab ${menuState === 0 ? 'active' : ''}`}
 				on:click={() => {
 					menuState = 0;
 				}}>hand</button
 			>
 			<button
-				class="button-ghost"
+				class={`tab divider ${menuState === 1 ? 'active' : ''}`}
 				on:click={() => {
 					menuState = 1;
 				}}>chat</button
 			>
 			<button
-				class="button-ghost"
+				class={`tab divider ${menuState === 2 ? 'active' : ''}`}
 				on:click={() => {
 					menuState = 2;
 				}}>move history</button
@@ -172,7 +172,26 @@
 		/* gap: 1rem; */
 		justify-content: center;
 		/* margin-left: 10%; */
-		padding: 1rem 0;
+		margin: 1rem 0;
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.tab{
+		background-color: rgb(var(--bg-2));
+		padding: .5rem 1rem;
+		&:hover{
+			background-color: rgb(var(--primary));
+			color: white;
+		}
+	}
+	.divider{
+		border-left: 1px rgba(99, 99, 99, 0.2) solid;
+	}
+	.active{
+		background-color: rgb(var(--primary));
+		color: white;
 	}
 
 	.game-state {
