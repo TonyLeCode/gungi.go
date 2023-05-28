@@ -84,7 +84,7 @@
 			}}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} style={`${PieceIsPlayerColor(square[square.length-1], playerColor) ? 'cursor: pointer' : ''}`} class="piece" src={GetImage(square)} alt="" />
+				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class={`piece ${PieceIsPlayerColor(square[square.length-1], playerColor) ? 'pointer' : ''}`} src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img
 						draggable="false"
@@ -112,6 +112,10 @@
 
 <style>
 
+	.pointer {
+		cursor: pointer;
+	}
+
 	.board {
 		box-shadow: 0px 7px 50px 5px rgba(230, 106, 5, 0.25);
 		display: grid;
@@ -129,6 +133,9 @@
 	.square {
 		background-color: rgb(254 215 170);
 		position: relative;
+	}
+	.square:hover {
+		background-color: rgb(255, 131, 82);
 	}
 
 	.file {
@@ -162,8 +169,5 @@
 		right: 0;
 		z-index: 1;
 		user-select: none;
-	}
-	.piece:hover {
-		background-color: rgba(255, 77, 7, 0.479);
 	}
 </style>

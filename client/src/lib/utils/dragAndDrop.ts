@@ -75,11 +75,9 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 
 	function releaseMouse() {
 		if (dragElement) {
-			dragElement.style.left = '0';
-			dragElement.style.top = '0';
+			dragElement.removeAttribute("style")
 			document.removeEventListener('mousemove', dragMouse);
 			document.removeEventListener('mouseup', releaseMouse);
-			dragElement.style.pointerEvents = 'auto';
 
 			if (releaseEvent && typeof releaseEvent === 'function') {
 				const items = {
@@ -88,8 +86,6 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 				} as dragAndDropItems
 				releaseEvent(items);
 			}
-
-			dragElement.style.zIndex = '2';
 			dragElement = null;
 			hoverItem = null;
 			if(setDragItem) {

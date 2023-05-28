@@ -34,7 +34,7 @@
 </script>
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
-	<img class={`piece ${color == playerColor ? 'piece-hover' : ''}`} style={`${color == playerColor ? 'cursor: pointer' : ''}`} draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+	<img class={`piece ${color == playerColor ? 'piece-hover pointer' : ''}`} draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{#if amount > 1}
 		<img class='piece-under' draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{/if}
@@ -48,6 +48,9 @@
 		width: 3rem;
 		border-radius: 50%;
 		box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
+	}
+	.pointer {
+		cursor: pointer;
 	}
 	.piece-hover:hover {
 		outline: rgb(var(--primary)) 5px solid;

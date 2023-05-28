@@ -45,6 +45,9 @@
 		disableStackDialogue = false;
 
 		const { dragItem, hoverItem } = event.detail;
+		if(dragItem?.coordIndex === hoverItem?.coordIndex) {
+			return
+		}
 		let fromCoord = '';
 		if (dragItem.coordIndex) {
 			const [file, rank] = IndexToCoords(dragItem.coordIndex);
@@ -68,11 +71,10 @@
 		if (GetPieceColor(hoverItem?.piece) == playerColor) {
 			disableAttackDialogue = true;
 		}
-		console.log(hoverItem.stack)
 		if (hoverItem.stack?.length == 3){
 			disableStackDialogue = true;
 		}
-		if(hoverItem.stack?.length != 0){
+		if(hoverItem.stack?.length != 0 && !dragItem.from){
 			showMoveDialogue = true;
 		} else {
 			alert(
