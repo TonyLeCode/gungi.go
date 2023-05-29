@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/TonyLeCode/gungi.go/server/api"
 	"github.com/TonyLeCode/gungi.go/server/middleware"
@@ -43,13 +44,43 @@ func main() {
 	// board.PrintBoard()
 	config, err := utils.LoadConfig("./")
 	if err != nil {
-		log.Fatalln("Cannot load config")
+		log.Fatalln("Cannot load config", err)
 	}
 
 	dbs := api.DBConn{}
-	dbs.PostgresConnect(config.DB_SOURCE)
+	maxRetries := 5
+	sleepDuration := 2 * time.Second
+	for i := 1; i <= maxRetries; i++ {
+		err = dbs.PostgresConnect(config.DB_SOURCE)
+		if err == nil {
+			break
+		}
+		if i < maxRetries {
+			log.Println("Connection failed, retrying...")
+			time.Sleep(sleepDuration)
+			sleepDuration *= 2
+		}
+	}
+	if err != nil {
+		log.Fatalln("Failed to establish a database connection: ", err)
+	}
 	defer dbs.PostgresDB.Close()
-	dbs.RedisConnect(config.REDIS_CONN_STRING)
+
+	sleepDuration = 2 * time.Second
+	for i := 1; i <= maxRetries; i++ {
+		err = dbs.RedisConnect(config.REDIS_CONN_STRING)
+		if err == nil {
+			break
+		}
+		if i < maxRetries {
+			log.Println("Connection failed, retrying...")
+			time.Sleep(sleepDuration)
+			sleepDuration *= 2
+		}
+	}
+	if err != nil {
+		log.Fatalln("Failed to establish a database connection: ", err)
+	}
 	defer dbs.RedisClient.Close()
 
 	websocket.InitializeRooms(dbs.RedisClient)
