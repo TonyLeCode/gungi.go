@@ -124,7 +124,7 @@
 		gap: 2px;
 		max-width: 45rem;
 		aspect-ratio: 1/1;
-		background-color: rgb(226, 147, 49);
+		background-color: rgb(235, 145, 84);
 		padding: 2px;
 		margin: 2rem;
 		position: relative;
@@ -134,8 +134,16 @@
 		background-color: rgb(254 215 170);
 		position: relative;
 	}
-	.square:hover {
-		background-color: rgb(255, 131, 82);
+	.square:hover::after {
+		background-color: rgba(255, 131, 82, .2);
+		border: 4px rgba(255, 131, 82, .5) solid;
+		content: '';
+		display:block;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
 	}
 
 	.file {
