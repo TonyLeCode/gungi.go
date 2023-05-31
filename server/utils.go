@@ -1,12 +1,6 @@
-package utils
+package main
 
 import "github.com/spf13/viper"
-
-func RemoveIndexStr(s []string, index int) []string {
-	ret := make([]string, 0)
-	ret = append(ret, s[:index]...)
-	return append(ret, s[index+1:]...)
-}
 
 // Config stores all configuration of the application
 // The values are read by viper from a config file or environment variables

@@ -3,8 +3,6 @@ package gungi
 import (
 	"log"
 	"strings"
-
-	"github.com/TonyLeCode/gungi.go/server/utils"
 )
 
 type PossibleMove struct {
@@ -28,6 +26,12 @@ type PseudoMove struct {
 type XRay struct {
 	Coordinate int
 	Path       []XRaySquares
+}
+
+func RemoveIndexStr(s []string, index int) []string {
+	ret := make([]string, 0)
+	ret = append(ret, s[:index]...)
+	return append(ret, s[index+1:]...)
 }
 
 func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bool {
@@ -94,7 +98,7 @@ func (b *Board) UndoMove() {
 
 		b.RemovePiece(toCoord)
 		b.PlacePiece(fromPiece, fromCoord)
-		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.History = RemoveIndexStr(b.History, len(b.History)-1)
 		b.TurnColor = GetOppositeColor(b.TurnColor)
 		b.TurnNumber--
 	} else if strings.Contains(lastMove, "x") {
@@ -107,7 +111,7 @@ func (b *Board) UndoMove() {
 		b.RemovePiece(toCoord)
 		b.PlacePiece(toPiece, toCoord)
 		b.PlacePiece(fromPiece, fromCoord)
-		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.History = RemoveIndexStr(b.History, len(b.History)-1)
 		b.TurnColor = GetOppositeColor(b.TurnColor)
 		b.TurnNumber--
 	} else if lastMove == "Ready" {
@@ -121,7 +125,7 @@ func (b *Board) UndoMove() {
 
 		b.RemovePiece(toCoord)
 		b.Hand[piece]++
-		b.History = utils.RemoveIndexStr(b.History, len(b.History)-1)
+		b.History = RemoveIndexStr(b.History, len(b.History)-1)
 		b.TurnColor = GetOppositeColor(b.TurnColor)
 		b.TurnNumber--
 	}

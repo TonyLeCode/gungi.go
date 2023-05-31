@@ -6,43 +6,16 @@ import (
 	"time"
 
 	"github.com/TonyLeCode/gungi.go/server/api"
-	"github.com/TonyLeCode/gungi.go/server/middleware"
-	"github.com/TonyLeCode/gungi.go/server/utils"
-	"github.com/TonyLeCode/gungi.go/server/websocket"
+	"github.com/TonyLeCode/gungi.go/server/auth"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
-	// "nhooyr.io/websocket"
 )
-
-// func game(c echo.Context) error {
-// 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return err
-// 	}
-// 	defer ws.Close()
-
-// 	for {
-// 		_, message, err := ws.ReadMessage()
-// 		if err != nil {
-// 			log.Println(err)
-// 			return err
-// 		}
-// 		log.Println("Message received: ", message)
-// 		if true {
-// 			break
-// 		}
-// 		// err = ws.ReadJSON()
-// 	}
-
-// 	return nil
-// }
 
 func main() {
 	// board := gungi.Board{}
 	// board.InitializeBoard()
 	// board.PrintBoard()
-	config, err := utils.LoadConfig("./")
+	config, err := LoadConfig("./")
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
 	}
@@ -83,30 +56,14 @@ func main() {
 	}
 	defer dbs.RedisClient.Close()
 
-	websocket.InitializeRooms(dbs.RedisClient)
-
-	// postgresDB, err := api.NewConnection(config.DB_SOURCE)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// redisClient := redis.NewClient(&redis.Options{
-	// 	Addr:     "localhost:6379",
-	// 	Password: "",
-	// 	DB:       0,
-	// })
-
-	// dbs := &db.DBs{
-	// 	PostgresDB:  postgresDB,
-	// 	RedisClient: redisClient,
-	// }
+	InitializeRooms(dbs.RedisClient)
 
 	e := echo.New()
 	m := melody.New()
 	m.Config.MaxMessageSize = 1024
 
 	// e.Use(middleware.VerifySupabaseTokenMiddleware)
-	verify := e.Group("", middleware.VerifySupabaseTokenMiddleware)
+	verify := e.Group("", VerifySupabaseTokenMiddleware)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, world")
@@ -117,9 +74,22 @@ func main() {
 
 	e.GET("/getgame/:id", dbs.GetGame)
 
-	e.GET("/room", websocket.GameRoom(m, &dbs))
+	e.GET("/ws", ws(m, &dbs))
 
 	// e.POST("/user/register", )
 
 	e.Logger.Fatal(e.Start("localhost:5080"))
+}
+
+func VerifySupabaseTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		claims, err := auth.AuthenticateSupabaseToken(c.Request().Header.Get("Authorization"))
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, err)
+		}
+
+		c.Set("sub", claims["sub"])
+
+		return next(c)
+	}
 }
