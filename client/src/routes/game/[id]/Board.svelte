@@ -134,7 +134,7 @@
 		background-color: rgb(254 215 170);
 		position: relative;
 	}
-	.square:hover::after {
+	.square:hover::before {
 		background-color: rgba(255, 131, 82, .2);
 		border: 4px rgba(255, 131, 82, .5) solid;
 		content: '';
@@ -145,6 +145,22 @@
 		top: 0;
 		bottom: 0;
 	}
+
+	/* .square:hover::after {
+		border-radius: 50%;
+		content: '';
+		display:block;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background-color:rgba(228, 74, 3, 0.699);
+		width: 25px;
+		height: 25px;
+		margin:auto;
+		z-index: 2;
+	} */
 
 	.file {
 		display: grid;

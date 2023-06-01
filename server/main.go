@@ -56,8 +56,6 @@ func main() {
 	}
 	defer dbs.RedisClient.Close()
 
-	InitializeRooms(dbs.RedisClient)
-
 	e := echo.New()
 	m := melody.New()
 	m.Config.MaxMessageSize = 1024

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"math/rand"
 	"sync"
@@ -79,23 +78,27 @@ type MsgAuth struct {
 	Payload string `json:"payload"`
 }
 
-func InitializeRooms(r *redis.Client) error {
+func RedisRoomExists(r *redis.Client, roomKey string) error {
 	ctx := context.Background()
-	_, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
-	if errors.Is(err, redis.Nil) {
-		_, err = r.Do(ctx, "JSON.SET", "game_rooms", "$", "[]").Result()
+	exists, err := r.Exists(ctx, roomKey).Result()
+	if err != nil {
+		return err
+	}
+
+	if exists == 0 {
+		_, err = r.Do(ctx, "JSON.SET", roomKey, "$", "[]").Result()
 		if err != nil {
-			log.Println("Error: ", err)
 			return err
 		}
-	} else if err != nil {
-		log.Println("Error: ", err)
-		return err
 	}
 	return nil
 }
 
 func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
+	// overviewRoom := Room{}
+	// gameListRoom := Room{}
+	// inGameRoom := Room{}
+
 	m.HandleConnect(func(s *melody.Session) {
 		log.Println("Connected")
 	})
@@ -137,7 +140,7 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 				log.Println("Error: ", err)
 			}
 
-			InitializeRooms(dbs.RedisClient)
+			RedisRoomExists(dbs.RedisClient, "game_rooms")
 
 			_, err = dbs.RedisClient.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
 			if err != nil {
@@ -193,7 +196,7 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 				s.Set("username", username)
 
 				ctx := context.Background()
-				InitializeRooms(dbs.RedisClient)
+				RedisRoomExists(dbs.RedisClient, "game_rooms")
 				val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
 				if err != nil {
 					log.Println("Error: ", err)

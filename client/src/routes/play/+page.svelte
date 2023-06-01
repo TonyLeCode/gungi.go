@@ -5,6 +5,7 @@
 	import RoomList from './RoomList.svelte';
 	import { AddNotification, type notificationType } from '$lib/store/notification';
 	import {nanoid} from 'nanoid'
+	import {ws, wsConnState} from '$lib/store/websocket'
 
 	export let data;
 	$: username = data.session?.user.user_metadata.username;
@@ -29,34 +30,13 @@
 	let showRoomDialogue = false;
 	let roomDialogueInfo: Info;
 
-	let ws: WebSocket;
-	let wsConnectionState = 0;
-	onMount(() => {
-		const url = (route: string) => `ws://${import.meta.env.VITE_API_URL}/${route}`;
-		ws = new WebSocket(url('room'));
-
-		ws.addEventListener('open', (event) => {
-			const msg = {
-				type: 'auth',
-				payload: `Bearer ${data.session?.access_token}`,
-			};
-			ws.send(JSON.stringify(msg));
-		});
-		ws.addEventListener('message', (event) => {
-			console.log(event);
+	function handleRoomListMsg(event: MessageEvent<any>){
+		console.log(event);
 			try {
 				const data = JSON.parse(event.data);
 				switch (data.type) {
 					case 'roomList':
 						roomList = JSON.parse(data.payload);
-						break;
-					case 'auth':
-						data.payload == '1' ? (wsConnectionState = 1) : ws.close();
-						const testMsg = {
-							type: 'cancel',
-							payload: 'lol',
-						};
-						ws.send(JSON.stringify(testMsg));
 						break;
 					case 'accepted':
 						console.log(data.payload);
@@ -67,43 +47,35 @@
 							msg: `Go to <a class="a-primary" href="/game/${data.payload}">game<a>`,
 						} as notificationType);
 						break;
-					// setTimeout(() => {
-					// 	wsConnectionState = 1;
-					// }, 150);
 				}
-			} catch (e) {
+			} catch (err) {
 				console.log(event?.data);
-				console.error('Error: ', e);
+				console.error('Error: ', err);
 			}
-		});
-		ws.addEventListener('error', (event) => {
-			console.log(event);
-			console.error('Error: ', event);
-			wsConnectionState = 2;
-		});
-		ws.addEventListener('close', (event) => {
-			console.log(event);
-			wsConnectionState = 3;
-		});
-
-		return () => {
-			ws.close();
-		};
-	});
+	}
 
 	function accept(roomid: string) {
 		const msg = {
 			type: 'accept',
 			payload: roomid,
 		};
-		ws.send(JSON.stringify(msg));
+		$ws.send(JSON.stringify(msg));
 	}
+
+	onMount(() => {
+		$ws.addEventListener('message', handleRoomListMsg);
+
+		return () => {
+			$ws.removeEventListener('message', handleRoomListMsg)
+		};
+	});
+
 </script>
 
 <main>
-	{#if wsConnectionState === 0}
+	{#if $wsConnState === 'connecting'}
 		<p class="status-msg fly-up-fade">Loading...</p>
-	{:else if wsConnectionState === 1}
+	{:else if $wsConnState === 'connected'}
 		<section class="options">
 			<div class="filter">
 				<label>
@@ -126,7 +98,7 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				{ws}
+				ws={$ws}
 				roomList={liveRoomList}
 				heading="Live Games"
 				{username}
@@ -136,17 +108,17 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				{ws}
+				ws={$ws}
 				roomList={correspondenceRoomList}
 				heading="Correspondence Games"
 				{username}
 			/>
 		{/if}
-		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} {ws} />
+		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} ws={$ws} />
 		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
-	{:else if wsConnectionState === 2}
+	{:else if $wsConnState === 'error'}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
-	{:else if wsConnectionState === 3}
+	{:else if $wsConnState === 'closed'}
 		<p class="status-msg fly-up-fade">Not connected, please refresh or try again later</p>
 	{/if}
 </main>
