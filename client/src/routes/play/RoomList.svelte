@@ -50,7 +50,7 @@
 		{/each}
 	</ul>
 {:else}
-	<p class="empty fly-up-fade">Looks like there are no live games available</p>
+	<p class="empty fly-up-fade">Looks like there are no {heading.toLowerCase()} available</p>
 {/if}
 
 <style lang="scss">

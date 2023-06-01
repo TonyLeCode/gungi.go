@@ -33,7 +33,6 @@ export function websocketConnect(url: string, token: string) {
 	});
 
 	newWS.addEventListener('error', (event) => {
-		console.log(event);
 		console.error('Error: ', event);
 		wsConnState.set('error');
 	});

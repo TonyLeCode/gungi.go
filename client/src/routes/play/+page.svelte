@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
 	import RoomList from './RoomList.svelte';
 	import { AddNotification, type notificationType } from '$lib/store/notification';
-	import {nanoid} from 'nanoid'
-	import {ws, wsConnState} from '$lib/store/websocket'
+	import { nanoid } from 'nanoid';
+	import { ws, wsConnState } from '$lib/store/websocket';
 
 	export let data;
 	$: username = data.session?.user.user_metadata.username;
@@ -30,28 +30,28 @@
 	let showRoomDialogue = false;
 	let roomDialogueInfo: Info;
 
-	function handleRoomListMsg(event: MessageEvent<any>){
+	function handleRoomListMsg(event: MessageEvent<any>) {
 		console.log(event);
-			try {
-				const data = JSON.parse(event.data);
-				switch (data.type) {
-					case 'roomList':
-						roomList = JSON.parse(data.payload);
-						break;
-					case 'accepted':
-						console.log(data.payload);
-						AddNotification({
-							id: nanoid(),
-							title: 'Game Accepted',
-							type: 'default',
-							msg: `Go to <a class="a-primary" href="/game/${data.payload}">game<a>`,
-						} as notificationType);
-						break;
-				}
-			} catch (err) {
-				console.log(event?.data);
-				console.error('Error: ', err);
+		try {
+			const data = JSON.parse(event.data);
+			switch (data.type) {
+				case 'roomList':
+					roomList = JSON.parse(data.payload);
+					break;
+				case 'accepted':
+					console.log(data.payload);
+					AddNotification({
+						id: nanoid(),
+						title: 'Game Accepted',
+						type: 'default',
+						msg: `Go to <a class="a-primary" href="/game/${data.payload}">game<a>`,
+					} as notificationType);
+					break;
 			}
+		} catch (err) {
+			console.log(event?.data);
+			console.error('Error: ', err);
+		}
 	}
 
 	function accept(roomid: string) {
@@ -63,13 +63,25 @@
 	}
 
 	onMount(() => {
-		$ws.addEventListener('message', handleRoomListMsg);
+		ws.subscribe((val) => {
+			if (val) {
+				$ws.addEventListener('message', handleRoomListMsg);
+			}
+		});
 
-		return () => {
-			$ws.removeEventListener('message', handleRoomListMsg)
-		};
+		wsConnState.subscribe((val) => {
+		if (val === 'connected') {
+			const msg = {
+				type: 'route',
+				payload: 'roomList',
+			};
+			$ws.send(JSON.stringify(msg));
+		}
 	});
-
+		return () => {
+			$ws.removeEventListener('message', handleRoomListMsg);
+		}
+	});
 </script>
 
 <main>
