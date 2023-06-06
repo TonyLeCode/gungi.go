@@ -10,6 +10,7 @@
 	export let onBoardWhite: number | undefined;
 	export let dragAndDrop: dragAndDropFunction;
 	export let reversed: boolean;
+	export let isPlayerTurn: boolean;
 </script>
 
 <div class="hands">
@@ -28,7 +29,7 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 1 : 0] as amount, i}
 				{#if amount != 0}
-					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
+					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} {isPlayerTurn} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>
@@ -46,7 +47,7 @@
 		<div class="hand">
 			{#each hands[playerColor === 'w' ? 0 : 1] as amount, i}
 				{#if amount != 0}
-					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
+					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} {isPlayerTurn} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
 				{/if}
 			{/each}
 		</div>

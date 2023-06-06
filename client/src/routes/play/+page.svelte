@@ -31,7 +31,6 @@
 	let roomDialogueInfo: Info;
 
 	function handleRoomListMsg(event: MessageEvent<any>) {
-		console.log(event);
 		try {
 			const data = JSON.parse(event.data);
 			switch (data.type) {
@@ -39,7 +38,6 @@
 					roomList = JSON.parse(data.payload);
 					break;
 				case 'accepted':
-					console.log(data.payload);
 					AddNotification({
 						id: nanoid(),
 						title: 'Game Accepted',

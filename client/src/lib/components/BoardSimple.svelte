@@ -3,13 +3,15 @@
 	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, GetTopStack } from '$lib/utils/utils';
 
 	export let gameData;
+	export let isTurn: boolean;
 	// console.log(gameData.current_state);
 	const boardState = FenToBoard(gameData.current_state);
+	$: correctedBoardState = isTurn ? boardState : reverseList(boardState)
 	// console.log(boardState);
 </script>
 
 <div class="board">
-	{#each boardState as square}
+	{#each correctedBoardState as square}
 		<div class="square">
 			{#if square.length > 0}
 				<img class="piece" draggable='false' src={GetImage(square)} alt="" />

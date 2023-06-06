@@ -9,6 +9,7 @@
 	export let reversed: boolean;
 	export let dragAndDrop: dragAndDropFunction;
 	export let playerColor: string;
+	export let isPlayerTurn: boolean;
 
 	const dispatch = createEventDispatcher();
 
@@ -28,13 +29,13 @@
 		return {
 			releaseEvent: dropEvent,
 			setDragItem: items,
-			active: color == playerColor
+			active: color == playerColor && isPlayerTurn
 		};
 	}
 </script>
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
-	<img class={`piece ${color == playerColor ? 'piece-hover pointer' : ''}`} draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+	<img class={`piece ${color == playerColor && isPlayerTurn ? 'piece-hover pointer' : ''}`} draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{#if amount > 1}
 		<img class='piece-under' draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{/if}

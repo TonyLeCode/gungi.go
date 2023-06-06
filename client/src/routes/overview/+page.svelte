@@ -29,7 +29,6 @@
 	}
 
 	export let data;
-	$: console.log(data);
 	// $: console.log(data.data);
 </script>
 
@@ -44,7 +43,7 @@
 			{#each data.data as game}
 				<li class:your-turn={isTurn(game)}>
 					<div class="name name-1">{game.username1}</div>
-					<a href={`/game/${game.id}`}><BoardSimple gameData={game} /></a>
+					<a href={`/game/${game.id}`}><BoardSimple gameData={game} isTurn={isTurn(game)} /></a>
 					<div class="name name-2">{game.username2}</div>
 				</li>
 			{/each}

@@ -16,6 +16,7 @@
 	export let dragAndDrop: dragAndDropFunction;
 	export let drop: dropFunction;
 	export let playerColor: string;
+	export let isPlayerTurn: boolean;
 
 	const dispatch = createEventDispatcher();
 
@@ -30,9 +31,10 @@
 			return reverseList(arr);
 		} else return arr;
 	}
-	let boardState = reverseIfBlack(FenToBoard(gameData.current_state));
-	let fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-	let rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+	$: boardState = reverseIfBlack(gameData);
+	// $: console.log(boardState)
+	$: fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+	$: rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
 
 	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index
@@ -47,7 +49,7 @@
 		const items = {
 			coordIndex: correctedIndex,
 			piece: piece,
-			stack: boardState[index],
+			// stack: boardState[index],
 		}
 		return {
 			mouseEnterItem: items,
@@ -61,14 +63,18 @@
 	}
 
 	function dndOptions(index: number, piece: number){
+		let correctedIndex = index
+		if(reversed){
+			correctedIndex = 80 - index
+		}
 		const square = {
-			coordIndex: index,
+			coordIndex: correctedIndex,
 			piece: piece,
 		}
 		return {
 			releaseEvent: dropEvent,
 			setDragItem: square,
-			active: PieceIsPlayerColor(piece, playerColor)
+			active: PieceIsPlayerColor(piece, playerColor) && isPlayerTurn
 		}
 	}
 
@@ -84,7 +90,7 @@
 			}}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class={`piece ${PieceIsPlayerColor(square[square.length-1], playerColor) ? 'pointer' : ''}`} src={GetImage(square)} alt="" />
+				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class={`piece ${PieceIsPlayerColor(square[square.length-1], playerColor) && isPlayerTurn ? 'pointer' : ''}`} src={GetImage(square)} alt="" />
 				{#if square.length > 1}
 					<img
 						draggable="false"

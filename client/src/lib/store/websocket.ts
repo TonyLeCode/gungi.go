@@ -1,4 +1,6 @@
 import { writable } from 'svelte/store';
+import { AddNotification, type notificationType } from './notification';
+import { nanoid } from 'nanoid';
 
 type wsConnStateType = 'connecting' | 'connected' | 'reconnecting' | 'closed' | 'error';
 type wsRouteType = 'overview' | 'game' | 'roomList';
@@ -40,6 +42,12 @@ export function websocketConnect(url: string, token: string) {
 	newWS.addEventListener('close', (event) => {
 		console.log(event);
 		wsConnState.set('closed');
+		AddNotification({
+			id: nanoid(),
+			title: 'Disconnected',
+			type: 'default',
+			msg: 'Please refresh or come back later',
+		} as notificationType);
 	});
 
 	ws.set(newWS);

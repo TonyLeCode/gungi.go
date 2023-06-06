@@ -9,7 +9,7 @@
 	export let data: LayoutData;
 
 	$: ({ supabase, session } = data);
-	$: console.log($wsConnState)
+	// $: console.log($wsConnState)
 	// $: console.log(supabase)
 
 	onMount(() => {

@@ -1,21 +1,40 @@
 <script lang="ts">
 	import Board from './Board.svelte';
-	import { DecodePiece, DecodePieceFull, FenToHand, GetPieceColor, IndexToCoords } from '$lib/utils/utils.js';
+	import {
+		DecodePiece,
+		DecodePieceFull,
+		FenToBoard,
+		FenToHand,
+		GetPieceColor,
+		IndexToCoords,
+	} from '$lib/utils/utils.js';
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
 	import { dragAndDrop, drop } from '$lib/utils/dragAndDrop';
 	import MoveDialogue from './MoveDialogue.svelte';
+	import { ws, wsConnState } from '$lib/store/websocket';
+	import { onMount } from 'svelte';
 
 	export let data;
+	let boardState = data.data;
+	$: currentState = FenToBoard(boardState.current_state);
 	// console.log(data?.params.id);
-	console.log(data);
+	// console.log(data);
 	// for(let i in hands[0]){
 	// 	const encoded = DecodePiece(i).toLocaleLowerCase()
 	// 	console.log(`/pieces/w1${encoded}.svg`)
 	// }
 	//FenToBoard on board size
+
+	interface MoveType {
+		fromPiece: number;
+		fromCoord: number;
+		moveType: number;
+		toCoord: number;
+	}
 	let showMoveDialogue = false;
+	let moveDialogueInfo: MoveType;
 
 	function countPiecesOnBoard(fen: string) {
 		const pieces = fen.split(' ')[0];
@@ -24,7 +43,7 @@
 		return [matchW?.length ?? 0, matchB?.length ?? 0];
 	}
 	function reverseNameIfBlack(isBlack: boolean): string {
-		return !isBlack ? data.data.player1 : data.data.player2;
+		return !isBlack ? boardState.player1 : boardState.player2;
 	}
 
 	let moveDialogueText = '';
@@ -32,12 +51,12 @@
 	let disableStackDialogue = false;
 	let menuState = 0;
 	// countPiecesOnBoard(data.data.current_state)
-	$: hands = FenToHand(data.data.current_state);
-	$: [onBoardWhite, onBoardBlack] = countPiecesOnBoard(data.data.current_state);
-	$: turnColor = data.data.current_state.split(' ')[2];
-	$: turnPlayer = turnColor === 'w' ? data.data.player1 : data.data.player2;
-	$: playerColor = data.data.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
-	$: console.log(playerColor);
+	$: hands = FenToHand(boardState.current_state);
+	$: [onBoardWhite, onBoardBlack] = countPiecesOnBoard(boardState.current_state);
+	$: turnColor = boardState.current_state.split(' ')[2];
+	$: turnPlayer = turnColor === 'w' ? boardState.player1 : boardState.player2;
+	$: playerColor = boardState.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
+	$: isPlayerTurn = turnColor === playerColor
 
 	function handleDropEvent(event: CustomEvent) {
 		// console.log(event.detail);
@@ -45,8 +64,8 @@
 		disableStackDialogue = false;
 
 		const { dragItem, hoverItem } = event.detail;
-		if(dragItem?.coordIndex === hoverItem?.coordIndex) {
-			return
+		if (dragItem?.coordIndex === hoverItem?.coordIndex) {
+			return;
 		}
 		let fromCoord = '';
 		if (dragItem.coordIndex) {
@@ -71,10 +90,22 @@
 		if (GetPieceColor(hoverItem?.piece) == playerColor) {
 			disableAttackDialogue = true;
 		}
-		if (hoverItem.stack?.length == 3){
+
+		const stack = currentState[hoverItem.coordIndex];
+		if (stack?.length == 3) {
 			disableStackDialogue = true;
 		}
-		if(hoverItem.stack?.length != 0 && !dragItem.from){
+		if (stack?.length != 0 && !dragItem.from) {
+			// console.log(dragItem.coordIndex);
+			// console.log(IndexToCoords(dragItem.coordIndex));
+			const square = currentState[dragItem.coordIndex];
+
+			moveDialogueInfo = {
+				fromPiece: square[square.length - 1],
+				fromCoord: dragItem.coordIndex,
+				moveType: 0,
+				toCoord: hoverItem.coordIndex,
+			};
 			showMoveDialogue = true;
 		} else {
 			alert(
@@ -84,6 +115,58 @@
 			);
 		}
 	}
+
+	function handleMoveEvent(event: CustomEvent) {
+		const msg = {
+			type: 'makeMove',
+			payload: event.detail,
+		};
+		msg.payload.fromCoord = msg.payload.fromCoord;
+		msg.payload.toCoord = msg.payload.toCoord;
+		$ws.send(JSON.stringify(msg));
+	}
+
+	function handleGameMsg(event: MessageEvent<any>) {
+		try {
+			const res = JSON.parse(event.data);
+			switch (res.type) {
+				case 'game':
+					// console.log(JSON.stringify(res.payload))
+					boardState = res.payload;
+					// boardState = boardState;
+					break;
+			}
+		} catch (err) {
+			console.log(event?.data);
+			console.error('Error: ', err);
+		}
+	}
+
+	onMount(() => {
+		ws.subscribe((val) => {
+			if (val) {
+				$ws.addEventListener('message', handleGameMsg);
+			}
+		});
+
+		wsConnState.subscribe((val) => {
+			if (val === 'connected') {
+				const msg = {
+					type: 'route',
+					payload: 'game',
+				};
+				$ws.send(JSON.stringify(msg));
+				const msg2 = {
+					type: 'joinGame',
+					payload: boardState.id,
+				};
+				$ws.send(JSON.stringify(msg2));
+			}
+		});
+		return () => {
+			$ws.removeEventListener('message', handleGameMsg);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -97,17 +180,18 @@
 			{drop}
 			{playerColor}
 			on:drop={handleDropEvent}
-			gameData={data.data}
+			gameData={currentState}
 			reversed={playerColor !== 'w'}
+			{isPlayerTurn}
 		/>
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
 			{turnColor === 'w' ? 'White' : 'Black'} To Play
 		</div>
-		<div class='tabs'>
+		<div class="tabs">
 			<button
-			class={`tab ${menuState === 0 ? 'active' : ''}`}
+				class={`tab ${menuState === 0 ? 'active' : ''}`}
 				on:click={() => {
 					menuState = 0;
 				}}>hand</button
@@ -131,8 +215,9 @@
 				{dragAndDrop}
 				reversed={playerColor !== 'w'}
 				{playerColor}
-				player1={data.data.player1}
-				player2={data.data.player2}
+				player1={boardState.player1}
+				player2={boardState.player2}
+				{isPlayerTurn}
 				{hands}
 				{onBoardBlack}
 				{onBoardWhite}
@@ -144,6 +229,8 @@
 		{/if}
 	</aside>
 	<MoveDialogue
+		{moveDialogueInfo}
+		on:move={handleMoveEvent}
 		bind:showModal={showMoveDialogue}
 		{disableAttackDialogue}
 		{disableStackDialogue}
@@ -161,7 +248,7 @@
 		width: 100%;
 		user-select: none;
 	}
-	aside{
+	aside {
 		user-select: none;
 	}
 
@@ -178,18 +265,18 @@
 		overflow: hidden;
 	}
 
-	.tab{
+	.tab {
 		background-color: rgb(var(--bg-2));
-		padding: .5rem 1rem;
-		&:hover{
+		padding: 0.5rem 1rem;
+		&:hover {
 			background-color: rgb(var(--primary));
 			color: white;
 		}
 	}
-	.divider{
+	.divider {
 		border-left: 1px rgba(99, 99, 99, 0.2) solid;
 	}
-	.active{
+	.active {
 		background-color: rgb(var(--primary));
 		color: white;
 	}

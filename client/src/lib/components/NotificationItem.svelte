@@ -73,6 +73,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+		margin-right: 1rem;
 	}
 	.title {
 		font-weight: bold;
