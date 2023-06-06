@@ -11,6 +11,8 @@ import (
 
 	"github.com/TonyLeCode/gungi.go/server/api"
 	"github.com/TonyLeCode/gungi.go/server/auth"
+	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
+	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
@@ -20,6 +22,7 @@ import (
 type client struct {
 	username string
 	route    string
+	gameID   string
 }
 
 type clientList struct {
@@ -123,9 +126,8 @@ func RedisRoomExists(r *redis.Client, roomKey string) error {
 
 func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 	clientList := clientList{clients: make(map[*melody.Session]client)}
-	// overviewRoom := Room{}
-	// gameListRoom := Room{}
-	// inGameRoom := Room{}
+	gameRooms := make(map[string]*Room)
+	mutex := sync.Mutex{}
 
 	m.HandleConnect(func(s *melody.Session) {
 		log.Println("Connected")
@@ -134,6 +136,12 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 	m.HandleDisconnect(func(s *melody.Session) {
 		// log.Println(s.Keys)
 		clientList.RemoveClient(s)
+		mutex.Lock()
+		gameID := clientList.clients[s].gameID
+		if gameID != "" {
+			delete(gameRooms[gameID].clients, s)
+		}
+		mutex.Unlock()
 		log.Println("Disconnect")
 	})
 
@@ -213,6 +221,22 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
+			// TODO if gameRoom is empty, then delete
+			mutex.Lock()
+			clientList.mutex.Lock()
+			if entry, ok := clientList.clients[s]; ok {
+				if entry.gameID != "" {
+					delete(gameRooms[entry.gameID].clients, s)
+				}
+
+				entry.gameID = ""
+				clientList.clients[s] = entry
+			} else {
+				return
+			}
+			clientList.mutex.Unlock()
+			mutex.Unlock()
+
 			if route == "roomList" {
 				payload, err := getRoomList(ctx, dbs, s, true)
 				if err != nil {
@@ -224,6 +248,9 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 					log.Println("Error: ", err)
 					return
 				}
+			}
+
+			if route == "game" {
 			}
 			return
 		}
@@ -237,7 +264,11 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 		case "roomList":
 			handleRoomListMessages(unmarshal, m, s, dbs, ctx, &clientList)
 		case "game":
-			handleGameMessages(unmarshal, m, s, dbs, ctx, &clientList)
+			err = handleGameMessages(unmarshal, m, s, dbs, ctx, &clientList, &gameRooms, &mutex)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 		}
 	})
 
@@ -265,6 +296,7 @@ func getRoomList(ctx context.Context, dbs *api.DBConn, s *melody.Session, checkR
 		return []byte{}, err
 	}
 
+	//TODO don't marshal in function
 	roomList := MsgResponse{
 		Type:    "roomList",
 		Payload: val,
@@ -281,9 +313,117 @@ func getRoomList(ctx context.Context, dbs *api.DBConn, s *melody.Session, checkR
 	return payload, nil
 }
 
-func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList) error {
+func getGame(dbs *api.DBConn, roomID string) (db.GetGameRow, error) {
+	game, err := dbs.GetGame(roomID)
+	if err != nil {
+		log.Println("Error: ", err)
+		return db.GetGameRow{}, err
+	}
+
+	// msgResponse := MsgResponse{
+	// 	Type:    "game",
+	// 	Payload: game,
+	// }
+	return game, nil
+}
+
+type Move struct {
+	FromPiece int `json:"fromPiece"`
+	FromCoord int `json:"fromCoord"`
+	MoveType  int `json:"moveType"`
+	ToCoord   int `json:"toCoord"`
+}
+
+func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList, gameRooms *map[string]*Room, mutex *sync.Mutex) error {
 	switch msg.Type {
-	case "":
+	case "joinGame":
+		var roomID string
+		err := json.Unmarshal(msg.Payload, &roomID)
+		if err != nil {
+			return err
+		}
+
+		clientList.mutex.Lock()
+		if entry, ok := clientList.clients[s]; ok {
+			entry.gameID = roomID
+			clientList.clients[s] = entry
+		} else {
+			return errors.New("could not find gameID")
+		}
+		clientList.mutex.Unlock()
+
+		mutex.Lock()
+		room, ok := (*gameRooms)[roomID]
+		if !ok {
+			room = &Room{clients: make(map[*melody.Session]bool)}
+			(*gameRooms)[roomID] = room
+		}
+		mutex.Unlock()
+		room.AddClient(s)
+
+	case "ready":
+	case "makeMove":
+		gameID := clientList.clients[s].gameID
+		if gameID == "" {
+			return errors.New("could not find gameID")
+		}
+
+		game, err := getGame(dbs, gameID)
+		if err != nil {
+			return err
+		}
+
+		var move Move
+		err = json.Unmarshal(msg.Payload, &move)
+		if err != nil {
+			return err
+		}
+
+		newBoard := gungi.Board{}
+		err = newBoard.SetBoardFromFen(game.CurrentState)
+		if err != nil {
+			return err
+		}
+		newBoard.SetMoveHistory(game.History.String)
+		newBoard.PrintBoard()
+		log.Println(move)
+		// log.Println(newBoard.TurnColor)
+		// log.Println(gungi.GetColor(move.FromPiece))
+		isValid := newBoard.MakeMove(move.FromPiece, gungi.IndexToSquare(move.FromCoord), move.MoveType, gungi.IndexToSquare(move.ToCoord))
+		if !isValid {
+			return errors.New("invalid move")
+		}
+		newBoard.PrintBoard()
+
+		game.CurrentState = newBoard.BoardToFen()
+		game.History.String = newBoard.SerializeHistory()
+		game.History.Valid = true
+
+		makeMoveParams := db.MakeMoveParams{
+			ID:           game.ID,
+			CurrentState: game.CurrentState,
+			History:      game.History,
+		}
+		queries := db.New(dbs.PostgresDB)
+		err = queries.MakeMove(ctx, makeMoveParams)
+		if err != nil {
+			return err
+		}
+
+		msgResponse := MsgResponse{
+			Type:    "game",
+			Payload: game,
+		}
+		payload, err := json.Marshal(msgResponse)
+		if err != nil {
+			return err
+		}
+		for session := range (*gameRooms)[gameID].clients {
+			session.Write(payload)
+		}
+	case "requestUndo":
+	case "acceptUndo":
+	case "resign":
 	}
 	return nil
 }
@@ -296,6 +436,7 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 		err := json.Unmarshal(msg.Payload, &roomPayload)
 		if err != nil {
 			log.Println("Error: ", err)
+			return err
 		}
 		newRoom := SerializedGameRoom{
 			RoomID: uuid.New(),

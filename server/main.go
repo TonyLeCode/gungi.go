@@ -67,10 +67,9 @@ func main() {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
-	// verify.GET("/websocket", game)
 	verify.GET("/getongoinggamelist", dbs.GetOngoingGameList)
 
-	e.GET("/getgame/:id", dbs.GetGame)
+	e.GET("/getgame/:id", dbs.GetGameRoute)
 
 	e.GET("/ws", ws(m, &dbs))
 

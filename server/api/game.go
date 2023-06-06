@@ -74,12 +74,25 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 	return c.JSON(http.StatusOK, games)
 }
 
-func (dbConn *DBConn) GetRoomList(c echo.Context) error {
+func (dbConn *DBConn) GetGame(id string) (db.GetGameRow, error) {
+	ctx := context.Background()
 
-	return nil
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return db.GetGameRow{}, err
+	}
+
+	queries := db.New(dbConn.PostgresDB)
+
+	game, err := queries.GetGame(ctx, uuid)
+	if err != nil {
+		return db.GetGameRow{}, err
+	}
+
+	return game, nil
 }
 
-func (dbConn *DBConn) GetGame(c echo.Context) error {
+func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	ctx := context.Background()
 
 	id := c.Param("id")

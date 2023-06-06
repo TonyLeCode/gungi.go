@@ -75,6 +75,10 @@ func (b *Board) SetBoardFromFen(fen string) error {
 	// index 0 holds piece position, index 1 holds hand piece count, index 2 is color turn
 	fields := strings.Split(fen, " ")
 
+	if len(fields) != 4 {
+		return errors.New("incorrect fen length")
+	}
+
 	// forward slash splits into rows
 	split := strings.Split(fields[0], "/")
 	if len(split) != 9 {
@@ -133,7 +137,31 @@ func (b *Board) SetBoardFromFen(fen string) error {
 
 	b.TurnColor = LetterToTurn(fields[2])
 
+	ready := strings.Split(fields[3], "")
+	readyW, err := strconv.Atoi(ready[0])
+	if err != nil {
+		return errors.New("invalid ready fen")
+	}
+	readyB, err := strconv.Atoi(ready[1])
+	if err != nil {
+		return errors.New("invalid ready fen")
+	}
+	if readyW == 0 {
+		b.Ready[0] = false
+	} else {
+		b.Ready[0] = true
+	}
+	if readyB == 0 {
+		b.Ready[1] = false
+	} else {
+		b.Ready[1] = true
+	}
+
 	return nil
+}
+
+func (b *Board) SetMoveHistory(history string) {
+	b.History = strings.Split(history, " ")
 }
 
 func (b *Board) SerializeHistory() string {
@@ -142,8 +170,7 @@ func (b *Board) SerializeHistory() string {
 	// 	serializedHistory.WriteString(strconv.Itoa(i+1) + ". " + move + " ")
 	// }
 	// return serializedHistory.String()
-	var serializedHistory string
-	serializedHistory = strings.Join(b.History, " ")
+	serializedHistory := strings.Join(b.History, " ")
 	return serializedHistory
 }
 
@@ -200,6 +227,18 @@ func (b *Board) BoardToFen() string {
 		fenString.WriteString("w")
 	} else {
 		fenString.WriteString("b")
+	}
+
+	fenString.WriteString(" ")
+	if b.Ready[0] {
+		fenString.WriteString("1")
+	} else {
+		fenString.WriteString("1")
+	}
+	if b.Ready[1] {
+		fenString.WriteString("1")
+	} else {
+		fenString.WriteString("1")
 	}
 
 	return fenString.String()

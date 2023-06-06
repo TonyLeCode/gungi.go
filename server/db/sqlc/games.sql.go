@@ -157,3 +157,20 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 	}
 	return items, nil
 }
+
+const makeMove = `-- name: MakeMove :exec
+UPDATE games
+SET current_state = $2, history = $3
+WHERE id = $1
+`
+
+type MakeMoveParams struct {
+	ID           uuid.UUID      `json:"id"`
+	CurrentState string         `json:"current_state"`
+	History      sql.NullString `json:"history"`
+}
+
+func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {
+	_, err := q.db.ExecContext(ctx, makeMove, arg.ID, arg.CurrentState, arg.History)
+	return err
+}

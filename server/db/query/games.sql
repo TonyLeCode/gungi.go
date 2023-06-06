@@ -31,3 +31,8 @@ WHERE raw_user_meta_data ->> 'username' = $1;
 -- name: GameJunction :exec
 INSERT INTO player_games (user_id, game_id, color)
 VALUES ($1, $2, $3);
+
+-- name: MakeMove :exec
+UPDATE games
+SET current_state = $2, history = $3
+WHERE id = $1;

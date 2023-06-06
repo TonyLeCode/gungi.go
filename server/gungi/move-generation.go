@@ -73,6 +73,14 @@ func (b *Board) MakeMove(piece int, fromCoord int, moveType int, toCoord int) bo
 			b.History = append(b.History, str)
 		case READY:
 			b.Ready[b.TurnColor] = true
+			if b.TurnColor == 0 {
+				str := "w-ready"
+				b.History = append(b.History, str)
+			} else {
+				str := "b-ready"
+				b.History = append(b.History, str)
+
+			}
 			b.TurnColor = GetOppositeColor(b.TurnColor)
 		}
 
@@ -135,10 +143,12 @@ func (b *Board) UndoMove() {
 
 func (b *Board) ValidateMove(piece int, fromCoord int, moveType int, toCoord int) bool {
 	if (!b.Ready[0] || !b.Ready[1]) && (moveType != PLACE && moveType != READY) {
+		log.Println("not ready")
 		return false
 	}
 
 	if GetColor(piece) != b.TurnColor {
+		log.Println("wrong color")
 		return false
 	}
 
