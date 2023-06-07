@@ -3,7 +3,7 @@ export interface dragAndDropOptions {
 	dragEvent?: (items?: dragAndDropItems) => void;
 	releaseEvent?: (items?: dragAndDropItems) => void;
 	setDragItem?: unknown;
-	active?: boolean;
+	active?: boolean | (() => boolean);
 }
 export interface dropOptions {
 	mouseEnterEvent?: (items?: dragAndDropItems) => void;
@@ -112,6 +112,17 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 	}
 
 	function startDragMouse(e: MouseEvent) {
+		let verifyActive: boolean;
+		if (typeof active === 'function') {
+			verifyActive = active()
+		} else {
+			verifyActive = active
+		}
+
+		if (!verifyActive) {
+			return
+		}
+
 		initX = e.clientX;
 		initY = e.clientY;
 		const target = e.target as HTMLElement;
@@ -136,7 +147,7 @@ export function dragAndDrop(node: HTMLElement, options = {} as dragAndDropOption
 		}
 	}
 
-	active && node.addEventListener('mousedown', startDragMouse);
+	node.addEventListener('mousedown', startDragMouse);
 	return {
 		destroy() {
 			node.removeEventListener('mousedown', startDragMouse);

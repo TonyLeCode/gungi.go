@@ -180,7 +180,7 @@ func (b *Board) BoardToFen() string {
 	for i := 0; i < PLAYABLE_SQUARE_NUM; i++ {
 		square := b.BoardSquares[IndexToSquare(i)]
 
-		if i%9 == 0 && i != 0 {
+		if i%9 == 0 && i != 0 && skipIndex != 0 {
 			fenString.WriteString(strconv.Itoa(skipIndex) + "/")
 			skipIndex = 0
 		}
@@ -233,12 +233,12 @@ func (b *Board) BoardToFen() string {
 	if b.Ready[0] {
 		fenString.WriteString("1")
 	} else {
-		fenString.WriteString("1")
+		fenString.WriteString("0")
 	}
 	if b.Ready[1] {
 		fenString.WriteString("1")
 	} else {
-		fenString.WriteString("1")
+		fenString.WriteString("0")
 	}
 
 	return fenString.String()

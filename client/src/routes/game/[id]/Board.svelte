@@ -2,13 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
-	import {
-		DecodePiece,
-		FenToBoard,
-		GetImage,
-		GetPieceColor,
-		PieceIsPlayerColor,
-	} from '$lib/utils/utils';
+	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
 
 	// export const boardState = new Array(81).fill(['']);
 	export let gameData;
@@ -37,47 +31,49 @@
 	$: rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
 
 	function dropOptions(index: number, square: number[]) {
-		let correctedIndex = index
+		let correctedIndex = index;
 		let piece;
-		if(square.length > 0){
-			piece = square[square.length-1]
+		if (square.length > 0) {
+			piece = square[square.length - 1];
 		}
-		if(reversed){
-			correctedIndex = 80 - index
+		if (reversed) {
+			correctedIndex = 80 - index;
 		}
 
 		const items = {
 			coordIndex: correctedIndex,
 			piece: piece,
 			// stack: boardState[index],
-		}
+		};
 		return {
 			mouseEnterItem: items,
 		};
 	}
 
-	function dropEvent(items?: dragAndDropItems){
-		if(items?.hoverItem){
-			dispatch('drop', items)
+	function dropEvent(items?: dragAndDropItems) {
+		if (items?.hoverItem) {
+			dispatch('drop', items);
 		}
 	}
 
-	function dndOptions(index: number, piece: number){
-		let correctedIndex = index
-		if(reversed){
-			correctedIndex = 80 - index
+	function dndOptions(index: number, piece: number) {
+		let correctedIndex = index;
+		function isActive() {
+			return PieceIsPlayerColor(piece, playerColor) && isPlayerTurn;
+		}
+		if (reversed) {
+			correctedIndex = 80 - index;
 		}
 		const square = {
 			coordIndex: correctedIndex,
 			piece: piece,
-		}
+		};
 		return {
 			releaseEvent: dropEvent,
 			setDragItem: square,
-			active: PieceIsPlayerColor(piece, playerColor) && isPlayerTurn
-		}
+			active: isActive,
+		};
 	}
-
 </script>
 
 <div class="board">
@@ -90,7 +86,13 @@
 			}}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:dragAndDrop={dndOptions(index, square[square.length-1])} class={`piece ${PieceIsPlayerColor(square[square.length-1], playerColor) && isPlayerTurn ? 'pointer' : ''}`} src={GetImage(square)} alt="" />
+				<img
+					draggable="false"
+					use:dragAndDrop={dndOptions(index, square[square.length - 1])}
+					class={`piece ${PieceIsPlayerColor(square[square.length - 1], playerColor) && isPlayerTurn ? 'pointer' : ''}`}
+					src={GetImage(square)}
+					alt=""
+				/>
 				{#if square.length > 1}
 					<img
 						draggable="false"
@@ -117,7 +119,6 @@
 </div>
 
 <style>
-
 	.pointer {
 		cursor: pointer;
 	}
@@ -141,10 +142,10 @@
 		position: relative;
 	}
 	.square:hover::before {
-		background-color: rgba(255, 131, 82, .2);
-		border: 4px rgba(255, 131, 82, .5) solid;
+		background-color: rgba(255, 131, 82, 0.2);
+		border: 4px rgba(255, 131, 82, 0.5) solid;
 		content: '';
-		display:block;
+		display: block;
 		position: absolute;
 		left: 0;
 		right: 0;

@@ -15,6 +15,10 @@
 
 	const decodedPiece = DecodePiece(piece).toLowerCase();
 
+	function isActive(){
+		return color == playerColor && isPlayerTurn
+	}
+
 	function dropEvent(items?: dragAndDropItems){
 		if(items?.hoverItem){
 			dispatch('drop', items)
@@ -22,14 +26,18 @@
 	}
 
 	function dndOptions(piece: number) {
+		let correctedPiece = piece;
+		if (color == 'b') {
+			correctedPiece = correctedPiece + 13
+		}
 		const items = {
-			piece: piece,
+			piece: correctedPiece,
 			from: 'hand'
 		}
 		return {
 			releaseEvent: dropEvent,
 			setDragItem: items,
-			active: color == playerColor && isPlayerTurn
+			active: isActive
 		};
 	}
 </script>

@@ -56,48 +56,55 @@
 	$: turnColor = boardState.current_state.split(' ')[2];
 	$: turnPlayer = turnColor === 'w' ? boardState.player1 : boardState.player2;
 	$: playerColor = boardState.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
-	$: isPlayerTurn = turnColor === playerColor
+	$: isPlayerTurn = turnColor === playerColor;
 
 	function handleDropEvent(event: CustomEvent) {
 		// console.log(event.detail);
-		disableAttackDialogue = false;
-		disableStackDialogue = false;
+		disableAttackDialogue = true;
+		disableStackDialogue = true;
 
 		const { dragItem, hoverItem } = event.detail;
 		if (dragItem?.coordIndex === hoverItem?.coordIndex) {
 			return;
 		}
-		let fromCoord = '';
-		if (dragItem.coordIndex) {
-			const [file, rank] = IndexToCoords(dragItem.coordIndex);
-			fromCoord = `From: ${file.toUpperCase()}${rank} \n`;
-		} else if (dragItem.from) {
-			fromCoord = 'From: Hand \n';
-		}
-		const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
-		let destinationPieceText = 'No piece at destination';
-		if (hoverItem.piece != null) {
-			destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`;
-		}
+		// let fromCoord = '';
+		// if (dragItem.coordIndex) {
+		// 	const [file, rank] = IndexToCoords(dragItem.coordIndex);
+		// 	fromCoord = `From: ${file.toUpperCase()}${rank} \n`;
+		// } else if (dragItem.from) {
+		// 	fromCoord = 'From: Hand \n';
+		// }
+		// const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
+		// let destinationPieceText = 'No piece at destination';
+		// if (hoverItem.piece != null) {
+		// 	destinationPieceText = `Destination Piece: ${DecodePieceFull(hoverItem.piece)}`;
+		// }
 
 		if (dragItem.coordIndex) {
 			const [file, rank] = IndexToCoords(dragItem.coordIndex);
 			const [file2, rank2] = IndexToCoords(hoverItem.coordIndex);
+			let piece: number;
+			if (dragItem.from === 'hand') {
+				piece = dragItem.piece;
+			} else {
+				const fromSquare = currentState[dragItem?.coordIndex];
+				piece = fromSquare[fromSquare.length - 1];
+			}
 			moveDialogueText = `${DecodePieceFull(
-				dragItem.piece
+				piece
 			)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
 		}
-		if (GetPieceColor(hoverItem?.piece) == playerColor) {
-			disableAttackDialogue = true;
+
+		const fromSquare = currentState[hoverItem?.coordIndex];
+		if (GetPieceColor(fromSquare[fromSquare.length - 1]) != playerColor) {
+			disableAttackDialogue = false;
 		}
 
 		const stack = currentState[hoverItem.coordIndex];
-		if (stack?.length == 3) {
-			disableStackDialogue = true;
+		if (stack?.length != 3) {
+			disableStackDialogue = false;
 		}
 		if (stack?.length != 0 && !dragItem.from) {
-			// console.log(dragItem.coordIndex);
-			// console.log(IndexToCoords(dragItem.coordIndex));
 			const square = currentState[dragItem.coordIndex];
 
 			moveDialogueInfo = {
@@ -107,12 +114,43 @@
 				toCoord: hoverItem.coordIndex,
 			};
 			showMoveDialogue = true;
+			return;
 		} else {
-			alert(
-				`${fromCoord}From Piece: ${DecodePieceFull(
-					dragItem.piece
-				)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
-			);
+			// alert(
+			// 	`${fromCoord}From Piece: ${DecodePieceFull(
+			// 		dragItem.piece
+			// 	)} \nDestination: ${file2.toUpperCase()}${rank2} \n${destinationPieceText}`
+			// );
+		}
+
+		if (dragItem.from === 'hand') {
+			const move = {
+				fromPiece: dragItem.piece,
+				fromCoord: -1,
+				moveType: 3,
+				toCoord: hoverItem.coordIndex,
+			};
+			const msg = {
+				type: 'makeMove',
+				payload: move,
+			};
+
+			$ws.send(JSON.stringify(msg));
+		} else {
+			const square = currentState[dragItem.coordIndex];
+			const move = {
+				fromPiece: square[square.length - 1],
+				fromCoord: dragItem.coordIndex,
+				moveType: 0,
+				toCoord: hoverItem.coordIndex,
+			};
+
+			const msg = {
+				type: 'makeMove',
+				payload: move,
+			};
+
+			$ws.send(JSON.stringify(msg));
 		}
 	}
 
