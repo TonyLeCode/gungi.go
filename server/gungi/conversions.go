@@ -23,6 +23,11 @@ func CoordsToNotation(square int) (string, string) {
 	return InvertRank(file), FileToLetter(rank)
 }
 
+func SquareToIndex(index int) int {
+	file, rank := SquareToCoords(index)
+	return (file-1)*9 + (rank - 1)
+}
+
 func FileToLetter(rank int) string {
 	switch rank {
 	case 1:

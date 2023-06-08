@@ -19,6 +19,7 @@
 	export let data;
 	let boardState = data.data;
 	$: currentState = FenToBoard(boardState.current_state);
+	console.log(boardState)
 	// console.log(data?.params.id);
 	// console.log(data);
 	// for(let i in hands[0]){

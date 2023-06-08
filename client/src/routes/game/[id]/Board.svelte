@@ -74,12 +74,28 @@
 			active: isActive,
 		};
 	}
+
+	let moveIndices:number[] = [];
+	let highlightIndex:number;
+
+	function onClick(index) {
+		const square = boardState[index]
+		if (square.length === 0){
+			highlightIndex = -1
+			moveIndices = []
+			return
+		}
+		highlightIndex = index
+		// console.log(index);
+	}
 </script>
 
 <div class="board">
 	{#each boardState as square, index}
 		<div
+			on:mousedown={() => {onClick(index)}}
 			class="square"
+			class:highlight="{highlightIndex === index}"
 			use:drop={dropOptions(index, square)}
 			on:focus={() => {
 				console.log('');
@@ -144,6 +160,18 @@
 	.square:hover::before {
 		background-color: rgba(255, 131, 82, 0.2);
 		border: 4px rgba(255, 131, 82, 0.5) solid;
+		content: '';
+		display: block;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+	}
+
+	.board .highlight::before {
+		background-color: rgba(255, 131, 82, 0.432);
+		border: 4px rgba(255, 131, 82, 0.705) solid;
 		content: '';
 		display: block;
 		position: absolute;

@@ -74,22 +74,48 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 	return c.JSON(http.StatusOK, games)
 }
 
-func (dbConn *DBConn) GetGame(id string) (db.GetGameRow, error) {
+type GameWithMoves struct {
+	db.GetGameRow
+	MoveList map[int][]int `json:"moveList"`
+}
+
+func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 	ctx := context.Background()
 
 	uuid, err := uuid.Parse(id)
 	if err != nil {
-		return db.GetGameRow{}, err
+		return GameWithMoves{}, err
 	}
 
 	queries := db.New(dbConn.PostgresDB)
 
 	game, err := queries.GetGame(ctx, uuid)
 	if err != nil {
-		return db.GetGameRow{}, err
+		return GameWithMoves{}, err
 	}
 
-	return game, nil
+	newBoard := gungi.Board{}
+	err = newBoard.SetBoardFromFen(game.CurrentState)
+	if err != nil {
+		return GameWithMoves{}, err
+	}
+	newBoard.SetMoveHistory(game.History.String)
+
+	_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+	correctedLegalMoves := make(map[int][]int)
+	for key, element := range legalMoves {
+		correctedKey := gungi.SquareToIndex(key)
+		for _, index := range element {
+			correctedElement := gungi.SquareToIndex(index)
+			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
+		}
+	}
+	gameWithMoves := GameWithMoves{
+		GetGameRow: game,
+		MoveList:   correctedLegalMoves,
+	}
+
+	return gameWithMoves, nil
 }
 
 func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
@@ -108,7 +134,28 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	return c.JSON(http.StatusOK, game)
+	newBoard := gungi.Board{}
+	err = newBoard.SetBoardFromFen(game.CurrentState)
+	if err != nil {
+		return err
+	}
+	newBoard.SetMoveHistory(game.History.String)
+
+	_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+	correctedLegalMoves := make(map[int][]int)
+	for key, element := range legalMoves {
+		correctedKey := gungi.SquareToIndex(key)
+		for _, index := range element {
+			correctedElement := gungi.SquareToIndex(index)
+			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
+		}
+	}
+	gameWithMoves := GameWithMoves{
+		GetGameRow: game,
+		MoveList:   correctedLegalMoves,
+	}
+
+	return c.JSON(http.StatusOK, gameWithMoves)
 }
 
 func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType string, username1 string, username2 string) (string, error) {

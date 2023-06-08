@@ -313,11 +313,11 @@ func getRoomList(ctx context.Context, dbs *api.DBConn, s *melody.Session, checkR
 	return payload, nil
 }
 
-func getGame(dbs *api.DBConn, roomID string) (db.GetGameRow, error) {
+func getGame(dbs *api.DBConn, roomID string) (api.GameWithMoves, error) {
 	game, err := dbs.GetGame(roomID)
 	if err != nil {
 		log.Println("Error: ", err)
-		return db.GetGameRow{}, err
+		return api.GameWithMoves{}, err
 	}
 
 	// msgResponse := MsgResponse{
@@ -409,6 +409,17 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 		if err != nil {
 			return err
 		}
+
+		_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+		correctedLegalMoves := make(map[int][]int)
+		for key, element := range legalMoves {
+			correctedKey := gungi.SquareToIndex(key)
+			for _, index := range element {
+				correctedElement := gungi.SquareToIndex(index)
+				correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
+			}
+		}
+		game.MoveList = correctedLegalMoves
 
 		msgResponse := MsgResponse{
 			Type:    "game",
@@ -616,7 +627,7 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 				user2 = acceptedRoom.Host
 			}
 		}
-		gameID, err := dbs.CreateGame("9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w", acceptedRoom.Rules, acceptedRoom.Type, user1, user2)
+		gameID, err := dbs.CreateGame("9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00", acceptedRoom.Rules, acceptedRoom.Type, user1, user2)
 		if err != nil {
 			log.Println("Error: ", err)
 			return err
