@@ -11,8 +11,23 @@
 	export let drop: dropFunction;
 	export let playerColor: string;
 	export let isPlayerTurn: boolean;
+	export let moveList: {[key: number]: number[]};
+	$: correctedMoveList = transformObject(moveList, reversed)
+	console.log(moveList)
 
 	const dispatch = createEventDispatcher();
+
+	function transformObject(obj: { [key: number]: number[] }, shouldCreateNewObject: boolean): { [key: number]: number[] } {
+  const transformedObj: { [key: number]: number[] } = shouldCreateNewObject ? {} : obj;
+
+  for (const key in obj) {
+    const transformedKey = 80 - parseInt(key, 10);
+    const transformedValues = obj[key].map(value => 80 - value);
+    transformedObj[transformedKey] = transformedValues;
+  }
+
+  return transformedObj;
+}
 
 	function GetImage2(tier: number, piece: number): string {
 		const encodedPiece = DecodePiece(piece).toLowerCase();
@@ -86,7 +101,13 @@
 			return
 		}
 		highlightIndex = index
+		moveIndices = correctedMoveList[highlightIndex]
 		// console.log(index);
+	}
+
+	function moveHighlight(index: number): boolean {
+		// console.log(correctedMoveList[highlightIndex])
+		return correctedMoveList[highlightIndex]?.includes(index)
 	}
 </script>
 
@@ -95,7 +116,8 @@
 		<div
 			on:mousedown={() => {onClick(index)}}
 			class="square"
-			class:highlight="{highlightIndex === index}"
+			class:highlight={highlightIndex === index}
+			class:move-highlight={moveIndices?.includes(index)}
 			use:drop={dropOptions(index, square)}
 			on:focus={() => {
 				console.log('');
@@ -181,7 +203,7 @@
 		bottom: 0;
 	}
 
-	/* .square:hover::after {
+	.board .move-highlight::after {
 		border-radius: 50%;
 		content: '';
 		display:block;
@@ -195,7 +217,9 @@
 		height: 25px;
 		margin:auto;
 		z-index: 2;
-	} */
+		user-select: none;
+		pointer-events: none;
+	}
 
 	.file {
 		display: grid;

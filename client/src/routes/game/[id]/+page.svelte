@@ -19,6 +19,7 @@
 	export let data;
 	let boardState = data.data;
 	$: currentState = FenToBoard(boardState.current_state);
+	$: moveList = boardState.moveList
 	console.log(boardState)
 	// console.log(data?.params.id);
 	// console.log(data);
@@ -219,6 +220,7 @@
 		<Board
 			{dragAndDrop}
 			{drop}
+			{moveList}
 			{playerColor}
 			on:drop={handleDropEvent}
 			gameData={currentState}
