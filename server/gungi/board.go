@@ -72,7 +72,7 @@ func (b *Board) InitializeBoard() {
 func (b *Board) SetBoardFromFen(fen string) error {
 	//TODO maybe make easier to read with regex
 	b.InitializeBoard()
-	// index 0 holds piece position, index 1 holds hand piece count, index 2 is color turn
+	// index 0 holds piece position, index 1 holds hand piece count, index 2 is color turn, index 3 is ready
 	fields := strings.Split(fen, " ")
 
 	if len(fields) != 4 {
@@ -180,11 +180,6 @@ func (b *Board) BoardToFen() string {
 	for i := 0; i < PLAYABLE_SQUARE_NUM; i++ {
 		square := b.BoardSquares[IndexToSquare(i)]
 
-		if i%9 == 0 && i != 0 && skipIndex != 0 {
-			fenString.WriteString(strconv.Itoa(skipIndex) + "/")
-			skipIndex = 0
-		}
-
 		if square == nil {
 			skipIndex++
 		} else if square.Value == -1 {
@@ -199,18 +194,33 @@ func (b *Board) BoardToFen() string {
 				pointer = pointer.Next
 			}
 
-			if skipIndex != 0 {
-				fenString.WriteString(strconv.Itoa(skipIndex) + ",")
-				skipIndex = 0
-			}
-			fenString.WriteString(stackString.String())
-
-			if i%8 != 0 || i == 0 {
+			if skipIndex != i%9 && skipIndex != 0 {
 				fenString.WriteString(",")
 			}
+
+			if skipIndex != 0 {
+				fenString.WriteString(strconv.Itoa(skipIndex))
+				skipIndex = 0
+			}
+
+			if i%9 != 0 || skipIndex != 0 {
+				fenString.WriteString(",")
+			}
+
+			fenString.WriteString(stackString.String())
 		}
-		if i == 80 && skipIndex != 0 {
-			fenString.WriteString(strconv.Itoa(skipIndex))
+
+		if i%9 == 8 {
+			if skipIndex != 0 {
+				if skipIndex != 9 {
+					fenString.WriteString(",")
+				}
+				fenString.WriteString(strconv.Itoa(skipIndex))
+				skipIndex = 0
+			}
+			if i != 80 {
+				fenString.WriteString("/")
+			}
 		}
 	}
 
