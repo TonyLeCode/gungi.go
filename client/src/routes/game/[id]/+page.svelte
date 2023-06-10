@@ -11,7 +11,7 @@
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
-	import { dragAndDrop, drop } from '$lib/utils/dragAndDrop';
+	import { createDragAndDrop } from '$lib/utils/dragAndDrop';
 	import MoveDialogue from './MoveDialogue.svelte';
 	import { ws, wsConnState } from '$lib/store/websocket';
 	import { onMount } from 'svelte';
@@ -27,6 +27,8 @@
 	// 	console.log(`/pieces/w1${encoded}.svg`)
 	// }
 	//FenToBoard on board size
+
+	const {dragAndDrop, drop} = createDragAndDrop()
 
 	interface MoveType {
 		fromPiece: number;
