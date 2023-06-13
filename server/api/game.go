@@ -150,6 +150,8 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 		}
 	}
+	log.Println(correctedLegalMoves)
+	log.Println("fen: ", newBoard.BoardToFen())
 	gameWithMoves := GameWithMoves{
 		GetGameRow: game,
 		MoveList:   correctedLegalMoves,

@@ -387,6 +387,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 		newBoard.SetMoveHistory(game.History.String)
 		newBoard.PrintBoard()
 		log.Println(move)
+		log.Println("fen: ", newBoard.BoardToFen())
 		// log.Println(newBoard.TurnColor)
 		// log.Println(gungi.GetColor(move.FromPiece))
 		isValid := newBoard.MakeMove(move.FromPiece, gungi.IndexToSquare(move.FromCoord), move.MoveType, gungi.IndexToSquare(move.ToCoord))
@@ -394,6 +395,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			return errors.New("invalid move")
 		}
 		newBoard.PrintBoard()
+		log.Println("fen: ", newBoard.BoardToFen())
 
 		game.CurrentState = newBoard.BoardToFen()
 		game.History.String = newBoard.SerializeHistory()
@@ -420,6 +422,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			}
 		}
 		game.MoveList = correctedLegalMoves
+		log.Println(correctedLegalMoves)
 
 		msgResponse := MsgResponse{
 			Type:    "game",
@@ -495,17 +498,13 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 		err := json.Unmarshal(msg.Payload, &roomid)
 		if err != nil {
 			log.Println("Error: ", err)
+			return err
 		}
 
-		val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
+		roomList, err := RedisGetGameRooms(dbs.RedisClient)
 		if err != nil {
 			log.Println("Error: ", err)
-		}
-
-		var roomList []SerializedGameRoom
-		err = json.Unmarshal([]byte(val.(string)), &roomList)
-		if err != nil {
-			log.Println("Error: ", err)
+			return err
 		}
 
 		var filteredRoomList []SerializedGameRoom
@@ -549,20 +548,7 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 			return err
 		}
 
-		err = RedisRoomExists(dbs.RedisClient, "game_rooms")
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		var roomList []SerializedGameRoom
-		err = json.Unmarshal([]byte(val.(string)), &roomList)
+		roomList, err := RedisGetGameRooms(dbs.RedisClient)
 		if err != nil {
 			log.Println("Error: ", err)
 			return err
@@ -653,4 +639,28 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 
 	}
 	return nil
+}
+
+func RedisGetGameRooms(r *redis.Client) ([]SerializedGameRoom, error) {
+	ctx := context.Background()
+	err := RedisRoomExists(r, "game_rooms")
+	if err != nil {
+		log.Println("Error: ", err)
+		return []SerializedGameRoom{}, err
+	}
+
+	val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+	if err != nil {
+		log.Println("Error: ", err)
+		return []SerializedGameRoom{}, err
+	}
+
+	var roomList []SerializedGameRoom
+	err = json.Unmarshal([]byte(val.(string)), &roomList)
+	if err != nil {
+		log.Println("Error: ", err)
+		return []SerializedGameRoom{}, err
+	}
+
+	return roomList, nil
 }

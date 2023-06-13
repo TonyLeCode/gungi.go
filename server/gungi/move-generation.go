@@ -378,12 +378,12 @@ func (b *Board) GenerateLegalMoves() (bool, bool, bool, XRay, int, map[int][]int
 		checkmate = true
 	}
 
-	log.Println("marshal moves: ", marshalHashmap)
-	log.Println("enemy xray: ", enemyXRaySquares)
-	log.Println("enemy xray hashmap: ", xrayHashmap)
-	log.Println("inCheck: ", inCheck)
-	log.Println("inDoubleCheck: ", inDoubleCheck)
-	log.Println("checkMate: ", checkmate)
+	// log.Println("marshal moves: ", marshalHashmap)
+	// log.Println("enemy xray: ", enemyXRaySquares)
+	// log.Println("enemy xray hashmap: ", xrayHashmap)
+	// log.Println("inCheck: ", inCheck)
+	// log.Println("inDoubleCheck: ", inDoubleCheck)
+	// log.Println("checkMate: ", checkmate)
 	log.Println("current player moves: ", filteredMoves)
 	return inCheck, inDoubleCheck, checkmate, enemyXRaySquares, attackPiece, filteredMoves
 }
