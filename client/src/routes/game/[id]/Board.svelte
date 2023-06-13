@@ -3,6 +3,7 @@
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
 	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
+  import { nanoid } from 'nanoid';
 
 	// export const boardState = new Array(81).fill(['']);
 	export let gameData;
@@ -11,23 +12,31 @@
 	export let drop: dropFunction;
 	export let playerColor: string;
 	export let isPlayerTurn: boolean;
-	export let moveList: {[key: number]: number[]};
-	$: correctedMoveList = transformObject(moveList, reversed)
-	console.log(moveList)
+	export let moveList: { [key: number]: number[] };
+	$: correctedMoveList = transformObject(moveList, reversed);
+	// $: console.log(moveList);
+	// $: console.log(correctedMoveList);
 
 	const dispatch = createEventDispatcher();
 
-	function transformObject(obj: { [key: number]: number[] }, shouldCreateNewObject: boolean): { [key: number]: number[] } {
-  const transformedObj: { [key: number]: number[] } = shouldCreateNewObject ? {} : obj;
+	function transformObject(
+		obj: { [key: number]: number[] },
+		shouldCreateNewObject: boolean
+	): { [key: number]: number[] } {
+		const transformedObj: { [key: number]: number[] } = {};
 
-  for (const key in obj) {
-    const transformedKey = 80 - parseInt(key, 10);
-    const transformedValues = obj[key].map(value => 80 - value);
-    transformedObj[transformedKey] = transformedValues;
-  }
+		if (shouldCreateNewObject) {
+			for (const key in obj) {
+				const transformedKey = 80 - parseInt(key, 10);
+				const transformedValues = obj[key].map((value) => 80 - value);
+				transformedObj[transformedKey] = transformedValues;
+			}
+		} else {
+			return obj
+		}
 
-  return transformedObj;
-}
+		return transformedObj;
+	}
 
 	function GetImage2(tier: number, piece: number): string {
 		const encodedPiece = DecodePiece(piece).toLowerCase();
@@ -69,6 +78,8 @@
 		if (items?.hoverItem) {
 			dispatch('drop', items);
 		}
+		highlightIndex = -1;
+		moveIndices = [];
 	}
 
 	function dndOptions(index: number, piece: number) {
@@ -90,33 +101,40 @@
 		};
 	}
 
-	let moveIndices:number[] = [];
-	let highlightIndex:number;
+	let moveIndices: number[] = [];
+	let highlightIndex: number;
 
 	function onClick(index) {
-		const square = boardState[index]
-		if (square.length === 0){
-			highlightIndex = -1
-			moveIndices = []
-			return
+		const square = boardState[index];
+		console.log(String(index) + JSON.stringify(square))
+		if (square.length === 0) {
+			highlightIndex = -1;
+			moveIndices = [];
+			return;
 		}
-		highlightIndex = index
-		moveIndices = correctedMoveList[highlightIndex]
-		// console.log(index);
+		if (GetPieceColor(square[square.length - 1]) != playerColor) {
+			highlightIndex = -1;
+			moveIndices = [];
+			return;
+		}
+		highlightIndex = index;
+		moveIndices = correctedMoveList[highlightIndex];
 	}
 
 	function moveHighlight(index: number): boolean {
 		// console.log(correctedMoveList[highlightIndex])
-		return correctedMoveList[highlightIndex]?.includes(index)
+		return correctedMoveList[highlightIndex]?.includes(index);
 	}
 </script>
 
 <div class="board">
-	{#each boardState as square, index}
+	{#each boardState as square, index (String(index) + JSON.stringify(square))}
 		<div
-			on:mousedown={() => {onClick(index)}}
+			on:mousedown={() => {
+				onClick(index);
+			}}
 			class="square"
-			class:highlight={highlightIndex === index}
+			class:highlight={highlightIndex == index}
 			class:move-highlight={moveIndices?.includes(index)}
 			use:drop={dropOptions(index, square)}
 			on:focus={() => {
@@ -206,16 +224,16 @@
 	.board .move-highlight::after {
 		border-radius: 50%;
 		content: '';
-		display:block;
+		display: block;
 		position: absolute;
 		left: 0;
 		right: 0;
 		top: 0;
 		bottom: 0;
-		background-color:rgba(228, 74, 3, 0.699);
+		background-color: rgba(228, 74, 3, 0.45);
 		width: 25px;
 		height: 25px;
-		margin:auto;
+		margin: auto;
 		z-index: 2;
 		user-select: none;
 		pointer-events: none;

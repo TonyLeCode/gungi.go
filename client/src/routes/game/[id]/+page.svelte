@@ -19,8 +19,8 @@
 	export let data;
 	let boardState = data.data;
 	$: currentState = FenToBoard(boardState.current_state);
-	$: moveList = boardState.moveList
-	console.log(boardState)
+	$: moveList = boardState.moveList;
+	// console.log(boardState);
 	// console.log(data?.params.id);
 	// console.log(data);
 	// for(let i in hands[0]){
@@ -29,7 +29,7 @@
 	// }
 	//FenToBoard on board size
 
-	const {dragAndDrop, drop} = createDragAndDrop()
+	const { dragAndDrop, drop } = createDragAndDrop();
 
 	interface MoveType {
 		fromPiece: number;
@@ -94,9 +94,7 @@
 				const fromSquare = currentState[dragItem?.coordIndex];
 				piece = fromSquare[fromSquare.length - 1];
 			}
-			moveDialogueText = `${DecodePieceFull(
-				piece
-			)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
+			moveDialogueText = `${DecodePieceFull(piece)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
 		}
 
 		const fromSquare = currentState[hoverItem?.coordIndex];
@@ -173,9 +171,7 @@
 			const res = JSON.parse(event.data);
 			switch (res.type) {
 				case 'game':
-					// console.log(JSON.stringify(res.payload))
 					boardState = res.payload;
-					// boardState = boardState;
 					break;
 			}
 		} catch (err) {
@@ -239,12 +235,12 @@
 					menuState = 0;
 				}}>hand</button
 			>
-			<button
+			<!-- <button
 				class={`tab divider ${menuState === 1 ? 'active' : ''}`}
 				on:click={() => {
 					menuState = 1;
 				}}>chat</button
-			>
+			> -->
 			<button
 				class={`tab divider ${menuState === 2 ? 'active' : ''}`}
 				on:click={() => {
@@ -268,7 +264,7 @@
 		{:else if menuState === 1}
 			<Chat />
 		{:else if menuState === 2}
-			<Replay />
+			<Replay moveHistory={boardState.history.String.split(" ")} />
 		{/if}
 	</aside>
 	<MoveDialogue
@@ -337,20 +333,4 @@
 		// margin-top: auto;
 		// margin-bottom: auto;
 	}
-
-	/* section {
-		max-width: 70rem;
-		margin: 0 auto;
-		margin-top: 2rem;
-		padding: 0 2rem;
-		text-align: center;
-	}
-
-	.gameList {
-		display: grid;
-		gap: 1rem;
-		grid-template-columns: repeat(auto-fit, 20rem);
-		padding: 1rem;
-		justify-content: center;
-	} */
 </style>
