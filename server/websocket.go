@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/TonyLeCode/gungi.go/server/auth"
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
+	"github.com/TonyLeCode/gungi.go/server/ruleset"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
@@ -379,19 +381,19 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			return err
 		}
 
-		newBoard := gungi.Board{}
+		newBoard := ruleset.NewBoard("revised")
 		err = newBoard.SetBoardFromFen(game.CurrentState)
 		if err != nil {
 			return err
 		}
-		newBoard.SetMoveHistory(game.History.String)
+		newBoard.SetHistory(strings.Split(game.History.String, " "))
 		newBoard.PrintBoard()
 		log.Println(move)
 		log.Println("fen: ", newBoard.BoardToFen())
 		// log.Println(newBoard.TurnColor)
 		// log.Println(gungi.GetColor(move.FromPiece))
-		isValid := newBoard.MakeMove(move.FromPiece, gungi.IndexToSquare(move.FromCoord), move.MoveType, gungi.IndexToSquare(move.ToCoord))
-		if !isValid {
+		err = newBoard.MakeMove(move.FromPiece, gungi.IndexToSquare(move.FromCoord), move.MoveType, gungi.IndexToSquare(move.ToCoord))
+		if err != nil {
 			return errors.New("invalid move")
 		}
 		newBoard.PrintBoard()
@@ -412,7 +414,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			return err
 		}
 
-		_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+		_, legalMoves := newBoard.GetLegalMoves()
 		correctedLegalMoves := make(map[int][]int)
 		for key, element := range legalMoves {
 			correctedKey := gungi.SquareToIndex(key)

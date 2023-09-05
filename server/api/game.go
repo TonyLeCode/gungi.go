@@ -4,9 +4,11 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
+	"github.com/TonyLeCode/gungi.go/server/ruleset"
 	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
 
@@ -15,16 +17,15 @@ import (
 )
 
 type SerializedGame struct {
-	Fen              string        `json:"fen"`
-	History          string        `json:"history"`
-	InCheck          bool          `json:"inCheck"`
-	PawnDrop         []int         `json:"pawnDrop"`
-	InvalidPawnFiles []int         `json:"invalidPawnFiles"`
-	MoveList         map[int][]int `json:"moveList"`
+	Fen         string        `json:"fen"`
+	History     string        `json:"history"`
+	CheckStatus string        `json:"checkStatus"`
+	Ruleset     string        `json:"ruleset"`
+	MoveList    map[int][]int `json:"moveList"`
 }
 
 func (dbConn *DBConn) GetOngoingGame(c echo.Context) error {
-	board := gungi.Board{}
+	board := ruleset.NewBoard("revised")
 	serializedGame := SerializedGame{}
 
 	//get fen from database
@@ -32,25 +33,25 @@ func (dbConn *DBConn) GetOngoingGame(c echo.Context) error {
 	// get history from database
 	// serializedGame.History =
 
-	inCheck, inDoubleCheck, _, enemyXRaySquares, attackPiece, filteredMoves := board.GenerateLegalMoves()
+	checkStatus, moves := board.GetLegalMoves()
 
-	serializedGame.InCheck = inCheck
-	serializedGame.MoveList = filteredMoves
+	serializedGame.CheckStatus = checkStatus
+	serializedGame.MoveList = moves
 
-	if inCheck && !inDoubleCheck {
-		inbetween := []int{}
-		if len(enemyXRaySquares.Path) != 0 {
-			for _, move := range enemyXRaySquares.Path {
-				if move.InBetween {
-					inbetween = append(inbetween, move.Coordinate)
-				}
-			}
-			inbetween = append(inbetween, enemyXRaySquares.Coordinate)
-			serializedGame.PawnDrop = inbetween
-		} else if attackPiece != -1 {
-			serializedGame.PawnDrop[0] = attackPiece
-		}
-	}
+	// if inCheck && !inDoubleCheck {
+	// 	inbetween := []int{}
+	// 	if len(enemyXRaySquares.Path) != 0 {
+	// 		for _, move := range enemyXRaySquares.Path {
+	// 			if move.InBetween {
+	// 				inbetween = append(inbetween, move.Coordinate)
+	// 			}
+	// 		}
+	// 		inbetween = append(inbetween, enemyXRaySquares.Coordinate)
+	// 		serializedGame.PawnDrop = inbetween
+	// 	} else if attackPiece != -1 {
+	// 		serializedGame.PawnDrop[0] = attackPiece
+	// 	}
+	// }
 
 	return nil
 }
@@ -94,14 +95,15 @@ func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 		return GameWithMoves{}, err
 	}
 
-	newBoard := gungi.Board{}
+	//TODO properly get ruleset
+	newBoard := ruleset.NewBoard("revised")
 	err = newBoard.SetBoardFromFen(game.CurrentState)
 	if err != nil {
 		return GameWithMoves{}, err
 	}
-	newBoard.SetMoveHistory(game.History.String)
+	newBoard.SetHistory(strings.Split(game.History.String, " "))
 
-	_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
 		correctedKey := gungi.SquareToIndex(key)
@@ -134,14 +136,14 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	newBoard := gungi.Board{}
+	newBoard := ruleset.NewBoard("revised")
 	err = newBoard.SetBoardFromFen(game.CurrentState)
 	if err != nil {
 		return err
 	}
-	newBoard.SetMoveHistory(game.History.String)
+	newBoard.SetHistory(strings.Split(game.History.String, " "))
 
-	_, _, _, _, _, legalMoves := newBoard.GenerateLegalMoves()
+	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
 		correctedKey := gungi.SquareToIndex(key)

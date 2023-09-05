@@ -1,7 +1,5 @@
 package session
 
-import "github.com/TonyLeCode/gungi.go/server/gungi"
-
 // var rooms = make(map[string][]*websocket.Conn)
 
 type Users struct {
@@ -11,8 +9,8 @@ type Users struct {
 
 type Session struct {
 	GameId     string
-	BoardState gungi.Board
-	History    []string
+	BoardState string
+	History    string
 	Users      Users
 }
 

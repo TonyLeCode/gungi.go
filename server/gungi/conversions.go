@@ -1,8 +1,15 @@
 package gungi
 
+func OppositeColor(color int) int {
+	if color == 0 {
+		return 1
+	}
+	return 0
+}
+
 // Takes index that would normally be on 9x9 and transposes it to playable area of 12x15
 func IndexToSquare(index int) int {
-	return CoordsToSquare(index%9, index/9)
+	return (index%9 + 37) + (index / 9 * 12)
 }
 
 // Takes file and rank (index) that would normally be on 9x9 and converts to one dimensional index on playable area of 12x15
@@ -17,12 +24,13 @@ func SquareToCoords(square int) (int, int) {
 	return file, rank
 }
 
-// Returns index of 12x15 and turns it into board notation
+// Gets index of 12x15 and turns it into board notation (Rank, File)
 func CoordsToNotation(square int) (string, string) {
 	file, rank := SquareToCoords(square)
 	return InvertRank(file), FileToLetter(rank)
 }
 
+// Index of 12x15 into 9x9 index
 func SquareToIndex(index int) int {
 	file, rank := SquareToCoords(index)
 	return (file-1)*9 + (rank - 1)
