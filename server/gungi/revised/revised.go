@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TonyLeCode/gungi.go/server/gungi"
+	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 )
 
 func getColor(piece int) int {
@@ -111,14 +111,14 @@ func (h *Hand) print() {
 	toPrintB := strings.Builder{}
 	for i := 0; i < 13; i++ {
 		p := h[i]
-		toPrintW.WriteString(gungi.EncodeSingleChar(i))
+		toPrintW.WriteString(utils.EncodeSingleChar(i))
 		toPrintW.WriteString(":")
 		toPrintW.WriteString(strconv.Itoa(p))
 		toPrintW.WriteString("  ")
 	}
 	for i := 13; i < 26; i++ {
 		p := h[i]
-		toPrintB.WriteString(gungi.EncodeSingleChar(i))
+		toPrintB.WriteString(utils.EncodeSingleChar(i))
 		toPrintB.WriteString(":")
 		toPrintB.WriteString(strconv.Itoa(p))
 		toPrintB.WriteString("  ")
@@ -131,7 +131,7 @@ func (h *Hand) print() {
 }
 
 type Revised struct {
-	BoardSquares  [gungi.BOARD_SQUARE_NUM]Square
+	BoardSquares  [utils.BOARD_SQUARE_NUM]Square
 	ListRef       ListRef
 	Hand          Hand
 	History       []string
@@ -162,7 +162,7 @@ func (r Revised) PieceCount() (int, int) {
 }
 
 func (r Revised) ConvertCoord(coord int) int {
-	return gungi.IndexToSquare(coord)
+	return utils.IndexToSquare(coord)
 }
 
 // Also resets board
@@ -174,7 +174,7 @@ func (r *Revised) InitializeBoard() {
 		r.BoardSquares[i] = outsideSquare
 	}
 	for i := 0; i < 81; i++ {
-		r.BoardSquares[gungi.IndexToSquare(i)] = Square{coord: gungi.IndexToSquare(i)}
+		r.BoardSquares[utils.IndexToSquare(i)] = Square{coord: utils.IndexToSquare(i)}
 	}
 
 	r.ListRef = ListRef{}
@@ -216,18 +216,18 @@ func (r *Revised) SetBoardFromFen(fen string) error {
 					}
 					fileIndex += skipNum - 1
 				} else {
-					switch gungi.DecodeSingleChar(string(piece)) {
+					switch utils.DecodeSingleChar(string(piece)) {
 					case BLACK_MARSHAL:
-						r.MarshalCoords[1] = gungi.CoordsToSquare(fileIndex, i)
+						r.MarshalCoords[1] = utils.CoordsToSquare(fileIndex, i)
 					case WHITE_MARSHAL:
-						r.MarshalCoords[0] = gungi.CoordsToSquare(fileIndex, i)
+						r.MarshalCoords[0] = utils.CoordsToSquare(fileIndex, i)
 					}
-					newSquare.Push(gungi.DecodeSingleChar(string(piece)))
+					newSquare.Push(utils.DecodeSingleChar(string(piece)))
 				}
 			}
 
 			if !newSquare.IsEmpty() {
-				coord := gungi.CoordsToSquare(fileIndex, i)
+				coord := utils.CoordsToSquare(fileIndex, i)
 				newSquare.coord = coord
 				r.BoardSquares[coord] = newSquare
 				color := getColor(newSquare.GetTop())
@@ -250,7 +250,7 @@ func (r *Revised) SetBoardFromFen(fen string) error {
 		r.Hand[i] = pieceNum
 	}
 
-	r.TurnColor = gungi.LetterToTurn(fields[2])
+	r.TurnColor = utils.LetterToTurn(fields[2])
 
 	ready := strings.Split(fields[3], "")
 	if ready[0] == "0" {
@@ -300,7 +300,7 @@ func (l *ListRef) Print(color int) {
 	toPrint := strings.Builder{}
 	current := l.Head[color]
 	for current != nil {
-		piece := gungi.EncodeSingleChar(current.GetTop())
+		piece := utils.EncodeSingleChar(current.GetTop())
 		toPrint.WriteString(piece + " ")
 		current = current.next
 	}
@@ -311,8 +311,8 @@ func (r *Revised) BoardToFen() string {
 	var fenString strings.Builder
 	skipIndex := 0
 
-	for i := 0; i < gungi.PLAYABLE_SQUARE_NUM; i++ {
-		square := r.BoardSquares[gungi.IndexToSquare(i)]
+	for i := 0; i < utils.PLAYABLE_SQUARE_NUM; i++ {
+		square := r.BoardSquares[utils.IndexToSquare(i)]
 
 		if square.IsEmpty() {
 			skipIndex++
@@ -322,7 +322,7 @@ func (r *Revised) BoardToFen() string {
 			stackStr := strings.Builder{}
 
 			for i := 0; i < len(square.stack); i++ {
-				stackStr.WriteString(gungi.EncodeSingleChar(square.stack[i]))
+				stackStr.WriteString(utils.EncodeSingleChar(square.stack[i]))
 			}
 
 			if skipIndex != i%9 && skipIndex != 0 {
@@ -403,7 +403,7 @@ func (r *Revised) PrintBoard() {
 				} else if square.IsOutOfBounds() {
 					fmt.Print("  -1")
 				} else {
-					piece := gungi.EncodeSingleChar(square.GetTop())
+					piece := utils.EncodeSingleChar(square.GetTop())
 					fmt.Print("   ", piece)
 				}
 			} else {

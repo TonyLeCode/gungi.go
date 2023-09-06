@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/TonyLeCode/gungi.go/server/gungi"
+	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 )
 
 // Piece must be colorless
@@ -22,8 +22,8 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 		return err
 	}
 
-	fromFile, fromRank := gungi.CoordsToNotation(fromCoord)
-	toFile, toRank := gungi.CoordsToNotation(toCoord)
+	fromFile, fromRank := utils.CoordsToNotation(fromCoord)
+	toFile, toRank := utils.CoordsToNotation(toCoord)
 	var str string
 
 	switch moveType {
@@ -32,26 +32,26 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 		r.RemovePiece(fromCoord)
 		r.PlacePiece(piece, toCoord)
 
-		str = gungi.EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
+		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
 		// Ex. L4D-4D
 	case STACK:
 		r.RemovePiece(fromCoord)
 		r.PlacePiece(piece, toCoord)
 
-		str = gungi.EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
+		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
 		// Ex. L4D-4D
 	case ATTACK:
 		r.RemovePiece(fromCoord)
 		r.RemovePiece(toCoord)
 		r.PlacePiece(piece, toCoord)
 
-		str = gungi.EncodeSingleChar(piece) + fromFile + fromRank + "x" + gungi.EncodeSingleChar(r.BoardSquares[toCoord].GetTop()) + toFile + toRank
+		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "x" + utils.EncodeSingleChar(r.BoardSquares[toCoord].GetTop()) + toFile + toRank
 		// Ex. L4Dxy5D
 	case PLACE:
 		r.Hand[piece]--
 		r.PlacePiece(piece, toCoord)
 
-		str = gungi.EncodeSingleChar(piece) + toFile + toRank
+		str = utils.EncodeSingleChar(piece) + toFile + toRank
 		// Ex. L4D
 	case READY:
 		r.Ready[r.TurnColor] = true
@@ -68,7 +68,7 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 	}
 
 	if r.Ready[0] == r.Ready[1] {
-		r.TurnColor = gungi.OppositeColor(r.TurnColor)
+		r.TurnColor = utils.OppositeColor(r.TurnColor)
 	}
 	r.TurnNumber++
 
@@ -89,56 +89,56 @@ func (r *Revised) UndoMove() {
 
 	lastMove := r.History[len(r.History)-1]
 	if strings.Contains(lastMove, "-") {
-		fromPiece := gungi.DecodeSingleChar(string(lastMove[0]))
-		fromCoord := gungi.CoordsToSquare(gungi.LetterToFile(string(lastMove[2]))-1, gungi.RevertRank(string(lastMove[1]))-1)
-		toCoord := gungi.CoordsToSquare(gungi.LetterToFile(string(lastMove[5]))-1, gungi.RevertRank(string(lastMove[4]))-1)
+		fromPiece := utils.DecodeSingleChar(string(lastMove[0]))
+		fromCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
+		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[5]))-1, utils.RevertRank(string(lastMove[4]))-1)
 
 		r.RemovePiece(toCoord)
 		r.PlacePiece(fromPiece, fromCoord)
 
 		if fromPiece%13 == MARSHAL {
-			r.MarshalCoords[gungi.OppositeColor(r.TurnColor)] = fromCoord
+			r.MarshalCoords[utils.OppositeColor(r.TurnColor)] = fromCoord
 		}
 
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
-		r.TurnColor = gungi.OppositeColor(r.TurnColor)
+		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
 	} else if strings.Contains(lastMove, "x") {
-		fromPiece := gungi.DecodeSingleChar(string(lastMove[0]))
-		toPiece := gungi.DecodeSingleChar(string(lastMove[0]))
-		fromCoord := gungi.CoordsToSquare(gungi.LetterToFile(string(lastMove[2]))-1, gungi.RevertRank(string(lastMove[1]))-1)
-		toCoord := gungi.CoordsToSquare(gungi.LetterToFile(string(lastMove[6]))-1, gungi.RevertRank(string(lastMove[5]))-1)
+		fromPiece := utils.DecodeSingleChar(string(lastMove[0]))
+		toPiece := utils.DecodeSingleChar(string(lastMove[0]))
+		fromCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
+		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[6]))-1, utils.RevertRank(string(lastMove[5]))-1)
 
 		r.RemovePiece(toCoord)
 		r.PlacePiece(toPiece, toCoord)
 		r.PlacePiece(fromPiece, fromCoord)
 
 		if fromPiece%13 == MARSHAL {
-			r.MarshalCoords[gungi.OppositeColor(r.TurnColor)] = fromCoord
+			r.MarshalCoords[utils.OppositeColor(r.TurnColor)] = fromCoord
 		}
 
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
-		r.TurnColor = gungi.OppositeColor(r.TurnColor)
+		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
 	} else if lastMove == "w-r" || lastMove == "b-r" {
-		r.Ready[gungi.OppositeColor(r.TurnColor)] = false
+		r.Ready[utils.OppositeColor(r.TurnColor)] = false
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
-		r.TurnColor = gungi.OppositeColor(r.TurnColor)
+		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
 	} else if len(lastMove) == 3 {
-		piece := gungi.DecodeSingleChar(string(lastMove[0]))
-		toCoord := gungi.CoordsToSquare(gungi.LetterToFile(string(lastMove[2]))-1, gungi.RevertRank(string(lastMove[1]))-1)
+		piece := utils.DecodeSingleChar(string(lastMove[0]))
+		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
 
 		r.RemovePiece(toCoord)
 		r.Hand[piece]++
 
 		if piece%13 == MARSHAL {
-			r.MarshalCoords[gungi.OppositeColor(r.TurnColor)] = 0
+			r.MarshalCoords[utils.OppositeColor(r.TurnColor)] = 0
 		}
 
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
 		if r.Ready[0] == r.Ready[1] {
-			r.TurnColor = gungi.OppositeColor(r.TurnColor)
+			r.TurnColor = utils.OppositeColor(r.TurnColor)
 		}
 		r.TurnNumber--
 	}
@@ -168,7 +168,7 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 
 	switch moveType {
 	case MOVE:
-		if fromCoord < 0 || fromCoord > gungi.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > gungi.BOARD_SQUARE_NUM {
+		if fromCoord < 0 || fromCoord > utils.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > utils.BOARD_SQUARE_NUM {
 			return errors.New("invalid coordinates")
 		}
 		if piece < 0 || piece > 25 {
@@ -190,7 +190,7 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 			}
 		}
 	case STACK:
-		if fromCoord < 0 || fromCoord > gungi.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > gungi.BOARD_SQUARE_NUM {
+		if fromCoord < 0 || fromCoord > utils.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > utils.BOARD_SQUARE_NUM {
 			return errors.New("invalid coordinates")
 		}
 		if piece < 0 || piece > 25 {
@@ -224,7 +224,7 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 			}
 		}
 	case ATTACK:
-		if fromCoord < 0 || fromCoord > gungi.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > gungi.BOARD_SQUARE_NUM {
+		if fromCoord < 0 || fromCoord > utils.BOARD_SQUARE_NUM || toCoord < 0 || toCoord > utils.BOARD_SQUARE_NUM {
 			return errors.New("invalid coordinates")
 		}
 		if piece < 0 || piece > 25 {
@@ -250,7 +250,7 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 			}
 		}
 	case PLACE:
-		if toCoord < 0 || toCoord > gungi.BOARD_SQUARE_NUM {
+		if toCoord < 0 || toCoord > utils.BOARD_SQUARE_NUM {
 			return errors.New("invalid coordinates")
 		}
 		if piece < 0 || piece > 25 {
@@ -511,7 +511,7 @@ type xraySquares struct {
 }
 
 func (r *Revised) CheckEnemyRanging(piece int, coord int) ([]xraySquares, bool, bool) {
-	// enemyColor := gungi.OppositeColor(r.TurnColor)
+	// enemyColor := utils.OppositeColor(r.TurnColor)
 	check := false
 	inPath := false
 	squares := []xraySquares{}
@@ -577,7 +577,7 @@ func (r *Revised) CheckEnemyRanging(piece int, coord int) ([]xraySquares, bool, 
 }
 
 func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquares, int, int, string) {
-	enemyColor := gungi.OppositeColor(r.TurnColor)
+	enemyColor := utils.OppositeColor(r.TurnColor)
 	currSquare := r.ListRef.Head[enemyColor]
 	var pinnedCoord int = -1
 	var xrayCoord int = -1

@@ -1,4 +1,4 @@
-package gungi
+package utils
 
 func OppositeColor(color int) int {
 	if color == 0 {

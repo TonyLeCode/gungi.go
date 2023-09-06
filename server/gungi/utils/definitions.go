@@ -1,4 +1,4 @@
-package gungi
+package utils
 
 const BOARD_SQUARE_NUM = 180
 const PLAYABLE_SQUARE_NUM = 81

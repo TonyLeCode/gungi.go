@@ -1,5 +1,7 @@
 package gungi
 
+import "github.com/TonyLeCode/gungi.go/server/gungi/revised"
+
 type Ruleset interface {
 	InitializeBoard()
 	PrintBoard()
@@ -16,6 +18,15 @@ type Ruleset interface {
 
 type Game struct {
 	Ruleset Ruleset
+}
+
+func CreateBoard(r string) Game {
+	newBoard := Game{}
+	if r == "revised" {
+		newBoard.Ruleset = &revised.Revised{}
+	}
+	newBoard.InitializeBoard()
+	return newBoard
 }
 
 func NewBoard(r Ruleset) Game {

@@ -8,7 +8,7 @@ import (
 
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
-	"github.com/TonyLeCode/gungi.go/server/ruleset"
+	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
 
@@ -25,7 +25,7 @@ type SerializedGame struct {
 }
 
 func (dbConn *DBConn) GetOngoingGame(c echo.Context) error {
-	board := ruleset.NewBoard("revised")
+	board := gungi.CreateBoard("revised")
 	serializedGame := SerializedGame{}
 
 	//get fen from database
@@ -96,7 +96,7 @@ func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 	}
 
 	//TODO properly get ruleset
-	newBoard := ruleset.NewBoard("revised")
+	newBoard := gungi.CreateBoard("revised")
 	err = newBoard.SetBoardFromFen(game.CurrentState)
 	if err != nil {
 		return GameWithMoves{}, err
@@ -106,9 +106,9 @@ func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
-		correctedKey := gungi.SquareToIndex(key)
+		correctedKey := utils.SquareToIndex(key)
 		for _, index := range element {
-			correctedElement := gungi.SquareToIndex(index)
+			correctedElement := utils.SquareToIndex(index)
 			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 		}
 	}
@@ -136,7 +136,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	newBoard := ruleset.NewBoard("revised")
+	newBoard := gungi.CreateBoard("revised")
 	err = newBoard.SetBoardFromFen(game.CurrentState)
 	if err != nil {
 		return err
@@ -146,9 +146,9 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
-		correctedKey := gungi.SquareToIndex(key)
+		correctedKey := utils.SquareToIndex(key)
 		for _, index := range element {
-			correctedElement := gungi.SquareToIndex(index)
+			correctedElement := utils.SquareToIndex(index)
 			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 		}
 	}
