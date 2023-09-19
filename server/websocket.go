@@ -509,7 +509,7 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 			return err
 		}
 
-		var filteredRoomList []SerializedGameRoom
+		filteredRoomList := []SerializedGameRoom{}
 		for _, room := range roomList {
 			if room.RoomID.String() != roomid {
 				filteredRoomList = append(filteredRoomList, room)
@@ -557,7 +557,7 @@ func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session,
 		}
 
 		var acceptedRoom SerializedGameRoom
-		var filteredRoomList []SerializedGameRoom
+		filteredRoomList := []SerializedGameRoom{}
 		for _, room := range roomList {
 			if room.RoomID.String() != roomid {
 				filteredRoomList = append(filteredRoomList, room)
