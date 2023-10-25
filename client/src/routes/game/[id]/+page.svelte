@@ -1,3 +1,30 @@
+<script lang="ts" context="module">
+	import type { BoardState } from '$lib/store/gameState';
+	// const gameContext = createGameContext('')
+	// const gameStore = createService<BoardState>('')
+	export const gameStateContext = createService<Writable<BoardState>>('gameState');
+	export const player1NameContext = createService<Readable<string>>('player1Name');
+	export const player2NameContext = createService<Readable<string>>('player2Name');
+	export const userColorContext = createService<Readable<'w' | 'b' | 'spectator'>>('userColor');
+	export const moveHistoryContext = createService<Readable<string[]>>('moveHistory');
+	export const manualFlipContext = createService<Writable<boolean>>('manualFlip');
+	export const isViewReversedContext = createService<Readable<boolean>>('isViewReversed');
+	export const turnColorContext = createService<Readable<string>>('turnColor');
+	export const player1HandListContext = createService<Readable<number[]>>('player1HandList');
+	export const player2HandListContext = createService<Readable<number[]>>('player2HandList');
+	export const isPlayer1ReadyContext = createService<Readable<boolean>>('isPlayer1Ready');
+	export const isPlayer2ReadyContext = createService<Readable<boolean>>('isPlayer2Ready');
+	export const isUserTurnContext = createService<Readable<boolean>>('isUserTurn');
+	export const player1ArmyCountContext = createService<Readable<number>>('player1ArmyCount');
+	export const player2ArmyCountContext = createService<Readable<number>>('player2ArmyCount');
+	export const player1HandCountContext = createService<Readable<number>>('player1HandCount');
+	export const player2HandCountContext = createService<Readable<number>>('player2HandCount');
+	export const moveListContext = createService<Readable<{ [key: number]: number[] }>>('moveList');
+	export const moveListUIContext = createService<Readable<{ [key: number]: number[] }>>('moveListUI');
+	export const boardStateContext = createService<Readable<number[][]>>('boardState');
+	export const boardUIContext = createService<Readable<number[][]>>('boardUI');
+</script>
+
 <script lang="ts">
 	import Board from './Board.svelte';
 	import {
@@ -15,11 +42,47 @@
 	import MoveDialogue from './MoveDialogue.svelte';
 	import { ws, wsConnState } from '$lib/store/websocket';
 	import { onMount } from 'svelte';
+	import { createService } from '$lib/store/contextHelper';
+	import type { Readable, Writable } from 'svelte/store';
+	import {get} from 'svelte/store'
+	import {createGameStore} from '$lib/store/gameState'
 
 	export let data;
-	let boardState = data.data;
-	$: currentState = FenToBoard(boardState.current_state);
-	$: moveList = boardState.moveList;
+	const gameStore = createGameStore(data.data, data.session?.user.user_metadata.username)
+	gameStateContext.set(gameStore.gameState)
+	player1NameContext.set(gameStore.player1Name)
+	player2NameContext.set(gameStore.player2Name)
+	userColorContext.set(gameStore.userColor)
+	moveHistoryContext.set(gameStore.moveHistory)
+	manualFlipContext.set(gameStore.manualFlip)
+	isViewReversedContext.set(gameStore.isViewReversed)
+	turnColorContext.set(gameStore.turnColor)
+	isPlayer1ReadyContext.set(gameStore.isPlayer1Ready)
+	isPlayer2ReadyContext.set(gameStore.isPlayer2Ready)
+	isUserTurnContext.set(gameStore.isUserTurn)
+	player1HandListContext.set(gameStore.player1HandList)
+	player2HandListContext.set(gameStore.player2HandList)
+	player1ArmyCountContext.set(gameStore.player1ArmyCount)
+	player2ArmyCountContext.set(gameStore.player2ArmyCount)
+	player1HandCountContext.set(gameStore.player1HandCount)
+	player2HandCountContext.set(gameStore.player2HandCount)
+	moveListContext.set(gameStore.moveList)
+	moveListUIContext.set(gameStore.moveListUI)
+	boardStateContext.set(gameStore.boardState)
+	boardUIContext.set(gameStore.boardUI)
+	// let boardState = data.data;
+	const boardState = gameStore.boardState
+	const isPlayer1Ready = gameStore.isPlayer1Ready
+	const isPlayer2Ready = gameStore.isPlayer2Ready
+	const gameState = gameStore.gameState
+	const userColor = gameStore.userColor
+	const turnColor = gameStore.turnColor
+	// const 
+
+	// $: currentState = FenToBoard(boardState.current_state);
+	// $: console.log("currentstate: ", currentState)
+	// console.log(boardState);
+	// $: moveList = boardState.moveList;
 	// console.log(boardState);
 	// console.log(data?.params.id);
 	// console.log(data);
@@ -40,27 +103,31 @@
 	let showMoveDialogue = false;
 	let moveDialogueInfo: MoveType;
 
-	function countPiecesOnBoard(fen: string) {
-		const pieces = fen.split(' ')[0];
-		const matchW = pieces.match(/[A-Z]/g);
-		const matchB = pieces.match(/[a-z]/g);
-		return [matchW?.length ?? 0, matchB?.length ?? 0];
-	}
-	function reverseNameIfBlack(isBlack: boolean): string {
-		return !isBlack ? boardState.player1 : boardState.player2;
-	}
+	// function countPiecesOnBoard(fen: string) {
+	// 	const pieces = fen.split(' ')[0];
+	// 	const matchW = pieces.match(/[A-Z]/g);
+	// 	const matchB = pieces.match(/[a-z]/g);
+	// 	return [matchW?.length ?? 0, matchB?.length ?? 0];
+	// }
+	// function reverseNameIfBlack(isBlack: boolean): string {
+	// 	return !isBlack ? boardState.player1 : boardState.player2;
+	// }
 
 	let moveDialogueText = '';
 	let disableAttackDialogue = false;
 	let disableStackDialogue = false;
 	let menuState = 0;
 	// countPiecesOnBoard(data.data.current_state)
-	$: hands = FenToHand(boardState.current_state);
-	$: [onBoardWhite, onBoardBlack] = countPiecesOnBoard(boardState.current_state);
-	$: turnColor = boardState.current_state.split(' ')[2];
-	$: turnPlayer = turnColor === 'w' ? boardState.player1 : boardState.player2;
-	$: playerColor = boardState.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
-	$: isPlayerTurn = turnColor === playerColor;
+	//TODO get fen to hand
+	// $: hands = FenToHand(boardState.current_state);
+	// $: [onBoardWhite, onBoardBlack] = countPiecesOnBoard(boardState.current_state);
+	// $: turnColor = boardState.current_state.split(' ')[2];
+	// $: turnPlayer = turnColor === 'w' ? boardState.player1 : boardState.player2;
+	// $: playerColor = boardState.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
+	// $: console.log(playerColor);
+	// $: isPlayerTurn = turnColor === playerColor;
+	// $: player1Ready = boardState.current_state.split(' ')[3][0] == 1;
+	// $: player2Ready = boardState.current_state.split(' ')[3][1] == 1;
 
 	function handleDropEvent(event: CustomEvent) {
 		// console.log(event.detail);
@@ -91,23 +158,23 @@
 			if (dragItem.from === 'hand') {
 				piece = dragItem.piece;
 			} else {
-				const fromSquare = currentState[dragItem?.coordIndex];
+				const fromSquare = $boardState[dragItem?.coordIndex];
 				piece = fromSquare[fromSquare.length - 1];
 			}
 			moveDialogueText = `${DecodePieceFull(piece)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
 		}
 
-		const fromSquare = currentState[hoverItem?.coordIndex];
-		if (GetPieceColor(fromSquare[fromSquare.length - 1]) != playerColor) {
+		const fromSquare = $boardState[hoverItem?.coordIndex];
+		if (GetPieceColor(fromSquare[fromSquare.length - 1]) != $userColor) {
 			disableAttackDialogue = false;
 		}
 
-		const stack = currentState[hoverItem.coordIndex];
+		const stack = $boardState[hoverItem.coordIndex];
 		if (stack?.length != 3) {
 			disableStackDialogue = false;
 		}
 		if (stack?.length != 0 && !dragItem.from) {
-			const square = currentState[dragItem.coordIndex];
+			const square = $boardState[dragItem.coordIndex];
 
 			moveDialogueInfo = {
 				fromPiece: square[square.length - 1],
@@ -139,7 +206,7 @@
 
 			$ws.send(JSON.stringify(msg));
 		} else {
-			const square = currentState[dragItem.coordIndex];
+			const square = $boardState[dragItem.coordIndex];
 			const move = {
 				fromPiece: square[square.length - 1],
 				fromCoord: dragItem.coordIndex,
@@ -171,7 +238,12 @@
 			const res = JSON.parse(event.data);
 			switch (res.type) {
 				case 'game':
-					boardState = res.payload;
+					gameStore.gameState.set(res.payload)
+					// boardState = res.payload;
+					// currentState = FenToBoard(boardState.current_state);
+					break;
+				case 'undoRequest':
+					//TODO undo request popup
 					break;
 			}
 		} catch (err) {
@@ -180,7 +252,41 @@
 		}
 	}
 
+	function handleResignEvent(event: CustomEvent) {
+		console.log('resign');
+		const msg = {
+			type: 'resign',
+		};
+		$ws.send(JSON.stringify(msg));
+	}
+
+	function handleUndoEvent(event: CustomEvent) {
+		console.log('requestUndo');
+		const msg = {
+			type: 'requestUndo',
+		};
+		$ws.send(JSON.stringify(msg));
+	}
+	function handleReadyEvent(event: CustomEvent) {
+		console.log('ready');
+		const msg = {
+			type: 'makeMove',
+			payload: {
+				fromPiece: -1,
+				fromCoord: 0,
+				moveType: 4,
+				toCoord: 0,
+			},
+		};
+		$ws.send(JSON.stringify(msg));
+	}
+
 	onMount(() => {
+		// doesn't work because socket will be empty/undefined
+		// const socket = $ws
+		// if (socket){
+		// 	socket.addEventListener('message', handleGameMsg);
+		// }
 		ws.subscribe((val) => {
 			if (val) {
 				$ws.addEventListener('message', handleGameMsg);
@@ -196,7 +302,7 @@
 				$ws.send(JSON.stringify(msg));
 				const msg2 = {
 					type: 'joinGame',
-					payload: boardState.id,
+					payload: get(gameStore.gameState).id,
 				};
 				$ws.send(JSON.stringify(msg2));
 			}
@@ -216,17 +322,13 @@
 		<Board
 			{dragAndDrop}
 			{drop}
-			{moveList}
-			{playerColor}
 			on:drop={handleDropEvent}
-			gameData={currentState}
-			reversed={playerColor !== 'w'}
-			{isPlayerTurn}
 		/>
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
-			{turnColor === 'w' ? 'White' : 'Black'} To Play
+			{$isPlayer1Ready && $isPlayer2Ready ? '' : 'Drafting -'}
+			{$turnColor === 'w' ? 'White' : 'Black'} To Play
 		</div>
 		<div class="tabs">
 			<button
@@ -250,21 +352,16 @@
 		</div>
 		{#if menuState === 0}
 			<Hand
+				on:ready={handleReadyEvent}
+				on:resign={handleResignEvent}
+				on:undo={handleUndoEvent}
 				on:drop={handleDropEvent}
 				{dragAndDrop}
-				reversed={playerColor !== 'w'}
-				{playerColor}
-				player1={boardState.player1}
-				player2={boardState.player2}
-				{isPlayerTurn}
-				{hands}
-				{onBoardBlack}
-				{onBoardWhite}
 			/>
 		{:else if menuState === 1}
 			<Chat />
 		{:else if menuState === 2}
-			<Replay moveHistory={boardState.history.String.split(" ")} />
+			<Replay />
 		{/if}
 	</aside>
 	<MoveDialogue

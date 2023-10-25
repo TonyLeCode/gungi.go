@@ -3,19 +3,24 @@
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
 	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
-  import { nanoid } from 'nanoid';
+	import { nanoid } from 'nanoid';
+	import { get } from 'svelte/store';
+
+	import { boardUIContext, isViewReversedContext, isPlayer1ReadyContext, isPlayer2ReadyContext, isUserTurnContext, userColorContext, moveListUIContext } from './+page.svelte';
+	const boardUI = boardUIContext.get()
+	const userColor = userColorContext.get()
+	const isViewReversed = isViewReversedContext.get()
+	const isPlayer1Ready = isPlayer1ReadyContext.get()
+	const isPlayer2Ready = isPlayer2ReadyContext.get()
+	const isUserTurn = isUserTurnContext.get()
+	const moveList = moveListUIContext.get()
 
 	// export const boardState = new Array(81).fill(['']);
-	export let gameData;
-	export let reversed: boolean;
 	export let dragAndDrop: dragAndDropFunction;
 	export let drop: dropFunction;
-	export let playerColor: string;
-	export let isPlayerTurn: boolean;
-	export let moveList: { [key: number]: number[] };
-	$: correctedMoveList = transformObject(moveList, reversed);
+	// export let moveList: { [key: number]: number[] };
 	// $: console.log(moveList);
-	// $: console.log(correctedMoveList);
+	// $: console.log(moveList);
 
 	const dispatch = createEventDispatcher();
 
@@ -32,7 +37,7 @@
 				transformedObj[transformedKey] = transformedValues;
 			}
 		} else {
-			return obj
+			return obj;
 		}
 
 		return transformedObj;
@@ -44,15 +49,15 @@
 		return `/pieces/${color}${tier}${encodedPiece}.svg`;
 	}
 
-	function reverseIfBlack<T>(arr: T[]): T[] {
-		if (reversed) {
+	function reverseArrayView<T>(arr: T[]): T[] {
+		if ($isViewReversed) {
 			return reverseList(arr);
 		} else return arr;
 	}
-	$: boardState = reverseIfBlack(gameData);
+	// $: boardState = reverseIfBlack(gameData);
 	// $: console.log(boardState)
-	$: fileCoords = reverseIfBlack([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-	$: rankCoords = reverseIfBlack(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+	$: fileCoords = reverseArrayView([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+	$: rankCoords = reverseArrayView(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
 
 	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index;
@@ -60,7 +65,7 @@
 		if (square.length > 0) {
 			piece = square[square.length - 1];
 		}
-		if (reversed) {
+		if ($isViewReversed) {
 			correctedIndex = 80 - index;
 		}
 
@@ -85,9 +90,12 @@
 	function dndOptions(index: number, piece: number) {
 		let correctedIndex = index;
 		function isActive() {
-			return PieceIsPlayerColor(piece, playerColor) && isPlayerTurn;
+			if (!$isPlayer1Ready || !$isPlayer2Ready) {
+				return false;
+			}
+			return PieceIsPlayerColor(piece, $userColor) && $isUserTurn;
 		}
-		if (reversed) {
+		if ($isViewReversed) {
 			correctedIndex = 80 - index;
 		}
 		const square = {
@@ -104,38 +112,38 @@
 	let moveIndices: number[] = [];
 	let highlightIndex: number;
 
-	function onClick(index) {
-		const square = boardState[index];
-		console.log(String(index) + JSON.stringify(square))
+	function onClick(index: number) {
+		const square = $boardUI[index];
+		console.log(String(index) + JSON.stringify(square));
 		if (square.length === 0) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;
 		}
-		if (GetPieceColor(square[square.length - 1]) != playerColor) {
+		if (GetPieceColor(square[square.length - 1]) != $userColor) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;
 		}
 		highlightIndex = index;
-		moveIndices = correctedMoveList[highlightIndex];
+		moveIndices = $moveList[highlightIndex];
 	}
 
 	function moveHighlight(index: number): boolean {
-		// console.log(correctedMoveList[highlightIndex])
-		return correctedMoveList[highlightIndex]?.includes(index);
+		// console.log(moveList[highlightIndex])
+		return $moveList[highlightIndex]?.includes(index);
 	}
 </script>
 
 <div class="board">
-	{#each boardState as square, index (String(index) + JSON.stringify(square))}
+	{#each $boardUI as square, index (String(index) + JSON.stringify(square))}
 		<div
 			on:mousedown={() => {
 				onClick(index);
 			}}
 			class="square"
 			class:highlight={highlightIndex == index}
-			class:move-highlight={moveIndices?.includes(index)}
+			class:move-highlight={moveIndices?.includes(index) && $isPlayer1Ready && $isPlayer2Ready}
 			use:drop={dropOptions(index, square)}
 			on:focus={() => {
 				console.log('');
@@ -145,7 +153,7 @@
 				<img
 					draggable="false"
 					use:dragAndDrop={dndOptions(index, square[square.length - 1])}
-					class={`piece ${PieceIsPlayerColor(square[square.length - 1], playerColor) && isPlayerTurn ? 'pointer' : ''}`}
+					class={`piece ${PieceIsPlayerColor(square[square.length - 1], $userColor) && $isUserTurn ? 'pointer' : ''}`}
 					src={GetImage(square)}
 					alt=""
 				/>

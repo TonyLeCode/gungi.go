@@ -1,61 +1,135 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import PieceHand from './PieceHand.svelte';
 	import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
 
-	export let playerColor: string;
-	export let player1: string;
-	export let player2: string;
-	export let hands: number[][];
-	export let onBoardBlack: number | undefined;
-	export let onBoardWhite: number | undefined;
+	import { player1HandListContext, player2HandListContext, userColorContext, player1NameContext, player2NameContext, isPlayer1ReadyContext, isPlayer2ReadyContext, player1ArmyCountContext, player2ArmyCountContext, player1HandCountContext, player2HandCountContext, isUserTurnContext, isViewReversedContext} from './+page.svelte'
+	import { get } from 'svelte/store';
+	//TODO player hand list
+
+		const player1HandList = player1HandListContext.get()
+		const player2HandList = player2HandListContext.get()
+		const isPlayer1Ready = isPlayer1ReadyContext.get()
+		const isPlayer2Ready = isPlayer2ReadyContext.get()
+		const userColor = userColorContext.get()
+		const player1Name = player1NameContext.get()
+		const player2Name = player2NameContext.get()
+		const player1ArmyCount = player1ArmyCountContext.get()
+		const player2ArmyCount = player2ArmyCountContext.get()
+		const player1HandCount = player1HandCountContext.get()
+		const player2HandCount = player2HandCountContext.get()
+		const isUserTurn = isUserTurnContext.get()
+		const isViewReversed = isViewReversedContext.get()
+	// export let playerColor: string;
+	// export let player1: string;
+	// export let player2: string;
+	// export let hands: number[][];
+	// export let onBoardBlack: number | undefined;
+	// export let onBoardWhite: number | undefined;
 	export let dragAndDrop: dragAndDropFunction;
-	export let reversed: boolean;
-	export let isPlayerTurn: boolean;
+	// export let reversed: boolean;
+	// export let isPlayerTurn: boolean;
+	// export let player1Ready: boolean;
+	// export let player2Ready: boolean;
+
+	const dispatch = createEventDispatcher();
+
+	function readyDisplay(num: number, playerColor: string): string {
+		//TODO not reactive...
+		if (num === 0) {
+			if (playerColor === 'w' && $isPlayer2Ready) {
+				return '- ready';
+			}
+			if (playerColor === 'b' && $isPlayer1Ready) {
+				return '- ready';
+			}
+		} else if (num === 1) {
+			if (playerColor === 'w' && $isPlayer1Ready) {
+				return '- ready';
+			}
+			if (playerColor === 'b' && $isPlayer2Ready) {
+				return '- ready';
+			}
+		}
+		return '';
+	}
+
+	function handleResignButton() {
+		dispatch('resign');
+	}
+	function handleUndoButton() {
+		dispatch('undo');
+	}
+	function handleReadyButton() {
+		dispatch('ready');
+	}
 </script>
 
 <div class="hands">
 	<div class="hand-container">
 		<div class="hand-info">
-			<h3 class="name">{playerColor === 'w' ? player2 : player1}</h3>
-			<div>On Board: <span>{playerColor === 'w' ? onBoardBlack : onBoardWhite}</span></div>
+			<h3 class="name">{$userColor === 'w' ? $player2Name : $player1Name} {readyDisplay(0, $userColor)}</h3>
+			<div>On Board: <span>{$userColor === 'w' ? $player2ArmyCount : $player1ArmyCount}</span></div>
 			<div>
-				In Hand: <span
-					>{hands[playerColor === 'w' ? 1 : 0].reduce((a, b) => {
+				<!-- In Hand: <span
+					>{hands[$userColor === 'w' ? 1 : 0].reduce((a, b) => {
 						return a + b;
-					})}</span
-				>
+					})}</span> -->
+					In Hand: <span>{$userColor === 'b' ? $player1HandCount : $player2HandCount}</span>
 			</div>
 		</div>
 		<div class="hand">
-			{#each hands[playerColor === 'w' ? 1 : 0] as amount, i}
+			{#each $userColor === 'b' ? $player1HandList : $player2HandList as amount, i}
 				{#if amount != 0}
-					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} {isPlayerTurn} color={playerColor === 'w' ? 'b' : 'w'} piece={i} {amount} />
+					<PieceHand
+						on:drop
+						{dragAndDrop}
+						reversed={$isViewReversed}
+						playerColor={$userColor}
+						isPlayerTurn={$isUserTurn}
+						color={$userColor === 'w' ? 'b' : 'w'}
+						piece={i}
+						{amount}
+					/>
 				{/if}
 			{/each}
 		</div>
 	</div>
 	<div class="hand-container">
 		<div class="hand-info">
-			<h3 class="name">{playerColor === 'w' ? player1 : player2}</h3>
-			<span>On Board: {playerColor === 'w' ? onBoardWhite : onBoardBlack}</span>
-			<span
-				>In Hand: {hands[playerColor === 'w' ? 0 : 1].reduce((a, b) => {
+			<h3 class="name">{$userColor === 'w' ? $player1Name : $player2Name} {readyDisplay(1, $userColor)}</h3>
+			<span>On Board: {$userColor === 'w' ? $player1ArmyCount : $player2ArmyCount}</span>
+			<!-- <span
+				>In Hand: {hands[$userColor === 'w' ? 0 : 1].reduce((a, b) => {
 					return a + b;
 				})}</span
-			>
+			> -->
+			In Hand: <span>{$userColor === 'w' ? $player1HandCount : $player2HandCount}</span>
 		</div>
 		<div class="hand">
-			{#each hands[playerColor === 'w' ? 0 : 1] as amount, i}
+			{#each $userColor === 'w' ? $player1HandList : $player2HandList as amount, i}
 				{#if amount != 0}
-					<PieceHand on:drop {dragAndDrop} {reversed} {playerColor} {isPlayerTurn} color={playerColor === 'w' ? 'w' : 'b'} piece={i} {amount} />
+					<PieceHand
+						on:drop
+						{dragAndDrop}
+						reversed={$isViewReversed}
+						playerColor={$userColor}
+						isPlayerTurn={$isUserTurn}
+						color={$userColor === 'w' ? 'w' : 'b'}
+						piece={i}
+						{amount}
+					/>
 				{/if}
 			{/each}
 		</div>
 	</div>
 	<div class="buttons">
-		<button class="button-primary">resign</button>
-		<button class="button-primary">request undo</button>
+		<button class="button-primary" on:click={handleResignButton}>resign</button>
+		<button class="button-primary" on:click={handleUndoButton}>request undo</button>
 		<button class="button-primary" disabled>confirm move</button>
+		{#if !$isPlayer1Ready || !$isPlayer2Ready}
+			<button class="button-primary" on:click={handleReadyButton}>ready</button>
+		{/if}
 	</div>
 </div>
 
