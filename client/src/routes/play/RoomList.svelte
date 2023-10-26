@@ -83,7 +83,8 @@
 		padding: 0.5rem 2rem;
 		border-radius: 4px;
 		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+		// box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+		box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.05), 0px 2px 5px rgba(0, 0, 0, 0.05);
 		transition-duration: 150ms;
 		transition-property: background-color;
 		&:hover:not([disabled]) {

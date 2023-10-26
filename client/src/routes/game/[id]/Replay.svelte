@@ -130,14 +130,14 @@
 	.controls {
 		display: flex;
 		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		box-shadow: 0px 2px 55px rgba(0, 0, 0, 0.07), 0px 4px 15px rgba(0, 0, 0, 0.05);
 		margin-bottom: 1rem;
 		padding: 1rem;
 		justify-content: center;
 	}
 	.history-list {
 		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		box-shadow: 0px 2px 55px rgba(0, 0, 0, 0.07), 0px 4px 15px rgba(0, 0, 0, 0.05);
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;

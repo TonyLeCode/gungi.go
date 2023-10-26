@@ -160,7 +160,8 @@
 		/* border: 2px solid rgba(255, 77, 7, 0.7); */
 		background-color: rgb(var(--bg-2));
 		/* background-color: rgb(255, 255, 255); */
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		// box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
+		box-shadow: 0px 2px 55px rgba(0, 0, 0, 0.07), 0px 4px 15px rgba(0, 0, 0, 0.05);
 		border-radius: 8px;
 		padding: 1.5rem 2rem;
 	}
