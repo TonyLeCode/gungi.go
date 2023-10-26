@@ -6,14 +6,16 @@
 	import { nanoid } from 'nanoid';
 	import { get } from 'svelte/store';
 
-	import { boardUIContext, isViewReversedContext, isPlayer1ReadyContext, isPlayer2ReadyContext, isUserTurnContext, userColorContext, moveListUIContext } from './+page.svelte';
+	import { boardUIContext, isViewReversedContext, isPlayer1ReadyContext, isPlayer2ReadyContext, isUserTurnContext, turnColorContext, userColorContext, moveListUIContext, moveListContext } from './+page.svelte';
 	const boardUI = boardUIContext.get()
 	const userColor = userColorContext.get()
 	const isViewReversed = isViewReversedContext.get()
 	const isPlayer1Ready = isPlayer1ReadyContext.get()
 	const isPlayer2Ready = isPlayer2ReadyContext.get()
 	const isUserTurn = isUserTurnContext.get()
-	const moveList = moveListUIContext.get()
+	const moveList = moveListContext.get()
+	const turnColor = turnColorContext.get()
+	const moveListUI = moveListUIContext.get()
 
 	// export const boardState = new Array(81).fill(['']);
 	export let dragAndDrop: dragAndDropFunction;
@@ -24,24 +26,24 @@
 
 	const dispatch = createEventDispatcher();
 
-	function transformObject(
-		obj: { [key: number]: number[] },
-		shouldCreateNewObject: boolean
-	): { [key: number]: number[] } {
-		const transformedObj: { [key: number]: number[] } = {};
+	// function transformObject(
+	// 	obj: { [key: number]: number[] },
+	// 	shouldCreateNewObject: boolean
+	// ): { [key: number]: number[] } {
+	// 	const transformedObj: { [key: number]: number[] } = {};
 
-		if (shouldCreateNewObject) {
-			for (const key in obj) {
-				const transformedKey = 80 - parseInt(key, 10);
-				const transformedValues = obj[key].map((value) => 80 - value);
-				transformedObj[transformedKey] = transformedValues;
-			}
-		} else {
-			return obj;
-		}
+	// 	if (shouldCreateNewObject) {
+	// 		for (const key in obj) {
+	// 			const transformedKey = 80 - parseInt(key, 10);
+	// 			const transformedValues = obj[key].map((value) => 80 - value);
+	// 			transformedObj[transformedKey] = transformedValues;
+	// 		}
+	// 	} else {
+	// 		return obj;
+	// 	}
 
-		return transformedObj;
-	}
+	// 	return transformedObj;
+	// }
 
 	function GetImage2(tier: number, piece: number): string {
 		const encodedPiece = DecodePiece(piece).toLowerCase();
@@ -57,7 +59,7 @@
 	// $: boardState = reverseIfBlack(gameData);
 	// $: console.log(boardState)
 	$: fileCoords = reverseArrayView([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-	$: rankCoords = reverseArrayView(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']);
+	$: rankCoords = reverseList(reverseArrayView(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']));
 
 	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index;
@@ -83,19 +85,20 @@
 		if (items?.hoverItem) {
 			dispatch('drop', items);
 		}
+		console.log(items)
 		highlightIndex = -1;
 		moveIndices = [];
 	}
-
+	
 	function dndOptions(index: number, piece: number) {
 		let correctedIndex = index;
 		function isActive() {
-			if (!$isPlayer1Ready || !$isPlayer2Ready) {
+			if (!get(isPlayer1Ready) || !get(isPlayer2Ready)) {
 				return false;
 			}
-			return PieceIsPlayerColor(piece, $userColor) && $isUserTurn;
+			return PieceIsPlayerColor(piece, get(userColor)) && get(isUserTurn);
 		}
-		if ($isViewReversed) {
+		if (get(isViewReversed)) {
 			correctedIndex = 80 - index;
 		}
 		const square = {
@@ -113,20 +116,29 @@
 	let highlightIndex: number;
 
 	function onClick(index: number) {
-		const square = $boardUI[index];
+		const square = get(boardUI)[index];
 		console.log(String(index) + JSON.stringify(square));
+
+		if (get(userColor) != get(turnColor)){
+			highlightIndex = -1;
+			moveIndices = [];
+			return
+		}
+
 		if (square.length === 0) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;
 		}
-		if (GetPieceColor(square[square.length - 1]) != $userColor) {
+		
+		if (GetPieceColor(square[square.length - 1]) != get(turnColor)) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;
 		}
 		highlightIndex = index;
-		moveIndices = $moveList[highlightIndex];
+		moveIndices = get(moveList)[highlightIndex];
+		// console.log(moveIndices)
 	}
 
 	function moveHighlight(index: number): boolean {
@@ -170,7 +182,7 @@
 	{/each}
 
 	<div class="file">
-		{#each reverseList(fileCoords) as file}
+		{#each fileCoords as file}
 			<div class="">{file}</div>
 		{/each}
 	</div>
