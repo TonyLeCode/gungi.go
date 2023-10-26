@@ -67,7 +67,7 @@
 		if (square.length > 0) {
 			piece = square[square.length - 1];
 		}
-		if ($isViewReversed) {
+		if (get(isViewReversed)) {
 			correctedIndex = 80 - index;
 		}
 
@@ -117,7 +117,7 @@
 
 	function onClick(index: number) {
 		const square = get(boardUI)[index];
-		console.log(String(index) + JSON.stringify(square));
+		// console.log(String(index) + JSON.stringify(square));
 
 		if (get(userColor) != get(turnColor)){
 			highlightIndex = -1;
@@ -137,7 +137,7 @@
 			return;
 		}
 		highlightIndex = index;
-		moveIndices = get(moveList)[highlightIndex];
+		moveIndices = get(moveListUI)[highlightIndex];
 		// console.log(moveIndices)
 	}
 
