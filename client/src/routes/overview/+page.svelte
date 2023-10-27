@@ -1,20 +1,20 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
+	import type {Game} from './+page.server'
 
-	interface Game {
-		completed: boolean;
-		current_state: string;
-		date_started: Date;
-		fen: {
-			String: string;
-			Valid: boolean;
-		};
-		id: string;
-		username1: string;
-		username2: string;
+	export let data;
+
+	function getUserColor(player1: string, player2: string){
+		const user = data.session?.user.user_metadata.username ?? '';
+		if (user === player1) {
+			return 'w'
+		} else if (user === player2){
+			return 'b'
+		}
+		return 'spectator'
 	}
 
-	function isTurn(game: Game) {
+	function isUserTurn(game: Game) {
 		const fields = game.current_state.split(' ');
 		const turnColor = fields[2];
 		const turnPlayer = () => {
@@ -28,8 +28,8 @@
 		// }
 	}
 
-	export let data;
-	// $: console.log(data.data);
+	
+	$: console.log(data.data);
 </script>
 
 <svelte:head>
@@ -41,9 +41,9 @@
 		<h2>Current Games</h2>
 		<ul class="gameList">
 			{#each data.data as game}
-				<li class:your-turn={isTurn(game)}>
+				<li class:your-turn={isUserTurn(game)}>
 					<div class="name name-1">{game.username1}</div>
-					<a href={`/game/${game.id}`}><BoardSimple gameData={game} isTurn={isTurn(game)} /></a>
+					<a href={`/game/${game.id}`}><BoardSimple gameData={game} isUserTurn={isUserTurn(game)} userColor={getUserColor(game.username1, game.username2)} /></a>
 					<div class="name name-2">{game.username2}</div>
 				</li>
 			{/each}
@@ -87,7 +87,7 @@
 
 	.gameList {
 		display: grid;
-		gap: 2rem;
+		gap: 4rem 2rem;
 		grid-template-columns: repeat(auto-fit, 20rem);
 		padding: 1rem;
 		justify-content: center;
