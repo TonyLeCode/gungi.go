@@ -6,6 +6,7 @@
 	--primary-3: 255, 132, 94;
 	--bg: 242, 242, 242;
 	--bg-2: 245, 245, 245;
+	--bg-3: 236, 236, 236;
 	--font: 73, 73, 73;
 }
 
@@ -28,11 +29,8 @@ a, .a {
 	&:hover,
 	&:focus {
 		color: rgb(var(--primary));
-	}
-
-	&:focus {
-		/* outline: 5px solid rgb(var(--primary)); */
 		outline-color: rgba(var(--primary), 0.5);
+		/* outline: 5px solid rgb(var(--primary)); */
 	}
 }
 
@@ -41,8 +39,6 @@ a, .a {
 	&:hover,
 	&:focus {
 		color: rgb(var(--primary-2));
-	}
-	&:focus {
 		outline-color: rgba(var(--primary-2), 0.5);
 	}
 }

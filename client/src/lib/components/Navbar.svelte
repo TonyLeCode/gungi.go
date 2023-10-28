@@ -1,12 +1,8 @@
 <script lang="ts">
 	import type { Session } from '@supabase/supabase-js';
-	import Register from './Register.svelte';
-	import Login from './Login.svelte';
 
 	export let session: Session | null;
 	$: session = session;
-	let showRegisterModal = false;
-	let showLoginModal = false;
 	// $: console.log("session!!", session)
 </script>
 
@@ -27,29 +23,17 @@
 			<span class="name">{session.user.user_metadata.username}</span>
 			<a href="/logout">logout</a>
 		{:else}
-			<button
-				class="a"
-				on:click={() => {
-					showLoginModal = true;
-				}}>login</button
-			>
-			<button
-				class="a"
-				on:click={() => {
-					showRegisterModal = true;
-				}}>register</button
-			>
+			<a class="a" href='login'>login</a>
+			<a class="a" href='register'>register</a>
 		{/if}
 	</ul>
 </nav>
-<Register bind:showModal={showRegisterModal} />
-<Login bind:showModal={showLoginModal} />
 
 <style>
-	nav{
+	nav {
 		user-select: none;
 	}
-	a{
+	a {
 		padding: 0 0.5rem;
 	}
 	.brand {
