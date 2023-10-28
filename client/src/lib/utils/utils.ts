@@ -138,7 +138,8 @@ type DecodePieceEnums = {
 	[key: string]: string;
 };
 
-export function DecodePiece(encodedPiece: number | string): string {
+export function DecodePiece(encodedPiece: number): string {
+	if (encodedPiece > 25 || encodedPiece < 0){return ''}
 	const pieceEnums: DecodePieceEnums = {
 		0: 'P',
 		1: 'L',
