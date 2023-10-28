@@ -7,26 +7,28 @@
 </script>
 
 <nav class="navbar">
-	<a class="brand" href="/">Gungi</a>
-	<ul class="nav-list">
-		{#if session}
-			<a href="/overview">overview</a>
-			<a href="/play">play</a>
-			<!-- <a href="/games">games</a> -->
-			<!-- TODO learning, puzzles, resources, library -->
-		{/if}
-		<a href="/rules">rules</a>
-	</ul>
-	<ul class="nav-account">
-		{#if session}
-			<!-- TODO settings, friends, notifications  -->
-			<span class="name">{session.user.user_metadata.username}</span>
-			<a href="/logout">logout</a>
-		{:else}
-			<a class="a" href='login'>login</a>
-			<a class="a" href='register'>register</a>
-		{/if}
-	</ul>
+	<div class="nav-inner">
+		<a class="brand" href="/">Gungi</a>
+		<ul class="nav-list">
+			{#if session}
+				<a href="/overview">overview</a>
+				<a href="/play">play</a>
+				<!-- <a href="/games">games</a> -->
+				<!-- TODO learning, puzzles, resources, library -->
+			{/if}
+			<a href="/rules">rules</a>
+		</ul>
+		<ul class="nav-account">
+			{#if session}
+				<!-- TODO settings, friends, notifications  -->
+				<span class="name">{session.user.user_metadata.username}</span>
+				<a href="/logout">logout</a>
+			{:else}
+				<a class="a" href="login">login</a>
+				<a class="a" href="register">register</a>
+			{/if}
+		</ul>
+	</div>
 </nav>
 
 <style>
@@ -61,22 +63,33 @@
 	} */
 
 	.navbar {
-		display: flex;
+		/* display: flex; */
 		/* justify-content: space-between; */
 		/* background-color:red; */
 		/* max-width: 1000px; */
-		padding: 0.75rem 12rem;
+		padding: 0.75rem 1rem;
 		max-width: 120rem;
 		margin: auto;
 	}
-	.nav-list {
+	.nav-inner {
 		display: flex;
-		gap: 0.5rem;
-		margin-left: 2rem;
+		max-width: 96rem;
+		margin: auto;
+	}
+	.nav-list {
+		display: none;
+		/* margin-left: 2rem; */
 	}
 	.nav-account {
 		display: flex;
 		gap: 1rem;
 		margin-left: auto;
+	}
+
+	@media only screen and (min-width: 800px) {
+		.nav-list {
+			display: flex;
+			gap: 0.5rem;
+		}
 	}
 </style>

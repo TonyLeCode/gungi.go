@@ -439,6 +439,7 @@
 		// max-width: 36rem;
 		max-width: 44rem;
 		width: 100%;
+		padding: 0 2rem;
 		// margin-top: auto;
 		// margin-bottom: auto;
 	}
@@ -450,6 +451,7 @@
 		.side-menu{
 			margin-left: auto;
 			max-width: 36rem;
+			padding: 0;
 		}
 	}
 </style>
