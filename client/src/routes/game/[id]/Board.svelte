@@ -145,6 +145,10 @@
 		// console.log(moveList[highlightIndex])
 		return $moveList[highlightIndex]?.includes(index);
 	}
+
+	function handleStackClick(index: number){
+		dispatch('stackClick', index)
+	}
 </script>
 
 <div class="board">
@@ -152,6 +156,9 @@
 		<div
 			on:mousedown={() => {
 				onClick(index);
+			}}
+			on:mousedown={() => {
+				handleStackClick(index)
 			}}
 			class="square"
 			class:highlight={highlightIndex == index}
