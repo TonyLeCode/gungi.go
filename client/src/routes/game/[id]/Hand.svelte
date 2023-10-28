@@ -5,6 +5,7 @@
 
 	import { player1HandListContext, player2HandListContext, userColorContext, player1NameContext, player2NameContext, isPlayer1ReadyContext, isPlayer2ReadyContext, player1ArmyCountContext, player2ArmyCountContext, player1HandCountContext, player2HandCountContext, isUserTurnContext, isViewReversedContext} from './+page.svelte'
 	import { get } from 'svelte/store';
+	import Stack from './Stack.svelte';
 	//TODO player hand list
 
 		const player1HandList = player1HandListContext.get()
@@ -27,6 +28,7 @@
 	// export let onBoardBlack: number | undefined;
 	// export let onBoardWhite: number | undefined;
 	export let dragAndDrop: dragAndDropFunction;
+	export let stack: number[]
 	// export let reversed: boolean;
 	// export let isPlayerTurn: boolean;
 	// export let player1Ready: boolean;
@@ -66,6 +68,7 @@
 </script>
 
 <div class="hands">
+	<Stack {stack} />
 	<div class="hand-container">
 		<div class="hand-info">
 			<h3 class="name">{$userColor === 'w' ? $player2Name : $player1Name} {readyDisplay(0, $userColor)}</h3>
@@ -84,7 +87,6 @@
 					<PieceHand
 						on:drop
 						{dragAndDrop}
-						reversed={$isViewReversed}
 						playerColor={$userColor}
 						isPlayerTurn={$isUserTurn}
 						color={$userColor === 'w' ? 'b' : 'w'}
@@ -112,7 +114,6 @@
 					<PieceHand
 						on:drop
 						{dragAndDrop}
-						reversed={$isViewReversed}
 						playerColor={$userColor}
 						isPlayerTurn={$isUserTurn}
 						color={$userColor === 'w' ? 'w' : 'b'}

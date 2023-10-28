@@ -44,40 +44,41 @@
 	import { onMount } from 'svelte';
 	import { createService } from '$lib/store/contextHelper';
 	import type { Readable, Writable } from 'svelte/store';
-	import {get} from 'svelte/store'
-	import {createGameStore} from '$lib/store/gameState'
+	import { get } from 'svelte/store';
+	import { createGameStore } from '$lib/store/gameState';
 
 	export let data;
-	const gameStore = createGameStore(data.data, data.session?.user.user_metadata.username)
-	gameStateContext.set(gameStore.gameState)
-	player1NameContext.set(gameStore.player1Name)
-	player2NameContext.set(gameStore.player2Name)
-	userColorContext.set(gameStore.userColor)
-	moveHistoryContext.set(gameStore.moveHistory)
-	manualFlipContext.set(gameStore.manualFlip)
-	isViewReversedContext.set(gameStore.isViewReversed)
-	turnColorContext.set(gameStore.turnColor)
-	isPlayer1ReadyContext.set(gameStore.isPlayer1Ready)
-	isPlayer2ReadyContext.set(gameStore.isPlayer2Ready)
-	isUserTurnContext.set(gameStore.isUserTurn)
-	player1HandListContext.set(gameStore.player1HandList)
-	player2HandListContext.set(gameStore.player2HandList)
-	player1ArmyCountContext.set(gameStore.player1ArmyCount)
-	player2ArmyCountContext.set(gameStore.player2ArmyCount)
-	player1HandCountContext.set(gameStore.player1HandCount)
-	player2HandCountContext.set(gameStore.player2HandCount)
-	moveListContext.set(gameStore.moveList)
-	moveListUIContext.set(gameStore.moveListUI)
-	boardStateContext.set(gameStore.boardState)
-	boardUIContext.set(gameStore.boardUI)
+	const gameStore = createGameStore(data.data, data.session?.user.user_metadata.username);
+	gameStateContext.set(gameStore.gameState);
+	player1NameContext.set(gameStore.player1Name);
+	player2NameContext.set(gameStore.player2Name);
+	userColorContext.set(gameStore.userColor);
+	moveHistoryContext.set(gameStore.moveHistory);
+	manualFlipContext.set(gameStore.manualFlip);
+	isViewReversedContext.set(gameStore.isViewReversed);
+	turnColorContext.set(gameStore.turnColor);
+	isPlayer1ReadyContext.set(gameStore.isPlayer1Ready);
+	isPlayer2ReadyContext.set(gameStore.isPlayer2Ready);
+	isUserTurnContext.set(gameStore.isUserTurn);
+	player1HandListContext.set(gameStore.player1HandList);
+	player2HandListContext.set(gameStore.player2HandList);
+	player1ArmyCountContext.set(gameStore.player1ArmyCount);
+	player2ArmyCountContext.set(gameStore.player2ArmyCount);
+	player1HandCountContext.set(gameStore.player1HandCount);
+	player2HandCountContext.set(gameStore.player2HandCount);
+	moveListContext.set(gameStore.moveList);
+	moveListUIContext.set(gameStore.moveListUI);
+	boardStateContext.set(gameStore.boardState);
+	boardUIContext.set(gameStore.boardUI);
 	// let boardState = data.data;
-	const boardState = gameStore.boardState
-	const isPlayer1Ready = gameStore.isPlayer1Ready
-	const isPlayer2Ready = gameStore.isPlayer2Ready
-	const gameState = gameStore.gameState
-	const userColor = gameStore.userColor
-	const turnColor = gameStore.turnColor
-	// const 
+	const boardState = gameStore.boardState;
+	const boardUI = gameStore.boardUI;
+	const isPlayer1Ready = gameStore.isPlayer1Ready;
+	const isPlayer2Ready = gameStore.isPlayer2Ready;
+	const gameState = gameStore.gameState;
+	const userColor = gameStore.userColor;
+	const turnColor = gameStore.turnColor;
+	// const
 
 	// $: currentState = FenToBoard(boardState.current_state);
 	// $: console.log("currentstate: ", currentState)
@@ -117,6 +118,7 @@
 	let disableAttackDialogue = false;
 	let disableStackDialogue = false;
 	let menuState = 0;
+	let stack: number[] = [];
 	// countPiecesOnBoard(data.data.current_state)
 	//TODO get fen to hand
 	// $: hands = FenToHand(boardState.current_state);
@@ -223,6 +225,10 @@
 		}
 	}
 
+	function handleStackClick(event: CustomEvent) {
+		stack = get(boardUI)[event.detail];
+	}
+
 	function handleMoveEvent(event: CustomEvent) {
 		const msg = {
 			type: 'makeMove',
@@ -238,7 +244,7 @@
 			const res = JSON.parse(event.data);
 			switch (res.type) {
 				case 'game':
-					gameStore.gameState.set(res.payload)
+					gameStore.gameState.set(res.payload);
 					// boardState = res.payload;
 					// currentState = FenToBoard(boardState.current_state);
 					break;
@@ -319,11 +325,7 @@
 
 <main>
 	<section>
-		<Board
-			{dragAndDrop}
-			{drop}
-			on:drop={handleDropEvent}
-		/>
+		<Board {dragAndDrop} {drop} on:drop={handleDropEvent} on:stackClick={handleStackClick} />
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
@@ -356,6 +358,7 @@
 				on:resign={handleResignEvent}
 				on:undo={handleUndoEvent}
 				on:drop={handleDropEvent}
+				stack={stack}
 				{dragAndDrop}
 			/>
 		{:else if menuState === 1}
@@ -375,14 +378,21 @@
 </main>
 
 <style lang="scss">
-	main {
-		display: flex;
+	// main {
+	// 	display: flex;
+	// 	max-width: 90rem;
+	// 	margin: 0 auto;
+	// }
+	main{
 		max-width: 90rem;
 		margin: 0 auto;
 	}
+	
 	section {
-		width: 100%;
+		// width: 100%;
 		user-select: none;
+		margin:auto;
+		max-width: 50rem;
 	}
 	aside {
 		user-select: none;
@@ -424,10 +434,22 @@
 
 	.side-menu {
 		/* background-color: gray; */
-		margin-left: auto;
-		max-width: 36rem;
+		// margin-left: auto;
+		margin: 0 auto;
+		// max-width: 36rem;
+		max-width: 44rem;
 		width: 100%;
 		// margin-top: auto;
 		// margin-bottom: auto;
+	}
+
+	@media only screen and (min-width: 1200px) {
+		main {
+			display: flex;
+		}
+		.side-menu{
+			margin-left: auto;
+			max-width: 36rem;
+		}
 	}
 </style>
