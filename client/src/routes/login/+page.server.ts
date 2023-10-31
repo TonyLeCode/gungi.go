@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals: { getSession } }) => {
 	}
 };
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ locals, request }) => {
 		const body = Object.fromEntries(await request.formData());
 
@@ -21,6 +21,11 @@ export const actions = {
 
 		if (error) {
 			console.log(error);
+			if(error instanceof AuthApiError && error.status === 400){
+				return fail(400, {
+					error: "Invalid Login Info"
+				})
+			}
 			return fail(500, {
 				error: 'Server error. Try again later.',
 			});
