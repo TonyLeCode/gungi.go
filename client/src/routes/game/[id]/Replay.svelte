@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import {moveHistoryContext} from './+page.svelte'
+	import { get } from 'svelte/store';
 
 	// export let moveHistory: string[];
 	const moveHistory = moveHistoryContext.get()
-	$: moveHistoryLength = $moveHistory.length
-	let currentIndex = 0;
+	let currentIndex = get(moveHistory).length - 1;
+	moveHistory.subscribe((val) => {
+		currentIndex = val.length - 1
+	})
+	// $: moveHistoryLength = $moveHistory.length
 	let containerRef: HTMLOListElement;
 	let autoplay = false;
 	let autoplayInterval = 1000;
@@ -17,7 +21,7 @@
 
 	function startAutoplay() {
 		intervalId = setInterval(() => {
-			if (currentIndex === moveHistoryLength - 1) {
+			if (currentIndex === get(moveHistory).length - 1) {
 				if (intervalId) {
 					clearInterval(intervalId);
 					autoplay = false;
@@ -41,7 +45,7 @@
 		if (intervalId) {
 			clearInterval(intervalId);
 			intervalId = setInterval(() => {
-				if (currentIndex === moveHistoryLength - 1) {
+				if (currentIndex === get(moveHistory).length - 1) {
 					if (intervalId) {
 						clearInterval(intervalId);
 						autoplay = false;
@@ -54,7 +58,7 @@
 	}
 
 	function next() {
-		if (currentIndex === moveHistoryLength - 1) {
+		if (currentIndex === get(moveHistory).length - 1) {
 			return;
 		}
 		currentIndex++;
@@ -88,16 +92,16 @@
 		</li>
 	{/each}
 </ol>
-<input class="replay-bar" bind:value={currentIndex} type="range" name="replay" min="0" max={moveHistoryLength - 1} />
+<input class="replay-bar" bind:value={currentIndex} type="range" step=1 name="replay" min="0" max={$moveHistory.length - 1} />
 <div class="controls">
 	<button class="button-primary" on:click={prev} disabled={currentIndex === 0}>&lt;</button>
 	<div class="counter">
-		{currentIndex+1}/{moveHistoryLength}
+		{currentIndex+1}/{$moveHistory.length}
 	</div>
-	<button class="button-primary" on:click={next} disabled={currentIndex === moveHistoryLength - 1}> &gt;</button>
+	<button class="button-primary" on:click={next} disabled={currentIndex === $moveHistory.length - 1}> &gt;</button>
 	<div class="autoplay-controls">
 		<button class="button-primary" disabled={!autoplay} on:click={stopAutoplay}>stop</button>
-		<button class="button-primary" disabled={autoplay || currentIndex === moveHistoryLength-1} on:click={startAutoplay}>autoplay</button>
+		<button class="button-primary" disabled={autoplay || currentIndex === $moveHistory.length-1} on:click={startAutoplay}>autoplay</button>
 		<input type="number" name="autoplay" bind:value={autoplayInterval} on:change={intervalChange} />
 	</div>
 </div>
