@@ -6,7 +6,6 @@
 	export let color: string;
 	export let piece: number;
 	export let amount: number;
-	export let reversed: boolean;
 	export let dragAndDrop: dragAndDropFunction;
 	export let playerColor: string;
 	export let isPlayerTurn: boolean;

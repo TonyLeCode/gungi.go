@@ -42,10 +42,6 @@ export function createGameStore(initState: BoardState, username: string | null) 
   const manualFlip = writable(false);
 	const isViewReversed = derived([player1Name, manualFlip], ([player1Name, manualFlip]) => {
 		const isUserWhite = username === player1Name;
-		console.log('isreversed')
-		console.log(manualFlip)
-		console.log(isUserWhite)
-		console.log(manualFlip != isUserWhite)
 		return manualFlip == isUserWhite;
 	});
   const turnColor = derived(gameState, (data) => {

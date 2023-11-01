@@ -4,14 +4,11 @@
 	import type { Game } from '../../routes/overview/+page.server';
 
 	export let gameData: Game;
-	export let isUserTurn: boolean;
 	export let userColor: "w" | "b" | "spectator"
 	// console.log(gameData.current_state);
 	$: isUserWhite = userColor === "w"
 	$: boardState = FenToBoard(gameData.current_state);
 	$: correctedBoardState = isUserWhite ? boardState : reverseList(boardState)
-	$: console.log(boardState);
-	$: console.log("correctedBoardState: ", correctedBoardState);
 </script>
 
 <div class="board">
