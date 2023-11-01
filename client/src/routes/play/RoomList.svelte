@@ -17,12 +17,12 @@
 
 	export let ws: WebSocket;
 
-	function handleCancel(roomid: string){
+	function handleCancel(roomid: string) {
 		const payload = {
-			type: "cancel",
+			type: 'cancel',
 			payload: roomid,
-		}
-		ws.send(JSON.stringify(payload))
+		};
+		ws.send(JSON.stringify(payload));
 	}
 </script>
 
@@ -30,7 +30,7 @@
 {#if roomList.length != 0}
 	<ul class="room-list">
 		{#each roomList ?? [] as room, index (room.roomid)}
-			<li class="fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
+			<li class="room-item fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 				<button
 					disabled={room.host === username ? true : false}
 					on:click={() => {
@@ -44,7 +44,14 @@
 					<div>{room.description}</div>
 				</button>
 				{#if room.host === username}
-					<button on:click={() => {handleCancel(room.roomid)}} class="cancel button-ghost">Cancel</button>
+					<button
+						on:click={() => {
+							handleCancel(room.roomid);
+						}}
+						class="cancel button-ghost">Cancel</button
+					>
+				{:else}
+					<button class="accept button-primary">Accept</button>
 				{/if}
 			</li>
 		{/each}
@@ -57,8 +64,8 @@
 	h2 {
 		margin-bottom: 0.5rem;
 	}
-	li {
-		position: relative;
+	.room-item {
+		display: flex;
 	}
 	.empty {
 		margin-bottom: 2rem;
@@ -109,13 +116,12 @@
 		font-weight: 300;
 		text-transform: capitalize;
 	}
-	.cancel {
-		position: absolute;
-		left: -6rem;
+	.cancel,
+	.accept {
 		word-break: normal;
-		margin: auto;
+		margin: auto 1rem;
+		margin-right: 0;
 		height: min-content;
-		top: 0;
-		bottom: 0;
+		width: 5.5rem;
 	}
 </style>
