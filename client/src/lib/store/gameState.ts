@@ -40,9 +40,12 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		return data.history.String.split(" ")
 	})
   const manualFlip = writable(false);
-	const isViewReversed = derived([player1Name, manualFlip], ([player1Name, manualFlip]) => {
+	const isViewReversed = derived([player1Name, player2Name, manualFlip], ([player1Name, player2Name, manualFlip]) => {
+		if(username !== player1Name && username !== player2Name){
+			return manualFlip
+		}
 		const isUserWhite = username === player1Name;
-		return manualFlip == isUserWhite;
+		return manualFlip === isUserWhite;
 	});
   const turnColor = derived(gameState, (data) => {
     return data.current_state.split(' ')[2];
