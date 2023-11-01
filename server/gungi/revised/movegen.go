@@ -2,6 +2,7 @@ package revised
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
@@ -60,6 +61,7 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 		} else {
 			str = "b-r"
 		}
+		r.TurnColor = utils.OppositeColor(r.TurnColor)
 	}
 	r.History = append(r.History, str)
 
@@ -155,7 +157,7 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 	if !(r.Ready[0] && r.Ready[1]) && !(moveType == PLACE || moveType == READY) {
 		return errors.New("can only place or ready in drafting phase")
 	}
-	if getColor(piece) != r.TurnColor {
+	if getColor(piece) != r.TurnColor && piece != -1 {
 		return errors.New("wrong color")
 	}
 	if r.MarshalCoords[r.TurnColor] == 0 && (piece != coloredPiece(MARSHAL, r.TurnColor) || moveType != PLACE) {
@@ -348,9 +350,12 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 		}
 
 	case READY:
+		log.Println("ready?")
 		if r.Ready[r.TurnColor] {
+			log.Println(r.Ready)
 			return errors.New("already readied")
 		}
+		isValid = true
 	}
 
 	if isValid {
