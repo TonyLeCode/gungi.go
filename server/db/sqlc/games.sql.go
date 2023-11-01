@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tabbed/pqtype"
 )
 
 const createGame = `-- name: CreateGame :one
@@ -28,6 +27,24 @@ type CreateGameParams struct {
 
 func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createGame, arg.CurrentState, arg.Ruleset, arg.Type)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createUndo = `-- name: CreateUndo :one
+INSERT INTO undo (game_id, color)
+VALUES ($1, $2)
+RETURNING id
+`
+
+type CreateUndoParams struct {
+	GameID uuid.UUID `json:"game_id"`
+	Color  string    `json:"color"`
+}
+
+func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createUndo, arg.GameID, arg.Color)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -52,13 +69,13 @@ func (q *Queries) GameJunction(ctx context.Context, arg GameJunctionParams) erro
 const getGame = `-- name: GetGame :one
 SELECT 
   games.id, games.fen, games.history, games.completed, games.date_started, games.date_finished, games.current_state, games.ruleset, games.type, 
-  user1.raw_user_meta_data ->> 'username' AS player1,
-  user2.raw_user_meta_data ->> 'username' AS player2
+  user1.username AS player1,
+  user2.username AS player2
 FROM games 
 JOIN player_games AS player_games_1 ON games.id = player_games_1.game_id AND player_games_1.color = 'w' 
 JOIN player_games AS player_games_2 ON games.id = player_games_2.game_id AND player_games_2.color = 'b' 
-JOIN auth.users AS user1 ON user1.id = player_games_1.user_id
-JOIN auth.users AS user2 ON user2.id = player_games_2.user_id
+JOIN profiles AS user1 ON user1.id = player_games_1.user_id
+JOIN profiles AS user2 ON user2.id = player_games_2.user_id
 WHERE games.id = $1
 `
 
@@ -72,8 +89,8 @@ type GetGameRow struct {
 	CurrentState string         `json:"current_state"`
 	Ruleset      string         `json:"ruleset"`
 	Type         string         `json:"type"`
-	Player1      interface{}    `json:"player1"`
-	Player2      interface{}    `json:"player2"`
+	Player1      string         `json:"player1"`
+	Player2      string         `json:"player2"`
 }
 
 func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error) {
@@ -96,24 +113,24 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 }
 
 const getIdFromUsername = `-- name: GetIdFromUsername :one
-SELECT id FROM auth.users
-WHERE raw_user_meta_data ->> 'username' = $1
+SELECT id FROM profiles
+WHERE profiles.username = $1
 `
 
-func (q *Queries) GetIdFromUsername(ctx context.Context, rawUserMetaData pqtype.NullRawMessage) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getIdFromUsername, rawUserMetaData)
+func (q *Queries) GetIdFromUsername(ctx context.Context, username string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getIdFromUsername, username)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
 }
 
 const getOngoingGames = `-- name: GetOngoingGames :many
-SELECT games.id, games.fen, games.completed, games.date_started, games.current_state, users1.raw_user_meta_data ->> 'username' as username1, users2.raw_user_meta_data ->> 'username' as username2
+SELECT games.id, games.fen, games.completed, games.date_started, games.current_state, users1.username as username1, users2.username as username2
 FROM games
 JOIN player_games j ON games.id = j.game_id
-JOIN auth.users users1 ON j.user_id = users1.id AND j.color = 'w'
+JOIN profiles as users1 ON j.user_id = users1.id AND j.color = 'w'
 JOIN player_games j2 ON games.id = j2.game_id AND j2.user_id != j.user_id AND j2.color ='b'
-JOIN auth.users users2 ON j2.user_id = users2.id
+JOIN profiles as users2 ON j2.user_id = users2.id
 WHERE (users1.id = $1 OR users2.id = $1) AND games.completed=false
 `
 
@@ -123,8 +140,8 @@ type GetOngoingGamesRow struct {
 	Completed    bool           `json:"completed"`
 	DateStarted  time.Time      `json:"date_started"`
 	CurrentState string         `json:"current_state"`
-	Username1    interface{}    `json:"username1"`
-	Username2    interface{}    `json:"username2"`
+	Username1    string         `json:"username1"`
+	Username2    string         `json:"username2"`
 }
 
 func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoingGamesRow, error) {
@@ -158,6 +175,23 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 	return items, nil
 }
 
+const getUndo = `-- name: GetUndo :one
+SELECT id FROM undo
+WHERE game_id = $1 AND color = $2
+`
+
+type GetUndoParams struct {
+	GameID uuid.UUID `json:"game_id"`
+	Color  string    `json:"color"`
+}
+
+func (q *Queries) GetUndo(ctx context.Context, arg GetUndoParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getUndo, arg.GameID, arg.Color)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const makeMove = `-- name: MakeMove :exec
 UPDATE games
 SET current_state = $2, history = $3
@@ -172,5 +206,15 @@ type MakeMoveParams struct {
 
 func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {
 	_, err := q.db.ExecContext(ctx, makeMove, arg.ID, arg.CurrentState, arg.History)
+	return err
+}
+
+const removeUndo = `-- name: RemoveUndo :exec
+DELETE FROM undo
+WHERE id = $1
+`
+
+func (q *Queries) RemoveUndo(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, removeUndo, id)
 	return err
 }

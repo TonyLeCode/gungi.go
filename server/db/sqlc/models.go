@@ -66,3 +66,14 @@ type PlayerGame struct {
 	GameID uuid.UUID `json:"game_id"`
 	Color  string    `json:"color"`
 }
+
+type Profile struct {
+	ID       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
+}
+
+type Undo struct {
+	ID     uuid.UUID `json:"id"`
+	GameID uuid.UUID `json:"game_id"`
+	Color  string    `json:"color"`
+}

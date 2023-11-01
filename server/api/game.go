@@ -10,7 +10,6 @@ import (
 	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 	"github.com/google/uuid"
-	"github.com/tabbed/pqtype"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -167,29 +166,12 @@ func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType s
 
 	queries := db.New(dbConn.PostgresDB)
 
-	var nullRawUser1 pqtype.NullRawMessage
-	var nullRawUser2 pqtype.NullRawMessage
-
-	if username1 != "" {
-		nullRawUser1.Valid = true
-		nullRawUser1.RawMessage = []byte(username1)
-	} else {
-		nullRawUser1.Valid = false
-	}
-
-	if username2 != "" {
-		nullRawUser2.Valid = true
-		nullRawUser2.RawMessage = []byte(username2)
-	} else {
-		nullRawUser2.Valid = false
-	}
-
-	userID_1, err := queries.GetIdFromUsername(ctx, nullRawUser1)
+	userID_1, err := queries.GetIdFromUsername(ctx, username1)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-	userID_2, err := queries.GetIdFromUsername(ctx, nullRawUser2)
+	userID_2, err := queries.GetIdFromUsername(ctx, username2)
 	if err != nil {
 		log.Println(err)
 		return "", err

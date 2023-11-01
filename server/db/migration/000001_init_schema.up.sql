@@ -13,13 +13,21 @@ create table
     constraint games_id_key unique (id)
   );
 
-  create table
+create table
   public.player_games (
     user_id uuid not null,
     game_id uuid not null,
     color character(1) not null,
     constraint player_games_game_id_fkey foreign key (game_id) references games (id) on delete cascade,
     constraint player_games_user_id_fkey foreign key (user_id) references auth.users (id) on delete cascade
+  );
+
+create table
+  public.undo(
+    id uuid not null default uuid_generate_v4 (),
+    game_id uuid not null,
+    color character(1) not null,
+    constraint player_games_game_id_fkey foreign key (game_id) references games (id) on delete cascade
   );
 
 CREATE SCHEMA auth;
@@ -103,3 +111,12 @@ where
 create unique index users_email_partial_key on auth.users using btree (email)
 where
   (is_sso_user = false);
+
+create table
+  public.profiles (
+    id uuid not null,
+    username text not null,
+    constraint profiles_pkey primary key (id),
+    constraint profiles_username_key unique (username),
+    constraint profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade
+  ) tablespace pg_default;
