@@ -24,8 +24,8 @@
 				<span class="name">{session.user.user_metadata.username}</span>
 				<a href="/logout">logout</a>
 			{:else}
-				<a class="a" href="login">login</a>
-				<a class="a" href="register">register</a>
+				<a class="a" href="/login">login</a>
+				<a class="a" href="/register">register</a>
 			{/if}
 		</ul>
 	</div>
