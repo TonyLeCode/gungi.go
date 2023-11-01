@@ -3,24 +3,40 @@
 	import PieceHand from './PieceHand.svelte';
 	import type { dragAndDropFunction } from '$lib/utils/dragAndDrop';
 
-	import { player1HandListContext, player2HandListContext, userColorContext, player1NameContext, player2NameContext, isPlayer1ReadyContext, isPlayer2ReadyContext, player1ArmyCountContext, player2ArmyCountContext, player1HandCountContext, player2HandCountContext, isUserTurnContext, isViewReversedContext} from './+page.svelte'
+	import {
+		manualFlipContext,
+		player1HandListContext,
+		player2HandListContext,
+		userColorContext,
+		player1NameContext,
+		player2NameContext,
+		isPlayer1ReadyContext,
+		isPlayer2ReadyContext,
+		player1ArmyCountContext,
+		player2ArmyCountContext,
+		player1HandCountContext,
+		player2HandCountContext,
+		isUserTurnContext,
+		isViewReversedContext,
+	} from './+page.svelte';
 	import { get } from 'svelte/store';
 	import Stack from './Stack.svelte';
 	//TODO player hand list
 
-		const player1HandList = player1HandListContext.get()
-		const player2HandList = player2HandListContext.get()
-		const isPlayer1Ready = isPlayer1ReadyContext.get()
-		const isPlayer2Ready = isPlayer2ReadyContext.get()
-		const userColor = userColorContext.get()
-		const player1Name = player1NameContext.get()
-		const player2Name = player2NameContext.get()
-		const player1ArmyCount = player1ArmyCountContext.get()
-		const player2ArmyCount = player2ArmyCountContext.get()
-		const player1HandCount = player1HandCountContext.get()
-		const player2HandCount = player2HandCountContext.get()
-		const isUserTurn = isUserTurnContext.get()
-		const isViewReversed = isViewReversedContext.get()
+	const manualFlip = manualFlipContext.get();
+	const player1HandList = player1HandListContext.get();
+	const player2HandList = player2HandListContext.get();
+	const isPlayer1Ready = isPlayer1ReadyContext.get();
+	const isPlayer2Ready = isPlayer2ReadyContext.get();
+	const userColor = userColorContext.get();
+	const player1Name = player1NameContext.get();
+	const player2Name = player2NameContext.get();
+	const player1ArmyCount = player1ArmyCountContext.get();
+	const player2ArmyCount = player2ArmyCountContext.get();
+	const player1HandCount = player1HandCountContext.get();
+	const player2HandCount = player2HandCountContext.get();
+	const isUserTurn = isUserTurnContext.get();
+	const isViewReversed = isViewReversedContext.get();
 	// export let playerColor: string;
 	// export let player1: string;
 	// export let player2: string;
@@ -28,7 +44,7 @@
 	// export let onBoardBlack: number | undefined;
 	// export let onBoardWhite: number | undefined;
 	export let dragAndDrop: dragAndDropFunction;
-	export let stack: number[]
+	export let stack: number[];
 	// export let reversed: boolean;
 	// export let isPlayerTurn: boolean;
 	// export let player1Ready: boolean;
@@ -56,6 +72,12 @@
 		return '';
 	}
 
+	function handleFlipBoardButton() {
+		manualFlip.update((val) => {
+			return !val
+		})
+	}
+
 	function handleResignButton() {
 		dispatch('resign');
 	}
@@ -78,7 +100,7 @@
 					>{hands[$userColor === 'w' ? 1 : 0].reduce((a, b) => {
 						return a + b;
 					})}</span> -->
-					In Hand: <span>{$userColor === 'b' ? $player1HandCount : $player2HandCount}</span>
+				In Hand: <span>{$userColor === 'b' ? $player1HandCount : $player2HandCount}</span>
 			</div>
 		</div>
 		<div class="hand">
@@ -131,6 +153,7 @@
 		{#if !$isPlayer1Ready || !$isPlayer2Ready}
 			<button class="button-primary" on:click={handleReadyButton}>ready</button>
 		{/if}
+		<button class="button-primary" on:click={handleFlipBoardButton}>flip board</button>
 	</div>
 </div>
 

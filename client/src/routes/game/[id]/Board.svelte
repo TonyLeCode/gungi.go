@@ -1,21 +1,31 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
 	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
 	import { nanoid } from 'nanoid';
 	import { get } from 'svelte/store';
 
-	import { boardUIContext, isViewReversedContext, isPlayer1ReadyContext, isPlayer2ReadyContext, isUserTurnContext, turnColorContext, userColorContext, moveListUIContext, moveListContext } from './+page.svelte';
-	const boardUI = boardUIContext.get()
-	const userColor = userColorContext.get()
-	const isViewReversed = isViewReversedContext.get()
-	const isPlayer1Ready = isPlayer1ReadyContext.get()
-	const isPlayer2Ready = isPlayer2ReadyContext.get()
-	const isUserTurn = isUserTurnContext.get()
-	const moveList = moveListContext.get()
-	const turnColor = turnColorContext.get()
-	const moveListUI = moveListUIContext.get()
+	import {
+		boardUIContext,
+		isViewReversedContext,
+		isPlayer1ReadyContext,
+		isPlayer2ReadyContext,
+		isUserTurnContext,
+		turnColorContext,
+		userColorContext,
+		moveListUIContext,
+		moveListContext,
+	} from './+page.svelte';
+	const boardUI = boardUIContext.get();
+	const userColor = userColorContext.get();
+	const isViewReversed = isViewReversedContext.get();
+	const isPlayer1Ready = isPlayer1ReadyContext.get();
+	const isPlayer2Ready = isPlayer2ReadyContext.get();
+	const isUserTurn = isUserTurnContext.get();
+	const moveList = moveListContext.get();
+	const turnColor = turnColorContext.get();
+	const moveListUI = moveListUIContext.get();
 
 	// export const boardState = new Array(81).fill(['']);
 	export let dragAndDrop: dragAndDropFunction;
@@ -58,8 +68,19 @@
 	}
 	// $: boardState = reverseIfBlack(gameData);
 	// $: console.log(boardState)
-	$: fileCoords = reverseArrayView([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-	$: rankCoords = reverseList(reverseArrayView(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']));
+	let fileCoords = [9, 8, 7, 6, 5, 4, 3, 2, 1];
+	let rankCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+	const unsubscribe = isViewReversed.subscribe((val) => {
+		if (val) {
+			fileCoords = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+			rankCoords = ['i', 'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'];
+		} else {
+			fileCoords = [9, 8, 7, 6, 5, 4, 3, 2, 1];
+			rankCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+		}
+	});
+
+	onDestroy(unsubscribe)
 
 	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index;
@@ -85,11 +106,11 @@
 		if (items?.hoverItem) {
 			dispatch('drop', items);
 		}
-		console.log(items)
+		console.log(items);
 		highlightIndex = -1;
 		moveIndices = [];
 	}
-	
+
 	function dndOptions(index: number, piece: number) {
 		let correctedIndex = index;
 		function isActive() {
@@ -119,10 +140,10 @@
 		const square = get(boardUI)[index];
 		// console.log(String(index) + JSON.stringify(square));
 
-		if (get(userColor) != get(turnColor)){
+		if (get(userColor) != get(turnColor)) {
 			highlightIndex = -1;
 			moveIndices = [];
-			return
+			return;
 		}
 
 		if (square.length === 0) {
@@ -130,7 +151,7 @@
 			moveIndices = [];
 			return;
 		}
-		
+
 		if (GetPieceColor(square[square.length - 1]) != get(turnColor)) {
 			highlightIndex = -1;
 			moveIndices = [];
@@ -146,8 +167,8 @@
 		return $moveList[highlightIndex]?.includes(index);
 	}
 
-	function handleStackClick(index: number){
-		dispatch('stackClick', index)
+	function handleStackClick(index: number) {
+		dispatch('stackClick', index);
 	}
 </script>
 
@@ -158,7 +179,7 @@
 				onClick(index);
 			}}
 			on:mousedown={() => {
-				handleStackClick(index)
+				handleStackClick(index);
 			}}
 			class="square"
 			class:highlight={highlightIndex == index}
