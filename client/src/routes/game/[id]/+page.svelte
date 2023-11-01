@@ -314,7 +314,7 @@
 			}
 		});
 		return () => {
-			$ws.removeEventListener('message', handleGameMsg);
+			$ws?.removeEventListener('message', handleGameMsg);
 		};
 	});
 </script>

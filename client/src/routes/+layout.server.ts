@@ -8,10 +8,11 @@
 // 	} = event;
 // };
 
-// import type { LayoutServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 
-// export const load: LayoutServerLoad = async ({ locals: { getSession } }) => {
-// 	return {
-// 		session: getSession(),
-// 	};
-// };
+export const load: LayoutServerLoad = async ({ locals: { getSession } }) => {
+  // console.log("get session: ", await getSession())
+	return {
+		session: await getSession(),
+	};
+};

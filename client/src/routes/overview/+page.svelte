@@ -3,7 +3,7 @@
 	import type {Game} from './+page.server'
 
 	export let data;
-	const username = data.session?.user.user_metadata.username ?? ''
+	$: username = data.session?.user.user_metadata.username ?? ''
 	$: sortedGames = [...data.data].sort((a, b) => {
 		if (turnPlayer(a) === turnPlayer(b)){
 			return 0
@@ -45,7 +45,6 @@
 	}
 
 	
-	$: console.log(data.data);
 </script>
 
 <svelte:head>

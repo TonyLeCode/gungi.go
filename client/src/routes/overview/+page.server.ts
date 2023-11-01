@@ -1,4 +1,4 @@
-import { VITE_API_URL } from './../../../.svelte-kit/ambient.d';
+// import { VITE_API_URL } from './../../../.svelte-kit/ambient.d';
 // import { getServerSession } from '@supabase/auth-helpers-sveltekit'
 
 import type { PageServerLoad } from './$types';

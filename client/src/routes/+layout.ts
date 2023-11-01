@@ -4,6 +4,7 @@ import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 	depends('supabase:auth');
+	// console.log("data: ", data)
 
 	const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		global: {
@@ -12,8 +13,8 @@ export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 		cookies: {
 			get(key) {
 				if (!isBrowser()) {
-					return "not browser"
-					// return JSON.stringify(data.session);
+					// console.log('not browser')
+					return JSON.stringify(data.session);
 				}
 
 				const cookie = parse(document.cookie);

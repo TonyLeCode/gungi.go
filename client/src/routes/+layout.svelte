@@ -4,7 +4,6 @@
 	import type { LayoutData } from './$types';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
-	import { supabaseClient } from '$lib/supabaseClient';
 	import { ws, wsConnState, websocketConnect, df } from '$lib/store/websocket';
 
 	export let data: LayoutData;

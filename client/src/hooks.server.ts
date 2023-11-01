@@ -1,7 +1,6 @@
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
-import { supabaseClient } from '$lib/supabaseClient';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -28,7 +27,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return session;
 	};
 
-	return resolve(event, {
+	return await resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range';
 		},
