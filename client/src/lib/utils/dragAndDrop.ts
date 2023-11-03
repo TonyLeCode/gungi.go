@@ -119,9 +119,7 @@ export function createDragAndDrop() {
 		}
 
 		function startDragMouse(e: MouseEvent) {
-			if (e.button !== 0) {
-				return;
-			}
+			if (e.button !== 0) return;
 			let verifyActive: boolean;
 			if (typeof active === 'function') {
 				verifyActive = active();
@@ -129,9 +127,7 @@ export function createDragAndDrop() {
 				verifyActive = active;
 			}
 
-			if (!verifyActive) {
-				return;
-			}
+			if (!verifyActive) return;
 
 			initX = e.clientX;
 			initY = e.clientY;

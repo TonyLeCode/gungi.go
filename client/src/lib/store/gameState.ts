@@ -21,65 +21,45 @@ export interface BoardState {
 
 export function createGameStore(initState: BoardState, username: string | null) {
 	const gameState = writable<BoardState>(initState);
-	const player1Name = derived(gameState, (data) => {
-		return data.player1
-	})
-	const player2Name = derived(gameState, (data) => {
-		return data.player2
-	})
+	const player1Name = derived(gameState, (data) => data.player1);
+	const player2Name = derived(gameState, (data) => data.player2);
 	const userColor = derived(gameState, (data) => {
-		if (data.player1 === username) {
-			return 'w';
-		}
-		if (data.player2 === username) {
-			return 'b';
-		}
+		if (data.player1 === username) return 'w';
+		if (data.player2 === username) return 'b';
 		return 'spectator';
 	});
-	const moveHistory = derived(gameState, (data) => {
-		return data.history.String.split(" ")
-	})
-  const manualFlip = writable(false);
+	const moveHistory = derived(gameState, (data) => data.history.String.split(' '));
+	const manualFlip = writable(false);
 	const isViewReversed = derived([player1Name, player2Name, manualFlip], ([player1Name, player2Name, manualFlip]) => {
-		if(username !== player1Name && username !== player2Name){
-			return manualFlip
-		}
+		if (username !== player1Name && username !== player2Name) manualFlip;
 		const isUserWhite = username === player1Name;
 		return manualFlip === isUserWhite;
 	});
-  const turnColor = derived(gameState, (data) => {
-    return data.current_state.split(' ')[2];
-  })
-  const isPlayer1Ready = derived(gameState, (data) => {
-    return data.current_state.split(' ')[3][0] === '1';
-  })
-  const isPlayer2Ready = derived(gameState, (data) => {
-    return data.current_state.split(' ')[3][1] === '1';
-  })
-  const isUserTurn = derived([userColor, turnColor], ([userColor, turnColor]) => {
-		return userColor === turnColor
-	})
+	const turnColor = derived(gameState, (data) => data.current_state.split(' ')[2]);
+	const isPlayer1Ready = derived(gameState, (data) => data.current_state.split(' ')[3][0] === '1');
+	const isPlayer2Ready = derived(gameState, (data) => data.current_state.split(' ')[3][1] === '1');
+	const isUserTurn = derived([userColor, turnColor], ([userColor, turnColor]) => userColor === turnColor);
 	const player1HandList = derived(gameState, (data) => {
-		const hands = data.current_state.split(" ")[1]
-		const handString = hands.split('/')[0]
+		const hands = data.current_state.split(' ')[1];
+		const handString = hands.split('/')[0];
 
-		const hand: number[] = []
-		for (let i = 0; i < handString.length; i++){
-			hand.push(Number(handString[i]))
+		const hand: number[] = [];
+		for (let i = 0; i < handString.length; i++) {
+			hand.push(Number(handString[i]));
 		}
 		return hand;
-	})
+	});
 	const player2HandList = derived(gameState, (data) => {
-		const hands = data.current_state.split(" ")[1]
-		const handString = hands.split('/')[1]
-		
-		const hand: number[] = []
-		for (let i = 0; i < handString.length; i++){
-			hand.push(Number(handString[i]))
+		const hands = data.current_state.split(' ')[1];
+		const handString = hands.split('/')[1];
+
+		const hand: number[] = [];
+		for (let i = 0; i < handString.length; i++) {
+			hand.push(Number(handString[i]));
 		}
-		
+
 		return hand;
-	})
+	});
 	const player1ArmyCount = derived(gameState, (data) => {
 		return 5;
 	});
@@ -93,28 +73,26 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		return 5;
 	});
 	const moveList = derived(gameState, (data) => {
-		return data.moveList
-	})
-  const moveListUI = derived([moveList, isViewReversed], ([moveList, isViewReversed]) => {
-    const transformedMoveList: { [key: number]: number[] } = {};
-    if (isViewReversed) {
-      for (const key in moveList) {
-        const transformedKey = 80 - parseInt(key, 10);
-        const transformedValues = moveList[key].map((value) => 80 - value);
-        transformedMoveList[transformedKey] = transformedValues;
-      }
-    } else {
-      return moveList;
-    }
-  
-    return transformedMoveList;
-  })
-	const boardState = derived(gameState, (data) => {
-		return FenToBoard(data.current_state)
-	})
-	const boardUI = derived([boardState, isViewReversed], ([boardState, isViewReversed]) => {
-		return isViewReversed ? reverseList(boardState) : boardState;
+		return data.moveList;
 	});
+	const moveListUI = derived([moveList, isViewReversed], ([moveList, isViewReversed]) => {
+		const transformedMoveList: { [key: number]: number[] } = {};
+		if (isViewReversed) {
+			for (const key in moveList) {
+				const transformedKey = 80 - parseInt(key, 10);
+				const transformedValues = moveList[key].map((value) => 80 - value);
+				transformedMoveList[transformedKey] = transformedValues;
+			}
+		} else {
+			return moveList;
+		}
+
+		return transformedMoveList;
+	});
+	const boardState = derived(gameState, (data) => FenToBoard(data.current_state));
+	const boardUI = derived([boardState, isViewReversed], ([boardState, isViewReversed]) =>
+		isViewReversed ? reverseList(boardState) : boardState
+	);
 
 	return {
 		gameState,
@@ -137,8 +115,8 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		moveList,
 		moveListUI,
 		boardState,
-		boardUI
-	}
+		boardUI,
+	};
 }
 
 // export function createGameContext(initState: BoardState, username: string){

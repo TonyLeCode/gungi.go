@@ -137,9 +137,7 @@
 		disableStackDialogue = true;
 
 		const { dragItem, hoverItem } = event.detail;
-		if (dragItem?.coordIndex === hoverItem?.coordIndex) {
-			return;
-		}
+		if (dragItem?.coordIndex === hoverItem?.coordIndex) return;
 		// let fromCoord = '';
 		// if (dragItem.coordIndex) {
 		// 	const [file, rank] = IndexToCoords(dragItem.coordIndex);
@@ -358,7 +356,7 @@
 				on:resign={handleResignEvent}
 				on:undo={handleUndoEvent}
 				on:drop={handleDropEvent}
-				stack={stack}
+				{stack}
 				{dragAndDrop}
 			/>
 		{:else if menuState === 1}
@@ -383,15 +381,15 @@
 	// 	max-width: 90rem;
 	// 	margin: 0 auto;
 	// }
-	main{
+	main {
 		max-width: 90rem;
 		margin: 0 auto;
 	}
-	
+
 	section {
 		// width: 100%;
 		user-select: none;
-		margin:auto;
+		margin: auto;
 		max-width: 50rem;
 	}
 	aside {
@@ -448,7 +446,7 @@
 		main {
 			display: flex;
 		}
-		.side-menu{
+		.side-menu {
 			margin-left: auto;
 			max-width: 36rem;
 			padding: 0;
