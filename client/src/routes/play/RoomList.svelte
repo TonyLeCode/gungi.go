@@ -84,10 +84,10 @@
 		display: grid;
 		grid-template-columns: 12rem 8rem 1fr;
 		width: 100%;
-		min-height: 4rem;
+		min-height: 3.5rem;
 		gap: 1rem;
 		align-items: center;
-		padding: 0.5rem 2rem;
+		padding: 0.5rem 1.25rem;
 		border-radius: 4px;
 		background-color: rgb(var(--bg-2));
 		// box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
