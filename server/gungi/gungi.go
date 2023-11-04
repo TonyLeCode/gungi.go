@@ -9,6 +9,8 @@ type Ruleset interface {
 	ValidateMove(piece int, fromCoord int, moveType int, toCoord int) error
 	GetLegalMoves() (string, map[int][]int)
 	MakeMove(piece int, fromCoord int, moveType int, toCoord int) error
+	//Ready(playerColor string)
+	//Resign(playerColor string)
 	UndoMove()
 	BoardToFen() string
 	SetHistory(history []string)

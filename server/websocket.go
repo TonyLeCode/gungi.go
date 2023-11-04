@@ -363,7 +363,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 		mutex.Unlock()
 		room.AddClient(s)
 
-	case "ready":
+	case "ready": //TODO remove
 	case "makeMove":
 		gameID := clientList.clients[s].gameID
 		if gameID == "" {
@@ -381,20 +381,20 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			return err
 		}
 
-		newBoard := gungi.CreateBoard("revised")
+		newBoard := gungi.CreateBoard("revised") //TODO change hardcode
 		err = newBoard.SetBoardFromFen(game.CurrentState)
 		if err != nil {
 			return err
 		}
 		newBoard.SetHistory(strings.Split(game.History.String, " "))
 		newBoard.PrintBoard()
-		log.Println(move)
-		log.Println("fen: ", newBoard.BoardToFen())
+		// log.Println(move)
+		// log.Println("fen: ", newBoard.BoardToFen())
 		// log.Println(newBoard.TurnColor)
 		// log.Println(utils.GetColor(move.FromPiece))
 		err = newBoard.MakeMove(move.FromPiece, utils.IndexToSquare(move.FromCoord), move.MoveType, utils.IndexToSquare(move.ToCoord))
 		if err != nil {
-			return errors.New("invalid move")
+			return err
 		}
 		newBoard.PrintBoard()
 		log.Println("fen: ", newBoard.BoardToFen())
@@ -438,7 +438,43 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			session.Write(payload)
 		}
 	case "requestUndo":
-	case "acceptUndo":
+		gameID := clientList.clients[s].gameID
+		if gameID == "" {
+			return errors.New("could not find gameID")
+		}
+
+		gameUUID, err := uuid.Parse(gameID)
+		if err != nil {
+			return err
+		}
+
+		queryParams := db.CreateUndoParams{
+			GameID: gameUUID,
+			Color:  "w",
+		}
+
+		queries := db.New(dbs.PostgresDB)
+		undoID, err := queries.CreateUndo(ctx, queryParams)
+		if err != nil {
+			return err
+		}
+
+		msgResponse := MsgResponse{
+			Type:    "requestUndo",
+			Payload: undoID.String(),
+		}
+
+		payload, err := json.Marshal(msgResponse)
+		if err != nil {
+			return err
+		}
+
+		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+			// clientList.clients[q].username
+			// gameRooms[q]
+			return q == s //TODO only send to opponent
+		})
+	case "responseUndo":
 	case "resign":
 	}
 	return nil
