@@ -23,6 +23,7 @@
 		});
 		if (session?.access_token) {
 			websocketConnect(`ws://${import.meta.env.VITE_API_URL}/ws`, session.access_token);
+			//TODO websocket as spectator
 		}
 
 
