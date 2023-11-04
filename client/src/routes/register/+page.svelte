@@ -1,12 +1,21 @@
+<script lang='ts'>
+	export let form;
+
+	if (form){
+		console.log("form: ", form)
+		//TODO, make notification
+	}
+</script>
+
 <main>
   <form class="register" method="POST">
 		<fieldset>
 			<label for="username">Username:</label>
-			<input id="username" name="username" type="input" />
+			<input id="username" name="username" type="input" required />
 			<label for="email">Email:</label>
-			<input id="email" name="email" type="email" />
+			<input id="email" name="email" type="email" required />
 			<label for="password">Password:</label>
-			<input id="password" name="password" type="password" />
+			<input id="password" name="password" type="password" required />
 		</fieldset>
 		<button class="button-primary" type="submit">Register</button>
 		<a href="/login" class="button-ghost">Login</a>

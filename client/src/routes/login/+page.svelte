@@ -2,9 +2,9 @@
   <form class="login" method="POST">
 		<fieldset>
 			<label for="email">Email:</label>
-			<input id="email" name="email" type="email" />
+			<input id="email" name="email" type="email" required />
 			<label for="password">Password:</label>
-			<input id="password" name="password" type="password" />
+			<input id="password" name="password" type="password" required />
 		</fieldset>
 		<button class="button-primary" type="submit">Login</button>
 		<a href="/register" class="button-ghost">Register</a>
