@@ -17,7 +17,7 @@
 
 <ul>
 	{#each $notifications as notification (notification.id)}
-		<li transition:fly="{{x: "16px", duration: 250}}"><NotificationItem notification={notification} /></li>
+		<li transition:fly|global="{{x: "16px", duration: 250}}"><NotificationItem notification={notification} /></li>
 	{/each}
 </ul>
 
