@@ -443,37 +443,37 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			return errors.New("could not find gameID")
 		}
 
-		gameUUID, err := uuid.Parse(gameID)
-		if err != nil {
-			return err
-		}
+		// gameUUID, err := uuid.Parse(gameID)
+		// if err != nil {
+		// 	return err
+		// }
 
-		queryParams := db.CreateUndoParams{
-			GameID: gameUUID,
-			Color:  "w",
-		}
+		// queryParams := db.CreateUndoParams{
+		// 	GameID: gameUUID,
+		// 	Color:  "w",
+		// }
 
-		queries := db.New(dbs.PostgresDB)
-		undoID, err := queries.CreateUndo(ctx, queryParams)
-		if err != nil {
-			return err
-		}
+		// queries := db.New(dbs.PostgresDB)
+		// undoID, err := queries.CreateUndo(ctx, queryParams)
+		// if err != nil {
+		// 	return err
+		// }
 
-		msgResponse := MsgResponse{
-			Type:    "requestUndo",
-			Payload: undoID.String(),
-		}
+		// msgResponse := MsgResponse{
+		// 	Type:    "requestUndo",
+		// 	Payload: undoID.String(),
+		// }
 
-		payload, err := json.Marshal(msgResponse)
-		if err != nil {
-			return err
-		}
+		// payload, err := json.Marshal(msgResponse)
+		// if err != nil {
+		// 	return err
+		// }
 
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			// clientList.clients[q].username
-			// gameRooms[q]
-			return q == s //TODO only send to opponent
-		})
+		// err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+		// 	// clientList.clients[q].username
+		// 	// gameRooms[q]
+		// 	return q == s //TODO only send to opponent
+		// })
 	case "responseUndo":
 	case "resign":
 	}

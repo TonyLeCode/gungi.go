@@ -33,19 +33,20 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 }
 
 const createUndo = `-- name: CreateUndo :one
-INSERT INTO undo (game_id, color)
-VALUES ($1, $2)
+INSERT INTO undo_request (game_id, for_user, from_user)
+VALUES ($1, $2, $3)
 RETURNING id
 `
 
 type CreateUndoParams struct {
-	GameID uuid.UUID `json:"game_id"`
-	Color  string    `json:"color"`
+	GameID   uuid.UUID `json:"game_id"`
+	ForUser  uuid.UUID `json:"for_user"`
+	FromUser uuid.UUID `json:"from_user"`
 }
 
-func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, createUndo, arg.GameID, arg.Color)
-	var id uuid.UUID
+func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createUndo, arg.GameID, arg.ForUser, arg.FromUser)
+	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
@@ -175,21 +176,49 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 	return items, nil
 }
 
-const getUndo = `-- name: GetUndo :one
-SELECT id FROM undo
-WHERE game_id = $1 AND color = $2
+const getUndos = `-- name: GetUndos :many
+SELECT id, game_id, for_user, from_user FROM undo_request
+WHERE game_id = $1
 `
 
-type GetUndoParams struct {
-	GameID uuid.UUID `json:"game_id"`
-	Color  string    `json:"color"`
+func (q *Queries) GetUndos(ctx context.Context, gameID uuid.UUID) ([]UndoRequest, error) {
+	rows, err := q.db.QueryContext(ctx, getUndos, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UndoRequest
+	for rows.Next() {
+		var i UndoRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.ForUser,
+			&i.FromUser,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) GetUndo(ctx context.Context, arg GetUndoParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getUndo, arg.GameID, arg.Color)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+const getUsernameFromId = `-- name: GetUsernameFromId :one
+SELECT username FROM profiles
+WHERE profiles.id = $1
+`
+
+func (q *Queries) GetUsernameFromId(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUsernameFromId, id)
+	var username string
+	err := row.Scan(&username)
+	return username, err
 }
 
 const makeMove = `-- name: MakeMove :exec
@@ -210,11 +239,11 @@ func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {
 }
 
 const removeUndo = `-- name: RemoveUndo :exec
-DELETE FROM undo
+DELETE FROM undo_request
 WHERE id = $1
 `
 
-func (q *Queries) RemoveUndo(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) RemoveUndo(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, removeUndo, id)
 	return err
 }

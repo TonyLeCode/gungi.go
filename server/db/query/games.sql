@@ -28,6 +28,10 @@ RETURNING id;
 SELECT id FROM profiles
 WHERE profiles.username = $1;
 
+-- name: GetUsernameFromId :one
+SELECT username FROM profiles
+WHERE profiles.id = $1;
+
 -- name: GameJunction :exec
 INSERT INTO player_games (user_id, game_id, color)
 VALUES ($1, $2, $3);
@@ -38,14 +42,14 @@ SET current_state = $2, history = $3
 WHERE id = $1;
 
 -- name: CreateUndo :one
-INSERT INTO undo (game_id, color)
-VALUES ($1, $2)
+INSERT INTO undo_request (game_id, for_user, from_user)
+VALUES ($1, $2, $3)
 RETURNING id;
 
--- name: GetUndo :one
-SELECT id FROM undo
-WHERE game_id = $1 AND color = $2;
+-- name: GetUndos :many
+SELECT * FROM undo_request
+WHERE game_id = $1;
 
 -- name: RemoveUndo :exec
-DELETE FROM undo
+DELETE FROM undo_request
 WHERE id = $1;

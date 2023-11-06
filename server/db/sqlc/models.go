@@ -72,8 +72,9 @@ type Profile struct {
 	Username string    `json:"username"`
 }
 
-type Undo struct {
-	ID     uuid.UUID `json:"id"`
-	GameID uuid.UUID `json:"game_id"`
-	Color  string    `json:"color"`
+type UndoRequest struct {
+	ID       int64     `json:"id"`
+	GameID   uuid.UUID `json:"game_id"`
+	ForUser  uuid.UUID `json:"for_user"`
+	FromUser uuid.UUID `json:"from_user"`
 }
