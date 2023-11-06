@@ -1,21 +1,29 @@
 <script lang='ts'>
-	export let form;
+	import { superForm } from 'sveltekit-superforms/client';
+	import type { PageData } from './$types.js';
 
-	if (form){
-		console.log("form: ", form)
-		//TODO, make notification
-	}
+	export let data: PageData
+	const { form, errors, constraints, enhance } = superForm(data.form, {taintedMessage: null})
 </script>
 
 <main>
-  <form class="register" method="POST">
+  <form class="register" method="POST" use:enhance>
 		<fieldset>
-			<label for="username">Username:</label>
-			<input id="username" name="username" type="input" required />
-			<label for="email">Email:</label>
-			<input id="email" name="email" type="email" required />
-			<label for="password">Password:</label>
-			<input id="password" name="password" type="password" required />
+			<div class="input-group">
+				<label for="username">Username:</label>
+				<input id="username" name="username" type="input" bind:value={$form.username} aria-invalid={$errors.username ? 'true' : undefined} {...$constraints.username} />
+				{#if $errors.username}<div class="invalid">{$errors.username}</div>{/if}
+			</div>
+			<div class="input-group">
+				<label for="email">Email:</label>
+				<input id="email" name="email" type="email" bind:value={$form.email} aria-invalid={$errors.email ? 'true' : undefined} {...$constraints.email}  />
+				{#if $errors.email}<div class="invalid">{$errors.email}</div>{/if}
+			</div>
+			<div class="input-group">
+				<label for="password">Password:</label>
+				<input id="password" name="password" type="password" bind:value={$form.password} aria-invalid={$errors.password ? 'true' : undefined} {...$constraints.password} />
+				{#if $errors.password}<div class="invalid">{$errors.password}</div>{/if}
+			</div>
 		</fieldset>
 		<button class="button-primary" type="submit">Register</button>
 		<a href="/login" class="button-ghost">Login</a>
@@ -31,6 +39,8 @@
 	}
 	input {
 		/* border: 1.5px solid rgba(var(--primary), 0.25); */
+		display: block;
+		width: 100%;
     border-radius: 4px;
 		padding: 0.25rem 0.75rem;
 		/* background-color: rgb(var(--bg)); */
@@ -38,16 +48,24 @@
 		/* background-color: rgb(236, 236, 236); */
     /* box-shadow: inset 0px 0px 15px 2px rgba(0, 0, 0, 0.045); */
     &:focus {
-		/* outline: 5px solid rgb(var(--primary)); */
-		outline: 2px solid rgb(var(--primary));
-		// outline-offset: 2px;
+			/* outline: 5px solid rgb(var(--primary)); */
+			outline: 2px solid rgb(var(--primary));
+			// outline-offset: 2px;
+		}
 	}
+	.input-group{
+		position: relative;
+		margin-bottom: 1.25rem;
+	}
+	.invalid{
+		// position: absolute;
+		font-weight: 300;
+		// color: rgba(var(--font), .5);
+		margin-top: 4px;
+		// bottom: -1.75rem;
 	}
 	fieldset {
-		margin: 1rem 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		padding: 1rem 0;
 	}
 	.button-ghost {
 		text-align: center;
