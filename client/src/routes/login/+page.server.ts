@@ -38,14 +38,14 @@ export const actions: Actions = {
 				// 	error: "Invalid Login Info"
 				// })
 				// return fail(400, { form });
-				return message(form, 'Invalid login info')
+				return message(form, 'Invalid login info');
 			}
 			// return fail(500, {
 			// 	error: 'Server error. Try again later.',
 			// });
 			throw error(500, {
-				message: "Server error. Try again later."
-			})
+				message: 'Server error. Try again later.',
+			});
 		} else {
 			console.log('logged in', supabaseResponse.data);
 			throw redirect(303, '/overview');

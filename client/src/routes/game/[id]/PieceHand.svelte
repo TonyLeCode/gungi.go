@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-  import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions } from '$lib/utils/dragAndDrop';
+	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions } from '$lib/utils/dragAndDrop';
 	import { DecodePiece, DecodePieceFull, GetPieceColor, IndexToCoords, PieceIsPlayerColor } from '$lib/utils/utils';
 
 	export let color: string;
@@ -14,37 +14,43 @@
 
 	const decodedPiece = DecodePiece(piece).toLowerCase();
 
-	function isActive(){
-		return color == playerColor && isPlayerTurn
+	function isActive() {
+		return color == playerColor && isPlayerTurn;
 	}
 
-	function dropEvent(items?: dragAndDropItems){
-		if(items?.hoverItem){
-			dispatch('drop', items)
+	function dropEvent(items?: dragAndDropItems) {
+		if (items?.hoverItem) {
+			dispatch('drop', items);
 		}
 	}
 
 	function dndOptions(piece: number) {
 		let correctedPiece = piece;
 		if (color == 'b') {
-			correctedPiece = correctedPiece + 13
+			correctedPiece = correctedPiece + 13;
 		}
 		const items = {
 			piece: correctedPiece,
-			from: 'hand'
-		}
+			from: 'hand',
+		};
 		return {
 			releaseEvent: dropEvent,
 			setDragItem: items,
-			active: isActive
+			active: isActive,
 		};
 	}
 </script>
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
-	<img class={`piece ${color == playerColor && isPlayerTurn ? 'piece-hover pointer' : ''}`} draggable="false" use:dragAndDrop={dndOptions(piece)} src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+	<img
+		class={`piece ${color == playerColor && isPlayerTurn ? 'piece-hover pointer' : ''}`}
+		draggable="false"
+		use:dragAndDrop={dndOptions(piece)}
+		src={`/pieces/${color}1${decodedPiece}.svg`}
+		alt=""
+	/>
 	{#if amount > 1}
-		<img class='piece-under' draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
+		<img class="piece-under" draggable="false" src={`/pieces/${color}1${decodedPiece}.svg`} alt="" />
 	{/if}
 	<div class="badge" title={String(amount)}>
 		{amount}

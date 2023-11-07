@@ -1,3 +1,1 @@
-<div>
-  chat, lol
-</div>
+<div>chat, lol</div>

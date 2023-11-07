@@ -4,18 +4,18 @@
 	import type { Game } from '../../routes/overview/+page.server';
 
 	export let gameData: Game;
-	export let userColor: "w" | "b" | "spectator"
+	export let userColor: 'w' | 'b' | 'spectator';
 	// console.log(gameData.current_state);
-	$: isUserWhite = userColor === "w"
+	$: isUserWhite = userColor === 'w';
 	$: boardState = FenToBoard(gameData.current_state);
-	$: correctedBoardState = isUserWhite ? boardState : reverseList(boardState)
+	$: correctedBoardState = isUserWhite ? boardState : reverseList(boardState);
 </script>
 
 <div class="board">
 	{#each correctedBoardState as square}
 		<div class="square">
 			{#if square.length > 0}
-				<img class="piece" draggable='false' src={GetImage(square)} alt="" />
+				<img class="piece" draggable="false" src={GetImage(square)} alt="" />
 			{/if}
 		</div>
 	{/each}

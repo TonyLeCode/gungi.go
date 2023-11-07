@@ -10,7 +10,7 @@
 	let color = 'random';
 	let description: string;
 
-	function handleCreateGame(e:Event) {
+	function handleCreateGame(e: Event) {
 		e.preventDefault();
 		const payload = {
 			type: 'createRoom',

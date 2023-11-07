@@ -10,8 +10,6 @@ const schema = z.object({
 	password: z.string().min(6).max(64),
 });
 
-
-
 export const load: PageServerLoad = async ({ locals: { getSession } }) => {
 	const session = await getSession();
 	if (session) {

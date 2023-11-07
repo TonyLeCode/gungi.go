@@ -1,50 +1,48 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
-	import type {Game} from './+page.server'
+	import type { Game } from './+page.server';
 
 	export let data;
-	$: username = data.session?.user.user_metadata.username ?? ''
+	$: username = data.session?.user.user_metadata.username ?? '';
 	$: sortedGames = [...data.data].sort((a, b) => {
-		if (turnPlayer(a) === turnPlayer(b)){
-			return 0
+		if (turnPlayer(a) === turnPlayer(b)) {
+			return 0;
 		}
-		if (isUserTurn(a)){
-			return -1
-		} else if (isUserTurn(b)){
-			return 1
+		if (isUserTurn(a)) {
+			return -1;
+		} else if (isUserTurn(b)) {
+			return 1;
 		}
-		return 0
-	})
+		return 0;
+	});
 
-	function isUser(playername: string){
-		return username === playername
+	function isUser(playername: string) {
+		return username === playername;
 	}
 
-	function getUserColor(player1: string, player2: string){
+	function getUserColor(player1: string, player2: string) {
 		if (username === player1) {
-			return 'w'
-		} else if (username === player2){
-			return 'b'
+			return 'w';
+		} else if (username === player2) {
+			return 'b';
 		}
-		return 'spectator'
+		return 'spectator';
 	}
 
-	function turnPlayer(game: Game){
+	function turnPlayer(game: Game) {
 		const fields = game.current_state.split(' ');
 		const turnColor = fields[2];
 		return turnColor === 'w' ? game.username1 : game.username2;
 	}
 
 	function isUserTurn(game: Game) {
-		return turnPlayer(game) === username
+		return turnPlayer(game) === username;
 		// if(data.session){
 		// 	return data.session.user.user_metadata.username === user
 		// } else {
 		// 	return false
 		// }
 	}
-
-	
 </script>
 
 <svelte:head>
@@ -58,7 +56,9 @@
 			{#each sortedGames as game}
 				<li class:your-turn={isUserTurn(game)}>
 					<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
-					<a href={`/game/${game.id}`}><BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} /></a>
+					<a href={`/game/${game.id}`}
+						><BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} /></a
+					>
 					<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
 				</li>
 			{/each}

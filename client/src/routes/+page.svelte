@@ -10,8 +10,8 @@
 </main>
 
 <style>
-	main{
+	main {
 		max-width: 70rem;
-		margin:auto;
+		margin: auto;
 	}
 </style>

@@ -2,7 +2,7 @@
 	export let showModal: boolean;
 
 	let dialog: HTMLDialogElement;
-	$: showModal = showModal
+	$: showModal = showModal;
 	// $: if (dialog && showModal) dialog.showModal();
 	$: dialog && showModal ? dialog.showModal() : dialog?.close();
 </script>

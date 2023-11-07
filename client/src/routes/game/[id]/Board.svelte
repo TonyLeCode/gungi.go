@@ -80,7 +80,7 @@
 		}
 	});
 
-	onDestroy(unsubscribe)
+	onDestroy(unsubscribe);
 
 	function dropOptions(index: number, square: number[]) {
 		let correctedIndex = index;
@@ -229,7 +229,9 @@
 
 	.board {
 		/* box-shadow: 0px 7px 50px 5px rgba(230, 106, 5, 0.25); */
-		box-shadow: 0px 7px 50px 5px rgba(230, 106, 5, 0.25), 0px 5px 10px rgba(230, 106, 5, 0.25);
+		box-shadow:
+			0px 7px 50px 5px rgba(230, 106, 5, 0.25),
+			0px 5px 10px rgba(230, 106, 5, 0.25);
 		display: grid;
 		grid-template-columns: repeat(9, minmax(20px, 1fr));
 		grid-template-rows: repeat(9, minmax(20px, 1fr));

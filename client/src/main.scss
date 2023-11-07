@@ -10,10 +10,9 @@
 	--font: 73, 73, 73;
 }
 
-body{
+body {
 	color: rgb(var(--font));
 	background-color: rgb(var(--bg));
-
 }
 
 .dark {
@@ -22,7 +21,8 @@ body{
 	--font: 242, 242, 242;
 }
 
-a, .a {
+a,
+.a {
 	transition: color 100ms;
 	/* border-radius: 1px; */
 	outline-offset: 2px;
@@ -49,7 +49,9 @@ a, .a {
 	padding: 0.25rem 0.75rem;
 	border-radius: 4px;
 	// box-shadow: 0px 5px 10px rgba(255, 77, 7, 0.308);
-	box-shadow: 0px 5px 10px rgba(255, 77, 7, 0.308), 0px 2px 5px rgba(187, 54, 1, 0.2);
+	box-shadow:
+		0px 5px 10px rgba(255, 77, 7, 0.308),
+		0px 2px 5px rgba(187, 54, 1, 0.2);
 	transition-duration: 150ms;
 	transition-property: background-color;
 	&:hover:not([disabled]) {
@@ -97,7 +99,9 @@ a, .a {
 }
 
 .fly-up-fade {
-	animation: fly-up 250ms ease-out, fade 150ms ease-out;
+	animation:
+		fly-up 250ms ease-out,
+		fade 150ms ease-out;
 	animation-fill-mode: both;
 }
 

@@ -26,7 +26,6 @@
 			//TODO websocket as spectator
 		}
 
-
 		return () => {
 			subscription.unsubscribe();
 			$ws?.close();

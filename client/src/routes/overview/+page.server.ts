@@ -22,23 +22,23 @@ export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) =>
 	const token = session?.access_token;
 	// console.log('token', session?.access_token);
 	// const url = 'http://localhost:8080/getongoinggamelist';
-	fetch('')
-	const url = `http://${import.meta.env.VITE_API_URL}/getongoinggamelist`
+	fetch('');
+	const url = `http://${import.meta.env.VITE_API_URL}/getongoinggamelist`;
 	const options = {
 		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	}
+			Authorization: `Bearer ${token}`,
+		},
+	};
 
-	const res = await fetch(url, options)
-	if (!res.ok){
-		throw error(500,{
+	const res = await fetch(url, options);
+	if (!res.ok) {
+		throw error(500, {
 			message: 'Internal Server Error',
-		})
+		});
 	}
-	const data: Game = await res.json()
+	const data: Game = await res.json();
 
 	return {
-		data: data ?? [] as Game[],
+		data: data ?? ([] as Game[]),
 	};
 };

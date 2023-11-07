@@ -68,17 +68,17 @@
 		});
 
 		wsConnState.subscribe((val) => {
-		if (val === 'connected') {
-			const msg = {
-				type: 'route',
-				payload: 'roomList',
-			};
-			$ws.send(JSON.stringify(msg));
-		}
-	});
+			if (val === 'connected') {
+				const msg = {
+					type: 'route',
+					payload: 'roomList',
+				};
+				$ws.send(JSON.stringify(msg));
+			}
+		});
 		return () => {
 			$ws.removeEventListener('message', handleRoomListMsg);
-		}
+		};
 	});
 </script>
 

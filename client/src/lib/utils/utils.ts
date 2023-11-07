@@ -30,19 +30,19 @@ export function FenToBoard(fen: string): number[][] {
 	return newBoard;
 }
 
-export function FenToHand(fen: string):number[][]{
+export function FenToHand(fen: string): number[][] {
 	const fields = fen.split(' ')[1];
-	const split = fields.split('/')
+	const split = fields.split('/');
 
-	const hands: number[][] = [[],[]]
+	const hands: number[][] = [[], []];
 
-	for(const x of split[0]){
-		hands[0].push(Number(x))
+	for (const x of split[0]) {
+		hands[0].push(Number(x));
 	}
-	for(const x of split[1]){
-		hands[1].push(Number(x))
+	for (const x of split[1]) {
+		hands[1].push(Number(x));
 	}
-	return hands
+	return hands;
 }
 
 export function GetImage(stack: number[]): string {
@@ -61,7 +61,7 @@ export function GetPieceColor(piece: number): string {
 }
 
 export function PieceIsPlayerColor(piece: number, playerColor: string): boolean {
-	return GetPieceColor(piece) === playerColor
+	return GetPieceColor(piece) === playerColor;
 }
 
 export function GetTopStack(stack: number[]): number {
@@ -72,17 +72,17 @@ export function CoordsToIndex(file: number, rank: number): number {
 	return file + rank * 9;
 }
 
-export function IndexToCoords(index: number): string[]{
+export function IndexToCoords(index: number): string[] {
 	const file = (index % 9) + 1;
-	const rank = Math.floor(index / 9)+1;
-	return [FileToLetter(file), String(RankInvert(rank))]
+	const rank = Math.floor(index / 9) + 1;
+	return [FileToLetter(file), String(RankInvert(rank))];
 }
 
-export function RankInvert(num: number): number{
-	return 10 - num
+export function RankInvert(num: number): number {
+	return 10 - num;
 }
 
-export function FileToLetter(num: number): string{
+export function FileToLetter(num: number): string {
 	const pieceEnums = {
 		1: 'a',
 		2: 'b',
@@ -93,8 +93,8 @@ export function FileToLetter(num: number): string{
 		7: 'g',
 		8: 'h',
 		9: 'i',
-	}
-	return pieceEnums[num]
+	};
+	return pieceEnums[num];
 }
 
 type EncodePieceEnums = {
@@ -139,7 +139,9 @@ type DecodePieceEnums = {
 };
 
 export function DecodePiece(encodedPiece: number): string {
-	if (encodedPiece > 25 || encodedPiece < 0){return ''}
+	if (encodedPiece > 25 || encodedPiece < 0) {
+		return '';
+	}
 	const pieceEnums: DecodePieceEnums = {
 		0: 'P',
 		1: 'L',
@@ -173,7 +175,7 @@ export function DecodePiece(encodedPiece: number): string {
 }
 
 export function DecodePieceFull(encodedPiece: number | string): string {
-	const piece = Number(encodedPiece)%13
+	const piece = Number(encodedPiece) % 13;
 	const pieceEnums: DecodePieceEnums = {
 		0: 'Pawn',
 		1: 'Lieutenant General',

@@ -21,17 +21,19 @@
 <style lang="scss">
 	.stack-container {
 		background-color: rgb(var(--bg-2));
-		box-shadow: 0px 2px 55px rgba(0, 0, 0, 0.07), 0px 4px 15px rgba(0, 0, 0, 0.05);
+		box-shadow:
+			0px 2px 55px rgba(0, 0, 0, 0.07),
+			0px 4px 15px rgba(0, 0, 0, 0.05);
 		border-radius: 8px;
 		padding: 1.5rem 2rem;
 		margin-bottom: 1rem;
 	}
-  .img-container{
-    display: flex;
+	.img-container {
+		display: flex;
 		justify-content: center;
 		gap: 1rem;
 		min-height: 3rem;
-  }
+	}
 	.piece {
 		width: 3rem;
 		border-radius: 50%;
