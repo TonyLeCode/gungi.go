@@ -213,3 +213,48 @@ func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType s
 
 	return gameID.String(), nil
 }
+
+func (dbConn *DBConn) CreateRoom(host uuid.UUID, description string, rules string, roomType string, color string) error {
+	ctx := context.Background()
+
+	queries := db.New(dbConn.PostgresDB)
+
+	err := queries.CreateRoom(ctx, db.CreateRoomParams{
+		Host:        host,
+		Description: description,
+		Rules:       rules,
+		Type:        roomType,
+		Color:       color,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dbConn *DBConn) GetRoomList() ([]db.RoomList, error) {
+	ctx := context.Background()
+
+	queries := db.New(dbConn.PostgresDB)
+
+	roomList, err := queries.GetRoomList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return roomList, nil
+}
+
+func (dbConn *DBConn) DeleteRoom(id uuid.UUID) error {
+	ctx := context.Background()
+
+	queries := db.New(dbConn.PostgresDB)
+
+	err := queries.DeleteRoom(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
