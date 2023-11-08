@@ -32,6 +32,30 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 	return id, err
 }
 
+const createRoom = `-- name: CreateRoom :exec
+INSERT INTO public.room_list (host, description, rules, type, color)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type CreateRoomParams struct {
+	Host        uuid.UUID `json:"host"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
+}
+
+func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
+	_, err := q.db.ExecContext(ctx, createRoom,
+		arg.Host,
+		arg.Description,
+		arg.Rules,
+		arg.Type,
+		arg.Color,
+	)
+	return err
+}
+
 const createUndo = `-- name: CreateUndo :one
 INSERT INTO undo_request (game_id, for_user, from_user)
 VALUES ($1, $2, $3)
@@ -49,6 +73,16 @@ func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (int64, 
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteRoom = `-- name: DeleteRoom :exec
+DELETE FROM public.room_list
+WHERE id = $1
+`
+
+func (q *Queries) DeleteRoom(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteRoom, id)
+	return err
 }
 
 const gameJunction = `-- name: GameJunction :exec
@@ -162,6 +196,41 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 			&i.CurrentState,
 			&i.Username1,
 			&i.Username2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRoomList = `-- name: GetRoomList :many
+SELECT id, host, description, rules, type, color, created_at FROM public.room_list
+`
+
+func (q *Queries) GetRoomList(ctx context.Context) ([]RoomList, error) {
+	rows, err := q.db.QueryContext(ctx, getRoomList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RoomList
+	for rows.Next() {
+		var i RoomList
+		if err := rows.Scan(
+			&i.ID,
+			&i.Host,
+			&i.Description,
+			&i.Rules,
+			&i.Type,
+			&i.Color,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

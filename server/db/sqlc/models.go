@@ -72,6 +72,16 @@ type Profile struct {
 	Username string    `json:"username"`
 }
 
+type RoomList struct {
+	ID          uuid.UUID `json:"id"`
+	Host        uuid.UUID `json:"host"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type UndoRequest struct {
 	ID       int64     `json:"id"`
 	GameID   uuid.UUID `json:"game_id"`

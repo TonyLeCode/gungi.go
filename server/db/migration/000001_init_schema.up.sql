@@ -34,6 +34,19 @@ create table
     constraint undo_request_game_id_fkey foreign key (game_id) references games (id) on update cascade on delete cascade
   ) tablespace pg_default;
 
+  create table
+  public.room_list (
+    id uuid not null default gen_random_uuid (),
+    host uuid not null,
+    description text not null,
+    rules text not null,
+    type text not null,
+    color text not null,
+    created_at timestamp with time zone not null default now(),
+    constraint room_list_pkey primary key (id),
+    constraint room_list_host_fkey foreign key (host) references auth.users (id) on update cascade on delete cascade
+  ) tablespace pg_default;
+
 CREATE SCHEMA auth;
 
   create table

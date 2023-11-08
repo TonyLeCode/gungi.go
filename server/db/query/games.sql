@@ -53,3 +53,14 @@ WHERE game_id = $1;
 -- name: RemoveUndo :exec
 DELETE FROM undo_request
 WHERE id = $1;
+
+-- name: CreateRoom :exec
+INSERT INTO public.room_list (host, description, rules, type, color)
+VALUES ($1, $2, $3, $4, $5);
+
+-- name: GetRoomList :many
+SELECT * FROM public.room_list;
+
+-- name: DeleteRoom :exec
+DELETE FROM public.room_list
+WHERE id = $1;
