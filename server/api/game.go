@@ -8,7 +8,6 @@ import (
 
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
-	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
@@ -105,9 +104,9 @@ func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
-		correctedKey := utils.SquareToIndex(key)
+		correctedKey := newBoard.ConvertOutputCoord(key)
 		for _, index := range element {
-			correctedElement := utils.SquareToIndex(index)
+			correctedElement := newBoard.ConvertOutputCoord(index)
 			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 		}
 	}
@@ -145,9 +144,9 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
 	for key, element := range legalMoves {
-		correctedKey := utils.SquareToIndex(key)
+		correctedKey := newBoard.ConvertOutputCoord(key)
 		for _, index := range element {
-			correctedElement := utils.SquareToIndex(index)
+			correctedElement := newBoard.ConvertOutputCoord(index)
 			correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 		}
 	}

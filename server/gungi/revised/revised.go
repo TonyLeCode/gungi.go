@@ -161,8 +161,11 @@ func (r Revised) PieceCount() (int, int) {
 	return wCount, bCount
 }
 
-func (r Revised) ConvertCoord(coord int) int {
+func (r Revised) ConvertInputCoord(coord int) int {
 	return utils.IndexToSquare(coord)
+}
+func (r Revised) ConvertOutputCoord(coord int) int {
+	return utils.SquareToIndex(coord)
 }
 
 // Also resets board

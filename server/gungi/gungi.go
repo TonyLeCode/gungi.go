@@ -15,7 +15,8 @@ type Ruleset interface {
 	BoardToFen() string
 	SetHistory(history []string)
 	SerializeHistory() string
-	ConvertCoord(coord int) int
+	ConvertInputCoord(coord int) int
+	ConvertOutputCoord(coord int) int
 }
 
 type Game struct {
@@ -75,4 +76,12 @@ func (g *Game) SetHistory(history []string) {
 
 func (g *Game) SerializeHistory() string {
 	return g.Ruleset.SerializeHistory()
+}
+
+func (g *Game) ConvertInputCoord(coord int) int {
+	return g.Ruleset.ConvertInputCoord(coord)
+}
+
+func (g *Game) ConvertOutputCoord(coord int) int {
+	return g.Ruleset.ConvertOutputCoord(coord)
 }
