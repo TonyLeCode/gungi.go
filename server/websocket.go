@@ -386,7 +386,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 		if err != nil {
 			return err
 		}
-		newBoard.SetHistory(strings.Split(game.History.String, " "))
+		newBoard.SetHistory(strings.Fields(game.History.String))
 		newBoard.PrintBoard()
 		// log.Println(move)
 		// log.Println("fen: ", newBoard.BoardToFen())
