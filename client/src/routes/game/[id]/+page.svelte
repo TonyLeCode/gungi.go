@@ -387,7 +387,7 @@
 	}
 
 	section {
-		// width: 100%;
+		width: 100%;
 		user-select: none;
 		margin: auto;
 		max-width: 50rem;
