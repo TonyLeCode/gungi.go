@@ -2,7 +2,7 @@
 This is a webapp that allows you to play Gungi from Hunter x Hunter.
 Allows for live and correspondence games as well as a few different rules.
 
-I was inspired by Jwyce's site, Gungi.io, and decided to make my own with additional features.
+I was inspired by Jwyce's [site](https://github.com/jwyce/gungi.io), Gungi.io, and decided to make my own with additional features.
 
 Since the community for this game is small, I figured correspondence would be a good way to get people to play.
 
