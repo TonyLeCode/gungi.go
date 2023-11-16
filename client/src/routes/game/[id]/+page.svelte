@@ -40,7 +40,7 @@
 	import Replay from './Replay.svelte';
 	import { createDragAndDrop } from '$lib/utils/dragAndDrop';
 	import MoveDialogue from './MoveDialogue.svelte';
-	import { ws, wsConnState } from '$lib/store/websocket';
+	import { ws } from '$lib/store/websocket';
 	import { onMount } from 'svelte';
 	import { createService } from '$lib/store/contextHelper';
 	import type { Readable, Writable } from 'svelte/store';
@@ -204,7 +204,7 @@
 				payload: move,
 			};
 
-			$ws.send(JSON.stringify(msg));
+			ws?.send(msg);
 		} else {
 			const square = $boardState[dragItem.coordIndex];
 			const move = {
@@ -219,7 +219,7 @@
 				payload: move,
 			};
 
-			$ws.send(JSON.stringify(msg));
+			ws?.send(msg);
 		}
 	}
 
@@ -234,12 +234,12 @@
 		};
 		msg.payload.fromCoord = msg.payload.fromCoord;
 		msg.payload.toCoord = msg.payload.toCoord;
-		$ws.send(JSON.stringify(msg));
+		ws?.send(msg);
 	}
 
-	function handleGameMsg(event: MessageEvent<any>) {
+	function handleGameMsg(event?: MessageEvent) {
 		try {
-			const res = JSON.parse(event.data);
+			const res = JSON.parse(event?.data);
 			switch (res.type) {
 				case 'game':
 					gameStore.gameState.set(res.payload);
@@ -261,7 +261,7 @@
 		const msg = {
 			type: 'resign',
 		};
-		$ws.send(JSON.stringify(msg));
+		ws?.send(msg);
 	}
 
 	function handleUndoEvent(event: CustomEvent) {
@@ -269,7 +269,7 @@
 		const msg = {
 			type: 'requestUndo',
 		};
-		$ws.send(JSON.stringify(msg));
+		ws?.send(msg);
 	}
 	function handleReadyEvent(event: CustomEvent) {
 		console.log('ready');
@@ -282,7 +282,7 @@
 				toCoord: 0,
 			},
 		};
-		$ws.send(JSON.stringify(msg));
+		ws?.send(msg);
 	}
 
 	onMount(() => {
@@ -291,28 +291,32 @@
 		// if (socket){
 		// 	socket.addEventListener('message', handleGameMsg);
 		// }
-		ws.subscribe((val) => {
+		let unsubGameMsg2: (() => void) | undefined
+		const unsubGameMsg = ws?.subscribe((val) => {
 			if (val) {
-				$ws.addEventListener('message', handleGameMsg);
+				unsubGameMsg2 = ws?.addMsgListener(handleGameMsg);
 			}
 		});
 
-		wsConnState.subscribe((val) => {
+		const unsubConnect = ws?.subscribe((val) => {
 			if (val === 'connected') {
-				const msg = {
-					type: 'route',
-					payload: 'game',
-				};
-				$ws.send(JSON.stringify(msg));
+				// const msg = {
+				// 	type: 'route',
+				// 	payload: 'game',
+				// };
+				// ws?.send(msg);
 				const msg2 = {
 					type: 'joinGame',
 					payload: get(gameStore.gameState).id,
 				};
-				$ws.send(JSON.stringify(msg2));
+				ws?.send(msg2);
 			}
 		});
 		return () => {
-			$ws?.removeEventListener('message', handleGameMsg);
+			if (unsubGameMsg)	unsubGameMsg()
+			if (unsubGameMsg2) unsubGameMsg2()
+			if (unsubConnect) unsubConnect()
+			// $ws?.removeEventListener('message', handleGameMsg);
 		};
 	});
 </script>

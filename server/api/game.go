@@ -214,13 +214,13 @@ func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType s
 	return gameID.String(), nil
 }
 
-func (dbConn *DBConn) CreateRoom(host uuid.UUID, description string, rules string, roomType string, color string) error {
+func (dbConn *DBConn) CreateRoom(hostID uuid.UUID, description string, rules string, roomType string, color string) error {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.PostgresDB)
 
 	err := queries.CreateRoom(ctx, db.CreateRoomParams{
-		Host:        host,
+		HostID:      hostID,
 		Description: description,
 		Rules:       rules,
 		Type:        roomType,
@@ -233,7 +233,7 @@ func (dbConn *DBConn) CreateRoom(host uuid.UUID, description string, rules strin
 	return nil
 }
 
-func (dbConn *DBConn) GetRoomList() ([]db.RoomList, error) {
+func (dbConn *DBConn) GetRoomList() ([]db.GetRoomListRow, error) {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.PostgresDB)

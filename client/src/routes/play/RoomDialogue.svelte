@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
 	type Info = {
-		roomid: string;
+		id: string;
 		host: string;
 		description: string;
 		type: string;
@@ -39,7 +39,7 @@
 		</div>
 		<button
 			on:click={() => {
-				accept(info.roomid);
+				accept(info.id);
 				showModal = false;
 			}}
 			class="button-primary">Accept</button

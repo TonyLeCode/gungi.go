@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
+	import { ws } from '$lib/store/websocket';
 
 	export let showModal: boolean;
 	export let host: string;
-	export let ws: WebSocket;
 
 	let type = 'correspondence';
 	let ruleset = 'default';
@@ -22,7 +22,7 @@
 				rules: ruleset,
 			},
 		};
-		ws.send(JSON.stringify(payload));
+		ws?.send(payload);
 		showModal = false;
 	}
 </script>

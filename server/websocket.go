@@ -21,6 +21,62 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// type UserConn struct {
+// 	Username string
+// 	Conn     *melody.Session
+// }
+
+type PlayConnections struct {
+	connections map[*melody.Session]bool
+	mu          sync.RWMutex
+}
+type GameConnections struct {
+	connections map[uuid.UUID]map[*melody.Session]bool
+	mu          sync.RWMutex
+}
+
+func (pc *PlayConnections) AddConnection(s *melody.Session) {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
+	pc.connections[s] = true
+}
+func (pc *PlayConnections) RemoveConnection(s *melody.Session) {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
+	delete(pc.connections, s)
+}
+
+func (gc *GameConnections) AddConnection(gameID uuid.UUID, s *melody.Session) {
+	gc.mu.Lock()
+	defer gc.mu.Unlock()
+
+	if _, ok := gc.connections[gameID]; !ok {
+		gc.connections[gameID] = make(map[*melody.Session]bool)
+	}
+
+	gc.connections[gameID][s] = true
+}
+func (gc *GameConnections) RemoveConnection(gameID uuid.UUID, s *melody.Session) {
+	gc.mu.Lock()
+	defer gc.mu.Unlock()
+
+	delete(gc.connections[gameID], s)
+}
+
+// type ClientList struct {
+// 	clients []*melody.Session
+// 	mu      sync.RWMutex
+// }
+
+// This won't scale, find solution in future
+func RemoveIndex(s []int, index int) []int {
+	ret := make([]int, 0)
+	ret = append(ret, s[:index]...)
+	return append(ret, s[index+1:]...)
+}
+
 type client struct {
 	username string
 	route    string
@@ -126,29 +182,35 @@ func RedisRoomExists(r *redis.Client, roomKey string) error {
 	return nil
 }
 
-func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
-	clientList := clientList{clients: make(map[*melody.Session]client)}
-	gameRooms := make(map[string]*Room)
-	mutex := sync.Mutex{}
+func ws2(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
+	PlayConnections := PlayConnections{
+		connections: make(map[*melody.Session]bool),
+		mu:          sync.RWMutex{},
+	}
+	GameConnections := GameConnections{
+		connections: make(map[uuid.UUID]map[*melody.Session]bool),
+		mu:          sync.RWMutex{},
+	}
 
 	m.HandleConnect(func(s *melody.Session) {
-		log.Println("Connected")
+		log.Println("Connected2", s)
 	})
 
 	m.HandleDisconnect(func(s *melody.Session) {
-		// log.Println(s.Keys)
-		clientList.RemoveClient(s)
-		mutex.Lock()
-		gameID := clientList.clients[s].gameID
-		if gameID != "" {
-			delete(gameRooms[gameID].clients, s)
+		if gameID, ok := s.Get("Game"); ok {
+			if gameUUID, err := uuid.Parse(gameID.(string)); err == nil {
+				log.Println("Removed Game Connection")
+				GameConnections.RemoveConnection(gameUUID, s)
+			}
+		} else if _, ok := PlayConnections.connections[s]; ok {
+			log.Println("Removed Play Connection")
+			PlayConnections.RemoveConnection(s)
 		}
-		mutex.Unlock()
 		log.Println("Disconnect")
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		ctx := context.Background()
+		// ctx := context.Background()
 
 		var unmarshal MsgPayload
 		err := json.Unmarshal(msg, &unmarshal)
@@ -157,16 +219,15 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 			return
 		}
 
-		// Generic messages that don't require a route
 		switch unmarshal.Type {
 		case "auth":
+			log.Println("auth1")
 			var token string
 			err := json.Unmarshal(unmarshal.Payload, &token)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
-
 			claims, err := auth.AuthenticateSupabaseToken(token)
 			if err != nil {
 				log.Println(err)
@@ -191,7 +252,7 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 
 			metadata := claims["user_metadata"].(map[string]interface{})
 			username := metadata["username"].(string)
-			clientList.AddClient(s, username)
+			s.Set("username", username)
 
 			// 1 means authenticated
 			authResponse := MsgResponse{
@@ -203,6 +264,7 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 				log.Println("Error: ", err)
 				return
 			}
+			log.Println("auth2")
 			err = s.Write(payload)
 			if err != nil {
 				log.Println("Error: ", err)
@@ -210,67 +272,57 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 			}
 			return
 
-		case "route":
-			var route string
-			err = json.Unmarshal(unmarshal.Payload, &route)
+		case "joinGame":
+			var gameID string
+			err = json.Unmarshal(unmarshal.Payload, &gameID)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
-			err = clientList.ChangeRoute(s, route)
+			if gameUUID, err := uuid.Parse(gameID); err == nil {
+				GameConnections.AddConnection(gameUUID, s)
+				log.Println("Joined Game: ", gameUUID)
+				log.Println("Conns: ", GameConnections.connections)
+			}
+
+		case "leaveGame":
+			var gameID string
+			err = json.Unmarshal(unmarshal.Payload, &gameID)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
-
-			// TODO if gameRoom is empty, then delete
-			mutex.Lock()
-			clientList.mutex.Lock()
-			if entry, ok := clientList.clients[s]; ok {
-				if entry.gameID != "" {
-					delete(gameRooms[entry.gameID].clients, s)
-				}
-
-				entry.gameID = ""
-				clientList.clients[s] = entry
-			} else {
-				return
-			}
-			clientList.mutex.Unlock()
-			mutex.Unlock()
-
-			if route == "roomList" {
-				payload, err := getRoomList(ctx, dbs, s, true)
-				if err != nil {
-					log.Println("Error: ", err)
-					return
-				}
-				err = s.Write(payload)
-				if err != nil {
-					log.Println("Error: ", err)
-					return
-				}
+			if gameUUID, err := uuid.Parse(gameID); err == nil {
+				log.Println("Left Game: ", gameUUID)
+				GameConnections.RemoveConnection(gameUUID, s)
+				log.Println("Conns: ", GameConnections.connections)
 			}
 
-			if route == "game" {
-			}
-			return
-		}
-
-		client := clientList.clients[s]
-		if client.route == "" {
-			return
-		}
-
-		switch client.route {
-		case "roomList":
-			handleRoomListMessages(unmarshal, m, s, dbs, ctx, &clientList)
-		case "game":
-			err = handleGameMessages(unmarshal, m, s, dbs, ctx, &clientList, &gameRooms, &mutex)
+		case "joinPlay":
+			PlayConnections.AddConnection(s)
+			log.Println("Joined Play")
+			log.Println("Conns: ", PlayConnections.connections)
+			// TODO host id to username
+			roomList, err := dbs.GetRoomList()
 			if err != nil {
 				log.Println(err)
-				return
+				break
 			}
+			msg := MsgResponse{
+				Type:    "roomList",
+				Payload: roomList,
+			}
+			marshalled, err := json.Marshal(msg)
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			s.Write(marshalled)
+
+		case "leavePlay":
+			log.Println("Left Play")
+			PlayConnections.RemoveConnection(s)
+			log.Println("Conns: ", PlayConnections.connections)
 		}
 	})
 
@@ -282,6 +334,163 @@ func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 		return nil
 	}
 }
+
+// func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
+// 	clientList := clientList{clients: make(map[*melody.Session]client)}
+// 	gameRooms := make(map[string]*Room)
+// 	mutex := sync.Mutex{}
+
+// 	m.HandleConnect(func(s *melody.Session) {
+// 		log.Println("Connected")
+// 	})
+
+// 	m.HandleDisconnect(func(s *melody.Session) {
+// 		// log.Println(s.Keys)
+// 		clientList.RemoveClient(s)
+// 		mutex.Lock()
+// 		gameID := clientList.clients[s].gameID
+// 		if gameID != "" {
+// 			delete(gameRooms[gameID].clients, s)
+// 		}
+// 		mutex.Unlock()
+// 		log.Println("Disconnect")
+// 	})
+
+// 	m.HandleMessage(func(s *melody.Session, msg []byte) {
+// 		ctx := context.Background()
+
+// 		var unmarshal MsgPayload
+// 		err := json.Unmarshal(msg, &unmarshal)
+// 		if err != nil {
+// 			log.Println("Error: ", err)
+// 			return
+// 		}
+
+// 		// Generic messages that don't require a route
+// 		switch unmarshal.Type {
+// 		case "auth":
+// 			var token string
+// 			err := json.Unmarshal(unmarshal.Payload, &token)
+// 			if err != nil {
+// 				log.Println("Error: ", err)
+// 				return
+// 			}
+
+// 			claims, err := auth.AuthenticateSupabaseToken(token)
+// 			if err != nil {
+// 				log.Println(err)
+// 				// 0 means failed
+// 				authResponse := MsgResponse{
+// 					Type:    "auth",
+// 					Payload: "0",
+// 				}
+// 				payload, err := json.Marshal(authResponse)
+// 				if err != nil {
+// 					log.Println("Error: ", err)
+// 				} else {
+// 					err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
+// 						return q == s
+// 					})
+// 					if err != nil {
+// 						log.Println("Error: ", err)
+// 					}
+// 				}
+// 				return
+// 			}
+
+// 			metadata := claims["user_metadata"].(map[string]interface{})
+// 			username := metadata["username"].(string)
+// 			clientList.AddClient(s, username)
+
+// 			// 1 means authenticated
+// 			authResponse := MsgResponse{
+// 				Type:    "auth",
+// 				Payload: "1",
+// 			}
+// 			payload, err := json.Marshal(authResponse)
+// 			if err != nil {
+// 				log.Println("Error: ", err)
+// 				return
+// 			}
+// 			err = s.Write(payload)
+// 			if err != nil {
+// 				log.Println("Error: ", err)
+// 				return
+// 			}
+// 			return
+
+// 		case "route":
+// 			var route string
+// 			err = json.Unmarshal(unmarshal.Payload, &route)
+// 			if err != nil {
+// 				log.Println("Error: ", err)
+// 				return
+// 			}
+// 			err = clientList.ChangeRoute(s, route)
+// 			if err != nil {
+// 				log.Println("Error: ", err)
+// 				return
+// 			}
+
+// 			// TODO if gameRoom is empty, then delete
+// 			mutex.Lock()
+// 			clientList.mutex.Lock()
+// 			if entry, ok := clientList.clients[s]; ok {
+// 				if entry.gameID != "" {
+// 					delete(gameRooms[entry.gameID].clients, s)
+// 				}
+
+// 				entry.gameID = ""
+// 				clientList.clients[s] = entry
+// 			} else {
+// 				return
+// 			}
+// 			clientList.mutex.Unlock()
+// 			mutex.Unlock()
+
+// 			if route == "roomList" {
+// 				payload, err := getRoomList(ctx, dbs, s, true)
+// 				if err != nil {
+// 					log.Println("Error: ", err)
+// 					return
+// 				}
+// 				err = s.Write(payload)
+// 				if err != nil {
+// 					log.Println("Error: ", err)
+// 					return
+// 				}
+// 			}
+
+// 			if route == "game" {
+// 			}
+// 			return
+// 		}
+
+// 		client := clientList.clients[s]
+// 		if client.route == "" {
+// 			return
+// 		}
+
+// 		switch client.route {
+// 		case "roomList":
+// 			handleRoomListMessages(unmarshal, m, s, dbs, ctx, &clientList)
+// 		case "game":
+// 			err = handleGameMessages(unmarshal, m, s, dbs, ctx, &clientList, &gameRooms, &mutex)
+// 			if err != nil {
+// 				log.Println(err)
+// 				return
+// 			}
+// 		}
+// 	})
+
+// 	return func(c echo.Context) error {
+// 		err := m.HandleRequest(c.Response().Writer, c.Request())
+// 		if err != nil {
+// 			return err
+// 		}
+// 		return nil
+// 	}
+// }
 
 func getRoomList(ctx context.Context, dbs *api.DBConn, s *melody.Session, checkRoom bool) ([]byte, error) {
 	if checkRoom {

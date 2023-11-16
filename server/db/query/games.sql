@@ -55,11 +55,17 @@ DELETE FROM undo_request
 WHERE id = $1;
 
 -- name: CreateRoom :exec
-INSERT INTO public.room_list (host, description, rules, type, color)
+INSERT INTO public.room_list (host_id, description, rules, type, color)
 VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetRoomList :many
-SELECT * FROM public.room_list;
+SELECT
+    room_list.*,
+    profiles.username AS host
+FROM
+    public.room_list
+JOIN
+    public.profiles ON room_list.host_id = profiles.id;
 
 -- name: DeleteRoom :exec
 DELETE FROM public.room_list

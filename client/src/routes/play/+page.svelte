@@ -5,13 +5,13 @@
 	import RoomList from './RoomList.svelte';
 	import { AddNotification, type notificationType } from '$lib/store/notification';
 	import { nanoid } from 'nanoid';
-	import { ws, wsConnState } from '$lib/store/websocket';
+	import { ws } from '$lib/store/websocket';
 
 	export let data;
 	$: username = data.session?.user.user_metadata.username;
 
 	type Info = {
-		roomid: string;
+		id: string;
 		host: string;
 		description: string;
 		type: string;
@@ -20,22 +20,23 @@
 	};
 
 	let roomList: Info[] = [];
-	$: roomList = roomList.sort((a, b) => (a.host === username ? -1 : 1));
+	$: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
 	let showLive = true;
 	let showCorrespondence = true;
-	$: liveRoomList = roomList?.filter((room) => room.type === 'live');
-	$: correspondenceRoomList = roomList?.filter((room) => room.type === 'correspondence');
+	$: liveRoomList = sortedList?.filter((room) => room.type === 'Live');
+	$: correspondenceRoomList = sortedList?.filter((room) => room.type === 'Correspondence');
 
 	let showCreateGameDialogue = false;
 	let showRoomDialogue = false;
 	let roomDialogueInfo: Info;
 
-	function handleRoomListMsg(event: MessageEvent<any>) {
+	function handleRoomListMsg(event?: MessageEvent) {
 		try {
-			const data = JSON.parse(event.data);
+			const data = JSON.parse(event?.data);
 			switch (data.type) {
 				case 'roomList':
-					roomList = JSON.parse(data.payload);
+					// console.log(data.payload)
+					roomList = data.payload;
 					break;
 				case 'accepted':
 					AddNotification({
@@ -57,35 +58,48 @@
 			type: 'accept',
 			payload: roomid,
 		};
-		$ws.send(JSON.stringify(msg));
+		ws?.send(msg);
 	}
 
 	onMount(() => {
-		ws.subscribe((val) => {
+		let unsubPlayMsg2: (() => void) | undefined
+		let unsubPlayMsg = ws?.subscribe((val) => {
 			if (val) {
-				$ws.addEventListener('message', handleRoomListMsg);
+				unsubPlayMsg2 = ws?.addMsgListener(handleRoomListMsg);
 			}
 		});
 
-		wsConnState.subscribe((val) => {
+		const unsub = ws?.subscribe((val) => {
 			if (val === 'connected') {
+				// const msg = {
+				// 	type: 'route',
+				// 	payload: 'roomList',
+				// };
+				// ws?.send(msg);
 				const msg = {
-					type: 'route',
-					payload: 'roomList',
+					type: 'joinPlay'
 				};
-				$ws.send(JSON.stringify(msg));
+				ws?.send(msg);
 			}
 		});
 		return () => {
-			$ws.removeEventListener('message', handleRoomListMsg);
+			if(unsub) unsub()
+			if (unsubPlayMsg) unsubPlayMsg()
+			if (unsubPlayMsg2) unsubPlayMsg2()
+			const msg = {
+					type: 'leavePlay'
+				};
+			ws?.send(msg);
+			// $ws.removeEventListener('message', handleRoomListMsg);
 		};
 	});
+	$: console.log($ws)
 </script>
 
 <main>
-	{#if $wsConnState === 'connecting'}
+	{#if $ws === 'connecting'}
 		<p class="status-msg fly-up-fade">Loading...</p>
-	{:else if $wsConnState === 'connected'}
+	{:else if $ws === 'connected'}
 		<section class="options">
 			<div class="filter">
 				<label>
@@ -108,7 +122,6 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				ws={$ws}
 				roomList={liveRoomList}
 				heading="Live Games"
 				{username}
@@ -118,17 +131,16 @@
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
-				ws={$ws}
 				roomList={correspondenceRoomList}
 				heading="Correspondence Games"
 				{username}
 			/>
 		{/if}
-		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} ws={$ws} />
+		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} />
 		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
-	{:else if $wsConnState === 'error'}
+	{:else if $ws === 'error'}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
-	{:else if $wsConnState === 'closed'}
+	{:else if $ws === 'closed'}
 		<p class="status-msg fly-up-fade">Not connected, please refresh or try again later</p>
 	{/if}
 </main>

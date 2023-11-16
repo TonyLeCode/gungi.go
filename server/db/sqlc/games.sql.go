@@ -33,12 +33,12 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 }
 
 const createRoom = `-- name: CreateRoom :exec
-INSERT INTO public.room_list (host, description, rules, type, color)
+INSERT INTO public.room_list (host_id, description, rules, type, color)
 VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateRoomParams struct {
-	Host        uuid.UUID `json:"host"`
+	HostID      uuid.UUID `json:"host_id"`
 	Description string    `json:"description"`
 	Rules       string    `json:"rules"`
 	Type        string    `json:"type"`
@@ -47,7 +47,7 @@ type CreateRoomParams struct {
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 	_, err := q.db.ExecContext(ctx, createRoom,
-		arg.Host,
+		arg.HostID,
 		arg.Description,
 		arg.Rules,
 		arg.Type,
@@ -211,26 +211,44 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 }
 
 const getRoomList = `-- name: GetRoomList :many
-SELECT id, host, description, rules, type, color, created_at FROM public.room_list
+SELECT
+    room_list.id, room_list.host_id, room_list.description, room_list.rules, room_list.type, room_list.color, room_list.created_at,
+    profiles.username AS host
+FROM
+    public.room_list
+JOIN
+    public.profiles ON room_list.host_id = profiles.id
 `
 
-func (q *Queries) GetRoomList(ctx context.Context) ([]RoomList, error) {
+type GetRoomListRow struct {
+	ID          uuid.UUID `json:"id"`
+	HostID      uuid.UUID `json:"host_id"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
+	CreatedAt   time.Time `json:"created_at"`
+	Host        string    `json:"host"`
+}
+
+func (q *Queries) GetRoomList(ctx context.Context) ([]GetRoomListRow, error) {
 	rows, err := q.db.QueryContext(ctx, getRoomList)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []RoomList
+	var items []GetRoomListRow
 	for rows.Next() {
-		var i RoomList
+		var i GetRoomListRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Host,
+			&i.HostID,
 			&i.Description,
 			&i.Rules,
 			&i.Type,
 			&i.Color,
 			&i.CreatedAt,
+			&i.Host,
 		); err != nil {
 			return nil, err
 		}

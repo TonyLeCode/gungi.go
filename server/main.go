@@ -71,7 +71,8 @@ func main() {
 
 	e.GET("/getgame/:id", dbs.GetGameRoute)
 
-	e.GET("/ws", ws(m, &dbs))
+	e.GET("/ws", ws2(m, &dbs))
+	// e.GET("/ws2", ws(m, &dbs))
 
 	// e.POST("/user/register", )
 

@@ -74,7 +74,7 @@ type Profile struct {
 
 type RoomList struct {
 	ID          uuid.UUID `json:"id"`
-	Host        uuid.UUID `json:"host"`
+	HostID      uuid.UUID `json:"host_id"`
 	Description string    `json:"description"`
 	Rules       string    `json:"rules"`
 	Type        string    `json:"type"`

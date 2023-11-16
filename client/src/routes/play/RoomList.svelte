@@ -1,6 +1,7 @@
 <script lang="ts">
+	import  {ws } from '$lib/store/websocket'
 	type Info = {
-		roomid: string;
+		id: string;
 		host: string;
 		description: string;
 		type: string;
@@ -15,21 +16,19 @@
 	export let showRoomDialogue: boolean;
 	export let roomDialogueInfo: Info;
 
-	export let ws: WebSocket;
-
 	function handleCancel(roomid: string) {
 		const payload = {
 			type: 'cancel',
 			payload: roomid,
 		};
-		ws.send(JSON.stringify(payload));
+		ws?.send(payload);
 	}
 </script>
 
 <h2 class="fly-up-fade">{heading}</h2>
 {#if roomList.length != 0}
 	<ul class="room-list">
-		{#each roomList ?? [] as room, index (room.roomid)}
+		{#each roomList ?? [] as room, index (room.id)}
 			<li class="room-item fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 				<button
 					disabled={room.host === username ? true : false}
@@ -46,7 +45,7 @@
 				{#if room.host === username}
 					<button
 						on:click={() => {
-							handleCancel(room.roomid);
+							handleCancel(room.id);
 						}}
 						class="cancel button-ghost">Cancel</button
 					>

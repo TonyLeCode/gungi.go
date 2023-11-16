@@ -37,7 +37,7 @@ create table
   create table
   public.room_list (
     id uuid not null default gen_random_uuid (),
-    host uuid not null,
+    host_id uuid not null,
     description text not null,
     rules text not null,
     type text not null,
