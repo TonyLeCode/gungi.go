@@ -165,47 +165,15 @@ func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType s
 
 	queries := db.New(dbConn.PostgresDB)
 
-	userID_1, err := queries.GetIdFromUsername(ctx, username1)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	userID_2, err := queries.GetIdFromUsername(ctx, username2)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-
 	gameQuery := db.CreateGameParams{
 		CurrentState: currentState,
 		Ruleset:      ruleset,
 		Type:         gameType,
+		Username:     username1,
+		Username_2:   username2,
 	}
 
 	gameID, err := queries.CreateGame(ctx, gameQuery)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-
-	junctionQuery1 := db.GameJunctionParams{
-		UserID: userID_1,
-		GameID: gameID,
-		Color:  "w",
-	}
-
-	junctionQuery2 := db.GameJunctionParams{
-		UserID: userID_2,
-		GameID: gameID,
-		Color:  "b",
-	}
-
-	err = queries.GameJunction(ctx, junctionQuery1)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	err = queries.GameJunction(ctx, junctionQuery2)
 	if err != nil {
 		log.Println(err)
 		return "", err

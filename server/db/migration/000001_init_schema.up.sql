@@ -9,17 +9,12 @@ create table
     current_state text not null,
     ruleset text not null default 'default'::text,
     type text not null default ''::text,
+    user_1 uuid not null,
+    user_2 uuid not null,
     constraint games_pkey primary key (id),
-    constraint games_id_key unique (id)
-  ) tablespace pg_default;
-
-create table
-  public.player_games (
-    user_id uuid not null,
-    game_id uuid not null,
-    color character(1) not null,
-    constraint player_games_game_id_fkey foreign key (game_id) references games (id) on delete cascade,
-    constraint player_games_user_id_fkey foreign key (user_id) references auth.users (id) on delete cascade
+    constraint games_id_key unique (id),
+    constraint games_user_1_fkey foreign key (user_1) references auth.users (id),
+    constraint games_user_2_fkey foreign key (user_2) references auth.users (id)
   ) tablespace pg_default;
 
 create table

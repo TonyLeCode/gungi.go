@@ -59,12 +59,8 @@ type Game struct {
 	CurrentState string         `json:"current_state"`
 	Ruleset      string         `json:"ruleset"`
 	Type         string         `json:"type"`
-}
-
-type PlayerGame struct {
-	UserID uuid.UUID `json:"user_id"`
-	GameID uuid.UUID `json:"game_id"`
-	Color  string    `json:"color"`
+	User1        uuid.UUID      `json:"user_1"`
+	User2        uuid.UUID      `json:"user_2"`
 }
 
 type Profile struct {
