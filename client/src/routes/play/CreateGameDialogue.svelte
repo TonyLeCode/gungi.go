@@ -3,7 +3,6 @@
 	import { ws } from '$lib/store/websocket';
 
 	export let showModal: boolean;
-	export let host: string;
 
 	let type = 'correspondence';
 	let ruleset = 'default';
@@ -13,9 +12,8 @@
 	function handleCreateGame(e: Event) {
 		e.preventDefault();
 		const payload = {
-			type: 'createRoom',
+			type: 'createPlayRoom',
 			payload: {
-				host: host,
 				description: description,
 				type: type,
 				color: color,

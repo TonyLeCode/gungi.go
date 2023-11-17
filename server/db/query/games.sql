@@ -74,7 +74,7 @@ WHERE id = $1;
 
 -- name: CreateRoom :exec
 INSERT INTO public.room_list (host_id, description, rules, type, color)
-VALUES ($1, $2, $3, $4, $5);
+VALUES ((SELECT id FROM profiles AS u1 WHERE u1.username = $1), $2, $3, $4, $5);
 
 -- name: GetRoomList :many
 SELECT
@@ -85,6 +85,13 @@ FROM
 JOIN
     public.profiles ON room_list.host_id = profiles.id;
 
--- name: DeleteRoom :exec
-DELETE FROM public.room_list
-WHERE id = $1;
+-- name: DeleteRoom :one
+WITH deleted_room AS (
+    DELETE FROM public.room_list
+    WHERE room_list.id = $1
+    AND EXISTS (SELECT FROM profiles WHERE profiles.id = room_list.host_id)
+    RETURNING *
+)
+SELECT deleted_room.*, profiles.username as host
+FROM deleted_room
+JOIN profiles ON deleted_room.host_id = profiles.id;

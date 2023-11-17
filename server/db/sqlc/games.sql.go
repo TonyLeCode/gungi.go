@@ -45,20 +45,20 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 
 const createRoom = `-- name: CreateRoom :exec
 INSERT INTO public.room_list (host_id, description, rules, type, color)
-VALUES ($1, $2, $3, $4, $5)
+VALUES ((SELECT id FROM profiles AS u1 WHERE u1.username = $1), $2, $3, $4, $5)
 `
 
 type CreateRoomParams struct {
-	HostID      uuid.UUID `json:"host_id"`
-	Description string    `json:"description"`
-	Rules       string    `json:"rules"`
-	Type        string    `json:"type"`
-	Color       string    `json:"color"`
+	Username    string `json:"username"`
+	Description string `json:"description"`
+	Rules       string `json:"rules"`
+	Type        string `json:"type"`
+	Color       string `json:"color"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 	_, err := q.db.ExecContext(ctx, createRoom,
-		arg.HostID,
+		arg.Username,
 		arg.Description,
 		arg.Rules,
 		arg.Type,
@@ -86,14 +86,43 @@ func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (int64, 
 	return id, err
 }
 
-const deleteRoom = `-- name: DeleteRoom :exec
-DELETE FROM public.room_list
-WHERE id = $1
+const deleteRoom = `-- name: DeleteRoom :one
+WITH deleted_room AS (
+    DELETE FROM public.room_list
+    WHERE room_list.id = $1
+    AND EXISTS (SELECT FROM profiles WHERE profiles.id = room_list.host_id)
+    RETURNING id, host_id, description, rules, type, color, created_at
+)
+SELECT deleted_room.id, deleted_room.host_id, deleted_room.description, deleted_room.rules, deleted_room.type, deleted_room.color, deleted_room.created_at, profiles.username as host
+FROM deleted_room
+JOIN profiles ON deleted_room.host_id = profiles.id
 `
 
-func (q *Queries) DeleteRoom(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteRoom, id)
-	return err
+type DeleteRoomRow struct {
+	ID          uuid.UUID `json:"id"`
+	HostID      uuid.UUID `json:"host_id"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
+	CreatedAt   time.Time `json:"created_at"`
+	Host        string    `json:"host"`
+}
+
+func (q *Queries) DeleteRoom(ctx context.Context, id uuid.UUID) (DeleteRoomRow, error) {
+	row := q.db.QueryRowContext(ctx, deleteRoom, id)
+	var i DeleteRoomRow
+	err := row.Scan(
+		&i.ID,
+		&i.HostID,
+		&i.Description,
+		&i.Rules,
+		&i.Type,
+		&i.Color,
+		&i.CreatedAt,
+		&i.Host,
+	)
+	return i, err
 }
 
 const getGame = `-- name: GetGame :one

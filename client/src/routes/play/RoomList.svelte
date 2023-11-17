@@ -15,10 +15,11 @@
 
 	export let showRoomDialogue: boolean;
 	export let roomDialogueInfo: Info;
+	export let accept: (roomid: string) => void;
 
 	function handleCancel(roomid: string) {
 		const payload = {
-			type: 'cancel',
+			type: 'cancelPlayRoom',
 			payload: roomid,
 		};
 		ws?.send(payload);
@@ -50,7 +51,9 @@
 						class="cancel button-ghost">Cancel</button
 					>
 				{:else}
-					<button class="accept button-primary">Accept</button>
+					<button class="accept button-primary" on:click={() => {
+						accept(room.id)
+					}}>Accept</button>
 				{/if}
 			</li>
 		{/each}

@@ -20,11 +20,11 @@ func main() {
 		log.Fatalln("Cannot load config", err)
 	}
 
-	dbs := api.DBConn{}
+	db := api.DBConn{}
 	maxRetries := 5
 	sleepDuration := 2 * time.Second
 	for i := 1; i <= maxRetries; i++ {
-		err = dbs.PostgresConnect(config.DB_SOURCE)
+		err = db.PostgresConnect(config.DB_SOURCE)
 		if err == nil {
 			break
 		}
@@ -37,24 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to establish a database connection: ", err)
 	}
-	defer dbs.PostgresDB.Close()
-
-	sleepDuration = 2 * time.Second
-	for i := 1; i <= maxRetries; i++ {
-		err = dbs.RedisConnect(config.REDIS_CONN_STRING)
-		if err == nil {
-			break
-		}
-		if i < maxRetries {
-			log.Println("Connection failed, retrying...")
-			time.Sleep(sleepDuration)
-			sleepDuration *= 2
-		}
-	}
-	if err != nil {
-		log.Fatalln("Failed to establish a database connection: ", err)
-	}
-	defer dbs.RedisClient.Close()
+	defer db.Conn.Close()
 
 	e := echo.New()
 	m := melody.New()
@@ -67,11 +50,11 @@ func main() {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
-	verify.GET("/getongoinggamelist", dbs.GetOngoingGameList)
+	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 
-	e.GET("/getgame/:id", dbs.GetGameRoute)
+	e.GET("/getgame/:id", db.GetGameRoute)
 
-	e.GET("/ws", ws2(m, &dbs))
+	e.GET("/ws", ws2(m, &db))
 	// e.GET("/ws2", ws(m, &dbs))
 
 	// e.POST("/user/register", )

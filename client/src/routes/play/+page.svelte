@@ -23,8 +23,8 @@
 	$: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
 	let showLive = true;
 	let showCorrespondence = true;
-	$: liveRoomList = sortedList?.filter((room) => room.type === 'Live');
-	$: correspondenceRoomList = sortedList?.filter((room) => room.type === 'Correspondence');
+	$: liveRoomList = sortedList?.filter((room) => room.type === 'live');
+	$: correspondenceRoomList = sortedList?.filter((room) => room.type === 'correspondence');
 
 	let showCreateGameDialogue = false;
 	let showRoomDialogue = false;
@@ -38,7 +38,7 @@
 					// console.log(data.payload)
 					roomList = data.payload;
 					break;
-				case 'accepted':
+				case 'roomAccepted':
 					AddNotification({
 						id: nanoid(),
 						title: 'Game Accepted',
@@ -55,7 +55,7 @@
 
 	function accept(roomid: string) {
 		const msg = {
-			type: 'accept',
+			type: 'acceptPlayRoom',
 			payload: roomid,
 		};
 		ws?.send(msg);
@@ -125,6 +125,7 @@
 				roomList={liveRoomList}
 				heading="Live Games"
 				{username}
+				{accept}
 			/>
 		{/if}
 		{#if showCorrespondence}
@@ -134,9 +135,10 @@
 				roomList={correspondenceRoomList}
 				heading="Correspondence Games"
 				{username}
+				{accept}
 			/>
 		{/if}
-		<CreateGameDialogue bind:showModal={showCreateGameDialogue} host={username} />
+		<CreateGameDialogue bind:showModal={showCreateGameDialogue} />
 		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
 	{:else if $ws === 'error'}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>

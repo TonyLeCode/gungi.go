@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 
@@ -63,7 +64,7 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "bad request")
 	}
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	games, err := queries.GetOngoingGames(ctx, subid)
 	if err != nil {
@@ -86,7 +87,7 @@ func (dbConn *DBConn) GetGame(id string) (GameWithMoves, error) {
 		return GameWithMoves{}, err
 	}
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	game, err := queries.GetGame(ctx, uuid)
 	if err != nil {
@@ -127,7 +128,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	game, err := queries.GetGame(ctx, uuid)
 	if err != nil {
@@ -163,7 +164,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType string, username1 string, username2 string) (string, error) {
 	ctx := context.Background()
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	gameQuery := db.CreateGameParams{
 		CurrentState: currentState,
@@ -182,13 +183,69 @@ func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType s
 	return gameID.String(), nil
 }
 
-func (dbConn *DBConn) CreateRoom(hostID uuid.UUID, description string, rules string, roomType string, color string) error {
+func (dbConn *DBConn) CreateGameFromRoom(room db.DeleteRoomRow, acceptingUsername string) (string, error) {
+	ctx := context.Background()
+	var username1 string
+	var username2 string
+	var currentState string
+	switch room.Color {
+	case "white":
+		username1 = room.Host
+		username2 = acceptingUsername
+	case "black":
+		username1 = acceptingUsername
+		username2 = room.Host
+	case "random":
+		r := rand.Intn(2)
+		if r == 0 {
+			username1 = room.Host
+			username2 = acceptingUsername
+		} else {
+			username1 = acceptingUsername
+			username2 = room.Host
+		}
+	default:
+		r := rand.Intn(2)
+		if r == 0 {
+			username1 = room.Host
+			username2 = acceptingUsername
+		} else {
+			username1 = acceptingUsername
+			username2 = room.Host
+		}
+	}
+	switch room.Rules {
+	case "revised":
+		currentState = "9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00"
+	case "universal-music":
+		currentState = "9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00"
+	case "default":
+		currentState = "9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00"
+	default:
+		currentState = "9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00"
+	}
+	queriesParams := db.CreateGameParams{
+		CurrentState: currentState,
+		Ruleset:      room.Rules,
+		Type:         room.Type,
+		Username:     username1,
+		Username_2:   username2,
+	}
+	queries := db.New(dbConn.Conn)
+	gameID, err := queries.CreateGame(ctx, queriesParams)
+	if err != nil {
+		return "", err
+	}
+	return gameID.String(), nil
+}
+
+func (dbConn *DBConn) CreateRoom(username string, description string, rules string, roomType string, color string) error {
 	ctx := context.Background()
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	err := queries.CreateRoom(ctx, db.CreateRoomParams{
-		HostID:      hostID,
+		Username:    username,
 		Description: description,
 		Rules:       rules,
 		Type:        roomType,
@@ -204,7 +261,7 @@ func (dbConn *DBConn) CreateRoom(hostID uuid.UUID, description string, rules str
 func (dbConn *DBConn) GetRoomList() ([]db.GetRoomListRow, error) {
 	ctx := context.Background()
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
 	roomList, err := queries.GetRoomList(ctx)
 	if err != nil {
@@ -214,15 +271,15 @@ func (dbConn *DBConn) GetRoomList() ([]db.GetRoomListRow, error) {
 	return roomList, nil
 }
 
-func (dbConn *DBConn) DeleteRoom(id uuid.UUID) error {
+func (dbConn *DBConn) DeleteRoom(id uuid.UUID) (db.DeleteRoomRow, error) {
 	ctx := context.Background()
 
-	queries := db.New(dbConn.PostgresDB)
+	queries := db.New(dbConn.Conn)
 
-	err := queries.DeleteRoom(ctx, id)
+	room, err := queries.DeleteRoom(ctx, id)
 	if err != nil {
-		return err
+		return db.DeleteRoomRow{}, err
 	}
 
-	return nil
+	return room, nil
 }

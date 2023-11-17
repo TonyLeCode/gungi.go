@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"math/rand"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/TonyLeCode/gungi.go/server/api"
 	"github.com/TonyLeCode/gungi.go/server/auth"
@@ -151,6 +149,13 @@ type GameRoomType struct {
 	Rules       string `json:"rules"`
 }
 
+type CreateGameRoomRequest struct {
+	Description string `json:"description"`
+	Type        string `json:"type"`
+	Color       string `json:"color"`
+	Rules       string `json:"rules"`
+}
+
 type SerializedGameRoom struct {
 	GameRoomType
 	RoomID uuid.UUID `json:"roomid"`
@@ -182,7 +187,7 @@ func RedisRoomExists(r *redis.Client, roomKey string) error {
 	return nil
 }
 
-func ws2(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
+func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	PlayConnections := PlayConnections{
 		connections: make(map[*melody.Session]bool),
 		mu:          sync.RWMutex{},
@@ -303,26 +308,181 @@ func ws2(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 			log.Println("Joined Play")
 			log.Println("Conns: ", PlayConnections.connections)
 			// TODO host id to username
-			roomList, err := dbs.GetRoomList()
+			roomList, err := dbConn.GetRoomList()
 			if err != nil {
 				log.Println(err)
-				break
+				return
 			}
-			msg := MsgResponse{
+			roomListMsg := MsgResponse{
 				Type:    "roomList",
 				Payload: roomList,
 			}
-			marshalled, err := json.Marshal(msg)
+			marshaledRoomListMsg, err := json.Marshal(roomListMsg)
 			if err != nil {
 				log.Println(err)
-				break
+				return
 			}
-			s.Write(marshalled)
+			s.Write(marshaledRoomListMsg)
 
 		case "leavePlay":
 			log.Println("Left Play")
 			PlayConnections.RemoveConnection(s)
 			log.Println("Conns: ", PlayConnections.connections)
+
+		case "createPlayRoom":
+			var roomPayload CreateGameRoomRequest
+			err := json.Unmarshal(unmarshal.Payload, &roomPayload)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			username, exists := s.Get("username")
+			if !exists {
+				return
+			}
+
+			err = dbConn.CreateRoom(username.(string), roomPayload.Description, roomPayload.Rules, roomPayload.Type, roomPayload.Color)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			roomList, err := dbConn.GetRoomList()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			roomListMsg := MsgResponse{
+				Type:    "roomList",
+				Payload: roomList,
+			}
+			marshaledRoomListMsg, err := json.Marshal(roomListMsg)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			err = m.BroadcastFilter(marshaledRoomListMsg, func(q *melody.Session) bool {
+				return PlayConnections.connections[q]
+			})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+		case "acceptPlayRoom":
+			username, exists := s.Get("username")
+			if !exists {
+				return
+			}
+
+			var roomid string
+			err := json.Unmarshal(unmarshal.Payload, &roomid)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			roomUUID, err := uuid.Parse(roomid)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			//TODO db transaction
+			room, err := dbConn.DeleteRoom(roomUUID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			gameID, err := dbConn.CreateGameFromRoom(room, username.(string))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			gameAcceptedMsg := MsgResponse{
+				Type:    "roomAccepted",
+				Payload: gameID,
+			}
+			marshaledGameAcceptedMsg, err := json.Marshal(gameAcceptedMsg)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			m.BroadcastFilter(marshaledGameAcceptedMsg, func(q *melody.Session) bool {
+				qUsername, exists := q.Get("username")
+				if !exists {
+					return false
+				}
+				return qUsername == room.Host || qUsername == username
+			})
+
+			roomList, err := dbConn.GetRoomList()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			updatedRoomListMsg := MsgResponse{
+				Type:    "roomList",
+				Payload: roomList,
+			}
+			marshaledUpdatedRoomListMsg, err := json.Marshal(updatedRoomListMsg)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			var keys []*melody.Session
+			for key := range PlayConnections.connections {
+				keys = append(keys, key)
+			}
+
+			m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
+
+		case "cancelPlayRoom":
+			var roomid string
+			err := json.Unmarshal(unmarshal.Payload, &roomid)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			roomUUID, err := uuid.Parse(roomid)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			_, err = dbConn.DeleteRoom(roomUUID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			roomList, err := dbConn.GetRoomList()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			updatedRoomListMsg := MsgResponse{
+				Type:    "roomList",
+				Payload: roomList,
+			}
+			marshaledUpdatedRoomListMsg, err := json.Marshal(updatedRoomListMsg)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			var keys []*melody.Session
+			for key := range PlayConnections.connections {
+				keys = append(keys, key)
+			}
+
+			m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
 		}
 	})
 
@@ -333,195 +493,6 @@ func ws2(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
 		}
 		return nil
 	}
-}
-
-// func ws(m *melody.Melody, dbs *api.DBConn) echo.HandlerFunc {
-// 	clientList := clientList{clients: make(map[*melody.Session]client)}
-// 	gameRooms := make(map[string]*Room)
-// 	mutex := sync.Mutex{}
-
-// 	m.HandleConnect(func(s *melody.Session) {
-// 		log.Println("Connected")
-// 	})
-
-// 	m.HandleDisconnect(func(s *melody.Session) {
-// 		// log.Println(s.Keys)
-// 		clientList.RemoveClient(s)
-// 		mutex.Lock()
-// 		gameID := clientList.clients[s].gameID
-// 		if gameID != "" {
-// 			delete(gameRooms[gameID].clients, s)
-// 		}
-// 		mutex.Unlock()
-// 		log.Println("Disconnect")
-// 	})
-
-// 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-// 		ctx := context.Background()
-
-// 		var unmarshal MsgPayload
-// 		err := json.Unmarshal(msg, &unmarshal)
-// 		if err != nil {
-// 			log.Println("Error: ", err)
-// 			return
-// 		}
-
-// 		// Generic messages that don't require a route
-// 		switch unmarshal.Type {
-// 		case "auth":
-// 			var token string
-// 			err := json.Unmarshal(unmarshal.Payload, &token)
-// 			if err != nil {
-// 				log.Println("Error: ", err)
-// 				return
-// 			}
-
-// 			claims, err := auth.AuthenticateSupabaseToken(token)
-// 			if err != nil {
-// 				log.Println(err)
-// 				// 0 means failed
-// 				authResponse := MsgResponse{
-// 					Type:    "auth",
-// 					Payload: "0",
-// 				}
-// 				payload, err := json.Marshal(authResponse)
-// 				if err != nil {
-// 					log.Println("Error: ", err)
-// 				} else {
-// 					err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-// 						return q == s
-// 					})
-// 					if err != nil {
-// 						log.Println("Error: ", err)
-// 					}
-// 				}
-// 				return
-// 			}
-
-// 			metadata := claims["user_metadata"].(map[string]interface{})
-// 			username := metadata["username"].(string)
-// 			clientList.AddClient(s, username)
-
-// 			// 1 means authenticated
-// 			authResponse := MsgResponse{
-// 				Type:    "auth",
-// 				Payload: "1",
-// 			}
-// 			payload, err := json.Marshal(authResponse)
-// 			if err != nil {
-// 				log.Println("Error: ", err)
-// 				return
-// 			}
-// 			err = s.Write(payload)
-// 			if err != nil {
-// 				log.Println("Error: ", err)
-// 				return
-// 			}
-// 			return
-
-// 		case "route":
-// 			var route string
-// 			err = json.Unmarshal(unmarshal.Payload, &route)
-// 			if err != nil {
-// 				log.Println("Error: ", err)
-// 				return
-// 			}
-// 			err = clientList.ChangeRoute(s, route)
-// 			if err != nil {
-// 				log.Println("Error: ", err)
-// 				return
-// 			}
-
-// 			// TODO if gameRoom is empty, then delete
-// 			mutex.Lock()
-// 			clientList.mutex.Lock()
-// 			if entry, ok := clientList.clients[s]; ok {
-// 				if entry.gameID != "" {
-// 					delete(gameRooms[entry.gameID].clients, s)
-// 				}
-
-// 				entry.gameID = ""
-// 				clientList.clients[s] = entry
-// 			} else {
-// 				return
-// 			}
-// 			clientList.mutex.Unlock()
-// 			mutex.Unlock()
-
-// 			if route == "roomList" {
-// 				payload, err := getRoomList(ctx, dbs, s, true)
-// 				if err != nil {
-// 					log.Println("Error: ", err)
-// 					return
-// 				}
-// 				err = s.Write(payload)
-// 				if err != nil {
-// 					log.Println("Error: ", err)
-// 					return
-// 				}
-// 			}
-
-// 			if route == "game" {
-// 			}
-// 			return
-// 		}
-
-// 		client := clientList.clients[s]
-// 		if client.route == "" {
-// 			return
-// 		}
-
-// 		switch client.route {
-// 		case "roomList":
-// 			handleRoomListMessages(unmarshal, m, s, dbs, ctx, &clientList)
-// 		case "game":
-// 			err = handleGameMessages(unmarshal, m, s, dbs, ctx, &clientList, &gameRooms, &mutex)
-// 			if err != nil {
-// 				log.Println(err)
-// 				return
-// 			}
-// 		}
-// 	})
-
-// 	return func(c echo.Context) error {
-// 		err := m.HandleRequest(c.Response().Writer, c.Request())
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return nil
-// 	}
-// }
-
-func getRoomList(ctx context.Context, dbs *api.DBConn, s *melody.Session, checkRoom bool) ([]byte, error) {
-	if checkRoom {
-		err := RedisRoomExists(dbs.RedisClient, "game_rooms")
-		if err != nil {
-			log.Println(err)
-			return []byte{}, err
-		}
-	}
-
-	val, err := dbs.RedisClient.Do(ctx, "JSON.GET", "game_rooms").Result()
-	if err != nil {
-		log.Println("Error: ", err)
-		return []byte{}, err
-	}
-
-	//TODO don't marshal in function
-	roomList := MsgResponse{
-		Type:    "roomList",
-		Payload: val,
-	}
-	payload, err := json.Marshal(roomList)
-	if err != nil {
-		return []byte{}, err
-	}
-	// err = s.Write(payload)
-	// if err != nil {
-	// 	log.Println("Error: ", err)
-	// 	return err
-	// }
-	return payload, nil
 }
 
 func getGame(dbs *api.DBConn, roomID string) (api.GameWithMoves, error) {
@@ -547,30 +518,6 @@ type Move struct {
 
 func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList, gameRooms *map[string]*Room, mutex *sync.Mutex) error {
 	switch msg.Type {
-	case "joinGame":
-		var roomID string
-		err := json.Unmarshal(msg.Payload, &roomID)
-		if err != nil {
-			return err
-		}
-
-		clientList.mutex.Lock()
-		if entry, ok := clientList.clients[s]; ok {
-			entry.gameID = roomID
-			clientList.clients[s] = entry
-		} else {
-			return errors.New("could not find gameID")
-		}
-		clientList.mutex.Unlock()
-
-		mutex.Lock()
-		room, ok := (*gameRooms)[roomID]
-		if !ok {
-			room = &Room{clients: make(map[*melody.Session]bool)}
-			(*gameRooms)[roomID] = room
-		}
-		mutex.Unlock()
-		room.AddClient(s)
 
 	case "ready": //TODO remove
 	case "makeMove":
@@ -617,7 +564,7 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 			CurrentState: game.CurrentState,
 			History:      game.History,
 		}
-		queries := db.New(dbs.PostgresDB)
+		queries := db.New(dbs.Conn)
 		err = queries.MakeMove(ctx, makeMoveParams)
 		if err != nil {
 			return err
@@ -685,205 +632,6 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 		// })
 	case "responseUndo":
 	case "resign":
-	}
-	return nil
-}
-
-func handleRoomListMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList) error {
-	switch msg.Type {
-	case "createRoom":
-		// TODO username and validate
-		var roomPayload GameRoomType
-		err := json.Unmarshal(msg.Payload, &roomPayload)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		newRoom := SerializedGameRoom{
-			RoomID: uuid.New(),
-			GameRoomType: GameRoomType{
-				Host:        roomPayload.Host,
-				Description: roomPayload.Description,
-				Type:        roomPayload.Type,
-				Color:       roomPayload.Color,
-				Rules:       roomPayload.Rules,
-			},
-		}
-		marshalled, err := json.Marshal(newRoom)
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-
-		err = RedisRoomExists(dbs.RedisClient, "game_rooms")
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		_, err = dbs.RedisClient.Do(ctx, "JSON.ARRAPPEND", "game_rooms", "$", marshalled).Result()
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		payload, err := getRoomList(ctx, dbs, s, true)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			return clientList.clients[q].route == "roomList"
-		})
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-	case "cancel":
-		//TODO verify
-		var roomid string
-		err := json.Unmarshal(msg.Payload, &roomid)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		roomList, err := RedisGetGameRooms(dbs.RedisClient)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		filteredRoomList := []SerializedGameRoom{}
-		for _, room := range roomList {
-			if room.RoomID.String() != roomid {
-				filteredRoomList = append(filteredRoomList, room)
-			}
-		}
-
-		marshalled, err := json.Marshal(filteredRoomList)
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-
-		_, err = dbs.RedisClient.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		newRoomList := MsgResponse{
-			Type:    "roomList",
-			Payload: string(marshalled),
-		}
-		payload, err := json.Marshal(newRoomList)
-		if err != nil {
-			log.Println("Error: ", err)
-		}
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			return clientList.clients[q].route == "roomList"
-		})
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-	case "accept":
-		var roomid string
-		err := json.Unmarshal(msg.Payload, &roomid)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		roomList, err := RedisGetGameRooms(dbs.RedisClient)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		var acceptedRoom SerializedGameRoom
-		filteredRoomList := []SerializedGameRoom{}
-		for _, room := range roomList {
-			if room.RoomID.String() != roomid {
-				filteredRoomList = append(filteredRoomList, room)
-			} else {
-				acceptedRoom = room
-			}
-		}
-
-		marshalled, err := json.Marshal(filteredRoomList)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		_, err = dbs.RedisClient.Do(ctx, "JSON.SET", "game_rooms", "$", marshalled).Result()
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		newRoomList := MsgResponse{
-			Type:    "roomList",
-			Payload: string(marshalled),
-		}
-		payload, err := json.Marshal(newRoomList)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			return clientList.clients[q].route == "roomList"
-		})
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		// Create new game
-		var user1 string
-		var user2 string
-		sessionUsername := clientList.clients[s].username
-		if acceptedRoom.Color == "w" {
-			user1 = acceptedRoom.Host
-			user2 = sessionUsername
-		} else if acceptedRoom.Color == "b" {
-			user1 = sessionUsername
-			user2 = acceptedRoom.Host
-		} else {
-			rand.Seed(time.Now().UnixNano())
-			randBool := rand.Intn(2) == 0
-			if randBool {
-				user1 = acceptedRoom.Host
-				user2 = sessionUsername
-			} else {
-				user1 = sessionUsername
-				user2 = acceptedRoom.Host
-			}
-		}
-		gameID, err := dbs.CreateGame("9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00", acceptedRoom.Rules, acceptedRoom.Type, user1, user2)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-		acceptResponse := MsgResponse{
-			Type:    "accepted",
-			Payload: gameID,
-		}
-		payload, err = json.Marshal(acceptResponse)
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
-		err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-			username := clientList.clients[q].username
-			return username == user1 || username == user2
-		})
-		if err != nil {
-			log.Println("Error: ", err)
-			return err
-		}
-
 	}
 	return nil
 }
