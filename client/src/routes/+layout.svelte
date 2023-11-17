@@ -21,21 +21,21 @@
 				invalidate('supabase:auth');
 			}
 		});
-		const token = session?.access_token
+		const token = session?.access_token;
 		if (token) {
 			// websocketConnect(`ws://${import.meta.env.VITE_API_URL}/ws`, session.access_token);
 			//TODO websocket as spectator
 			ws?.subscribe((val) => {
-				if (val === 'connecting'){
-					ws?.authenticate(token)
+				if (val === 'connecting') {
+					ws?.authenticate(token);
 				}
-			})
+			});
 		}
 
 		return () => {
 			subscription.unsubscribe();
 			// $ws?.close();
-			ws?.close()
+			ws?.close();
 		};
 	});
 </script>

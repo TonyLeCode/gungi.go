@@ -1,5 +1,5 @@
 <script lang="ts">
-	import  {ws } from '$lib/store/websocket'
+	import { ws } from '$lib/store/websocket';
 	type Info = {
 		id: string;
 		host: string;
@@ -51,9 +51,12 @@
 						class="cancel button-ghost">Cancel</button
 					>
 				{:else}
-					<button class="accept button-primary" on:click={() => {
-						accept(room.id)
-					}}>Accept</button>
+					<button
+						class="accept button-primary"
+						on:click={() => {
+							accept(room.id);
+						}}>Accept</button
+					>
 				{/if}
 			</li>
 		{/each}

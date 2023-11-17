@@ -291,7 +291,7 @@
 		// if (socket){
 		// 	socket.addEventListener('message', handleGameMsg);
 		// }
-		let unsubGameMsg2: (() => void) | undefined
+		let unsubGameMsg2: (() => void) | undefined;
 		const unsubGameMsg = ws?.subscribe((val) => {
 			if (val) {
 				unsubGameMsg2 = ws?.addMsgListener(handleGameMsg);
@@ -313,9 +313,9 @@
 			}
 		});
 		return () => {
-			if (unsubGameMsg)	unsubGameMsg()
-			if (unsubGameMsg2) unsubGameMsg2()
-			if (unsubConnect) unsubConnect()
+			if (unsubGameMsg) unsubGameMsg();
+			if (unsubGameMsg2) unsubGameMsg2();
+			if (unsubConnect) unsubConnect();
 			// $ws?.removeEventListener('message', handleGameMsg);
 		};
 	});

@@ -62,7 +62,7 @@
 	}
 
 	onMount(() => {
-		let unsubPlayMsg2: (() => void) | undefined
+		let unsubPlayMsg2: (() => void) | undefined;
 		let unsubPlayMsg = ws?.subscribe((val) => {
 			if (val) {
 				unsubPlayMsg2 = ws?.addMsgListener(handleRoomListMsg);
@@ -77,23 +77,23 @@
 				// };
 				// ws?.send(msg);
 				const msg = {
-					type: 'joinPlay'
+					type: 'joinPlay',
 				};
 				ws?.send(msg);
 			}
 		});
 		return () => {
-			if(unsub) unsub()
-			if (unsubPlayMsg) unsubPlayMsg()
-			if (unsubPlayMsg2) unsubPlayMsg2()
+			if (unsub) unsub();
+			if (unsubPlayMsg) unsubPlayMsg();
+			if (unsubPlayMsg2) unsubPlayMsg2();
 			const msg = {
-					type: 'leavePlay'
-				};
+				type: 'leavePlay',
+			};
 			ws?.send(msg);
 			// $ws.removeEventListener('message', handleRoomListMsg);
 		};
 	});
-	$: console.log($ws)
+	$: console.log($ws);
 </script>
 
 <main>

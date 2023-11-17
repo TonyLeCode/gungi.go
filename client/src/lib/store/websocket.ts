@@ -85,7 +85,7 @@ function createWsStore() {
 			} as notificationType);
 		});
 		newSocket.addEventListener('message', (event) => {
-			console.log("authhh")
+			console.log('authhh');
 			try {
 				const data = JSON.parse(event.data);
 				if (data.type == 'auth') {
@@ -116,8 +116,8 @@ function createWsStore() {
 	function addMsgListener(fn: (event?: MessageEvent) => void) {
 		newSocket.addEventListener('message', fn);
 		return () => {
-			newSocket.removeEventListener('message', fn)
-		}
+			newSocket.removeEventListener('message', fn);
+		};
 	}
 
 	console.log('create ws store');
