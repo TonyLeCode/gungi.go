@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { moveHistoryContext } from './+page.svelte';
+	import { moveHistoryContext, gameStateContext } from './+page.svelte';
 	import { get } from 'svelte/store';
 
 	// export let moveHistory: string[];
 	const moveHistory = moveHistoryContext.get();
+	const gameState = gameStateContext.get();
 	let currentIndex = get(moveHistory).length - 1;
 	moveHistory.subscribe((val) => {
 		currentIndex = val.length - 1;
@@ -17,6 +18,14 @@
 
 	$: if (containerRef) {
 		containerRef.scrollTop = currentIndex * 36;
+	}
+
+	function handleCopy(){
+		const state = get(gameState)
+		console.log(state)
+		let headings = `[game_id: ${state.id}]\n[ruleset: ${state.ruleset}]\n[type: ${state.type}]\n[date_started: ${state.date_started}]\n[white: ${state.player1}]\n[black: ${state.player2}]\n\n`
+		const history = get(moveHistory).join(" ")
+		navigator.clipboard.writeText(headings + history)
 	}
 
 	function startAutoplay() {
@@ -115,6 +124,7 @@
 			on:click={startAutoplay}>autoplay</button
 		>
 		<input type="number" name="autoplay" bind:value={autoplayInterval} on:change={intervalChange} />
+		<button class="button-primary" on:click={handleCopy}>Copy</button>
 	</div>
 </div>
 
