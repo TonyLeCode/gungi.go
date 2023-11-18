@@ -23,9 +23,12 @@ type Game struct {
 	Ruleset Ruleset
 }
 
-func CreateBoard(r string) Game {
+func CreateBoard(rules string) Game {
 	newBoard := Game{}
-	if r == "revised" {
+	switch rules {
+	case "revised":
+		newBoard.Ruleset = &revised.Revised{}
+	default:
 		newBoard.Ruleset = &revised.Revised{}
 	}
 	newBoard.InitializeBoard()

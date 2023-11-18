@@ -171,6 +171,14 @@ type MsgResponse struct {
 	Payload interface{} `json:"payload"`
 }
 
+type makeGameMoveMsg struct {
+	GameID    string `json:"gameID"`
+	FromPiece int    `json:"fromPiece"`
+	FromCoord int    `json:"fromCoord"`
+	MoveType  int    `json:"moveType"`
+	ToCoord   int    `json:"toCoord"`
+}
+
 func RedisRoomExists(r *redis.Client, roomKey string) error {
 	ctx := context.Background()
 	exists, err := r.Exists(ctx, roomKey).Result()
@@ -278,6 +286,14 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			return
 
 		case "joinGame":
+			//deletes previous game to prevent memory leak
+			if gameID, ok := s.Get("Game"); ok {
+				if gameUUID, err := uuid.Parse(gameID.(string)); err == nil {
+					log.Println("Removed Game Connection")
+					GameConnections.RemoveConnection(gameUUID, s)
+				}
+			}
+
 			var gameID string
 			err = json.Unmarshal(unmarshal.Payload, &gameID)
 			if err != nil {
@@ -288,11 +304,15 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				GameConnections.AddConnection(gameUUID, s)
 				log.Println("Joined Game: ", gameUUID)
 				log.Println("Conns: ", GameConnections.connections)
+				s.Set("Game", gameID)
 			}
 
 		case "leaveGame":
 			var gameID string
 			err = json.Unmarshal(unmarshal.Payload, &gameID)
+			log.Println("gameID", gameID)
+			log.Println("gameID", unmarshal.Payload)
+			log.Println("gameID", unmarshal)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
@@ -302,6 +322,88 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				GameConnections.RemoveConnection(gameUUID, s)
 				log.Println("Conns: ", GameConnections.connections)
 			}
+
+		case "makeGameMove":
+			ctx := context.Background()
+			var makeGameMoveMsg makeGameMoveMsg
+			err = json.Unmarshal(unmarshal.Payload, &makeGameMoveMsg)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			game, err := getGame(dbConn, makeGameMoveMsg.GameID)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			board := gungi.CreateBoard(game.Ruleset)
+			err = board.SetBoardFromFen(game.CurrentState)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			board.SetHistory(strings.Fields(game.History.String))
+			board.PrintBoard()
+
+			err = board.MakeMove(makeGameMoveMsg.FromPiece, board.ConvertInputCoord(makeGameMoveMsg.FromCoord), makeGameMoveMsg.MoveType, board.ConvertInputCoord(makeGameMoveMsg.ToCoord))
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			board.PrintBoard()
+			log.Println("fen: ", board.BoardToFen())
+
+			game.CurrentState = board.BoardToFen()
+			game.History.String = board.SerializeHistory()
+			game.History.Valid = true
+
+			makeMoveParams := db.MakeMoveParams{
+				ID:           game.ID,
+				CurrentState: game.CurrentState,
+				History:      game.History,
+			}
+			queries := db.New(dbConn.Conn)
+			err = queries.MakeMove(ctx, makeMoveParams)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			_, legalMoves := board.GetLegalMoves()
+			correctedLegalMoves := make(map[int][]int)
+			for key, element := range legalMoves {
+				correctedKey := board.ConvertOutputCoord(key)
+				for _, index := range element {
+					correctedElement := board.ConvertOutputCoord(index)
+					correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
+				}
+			}
+			game.MoveList = correctedLegalMoves
+			log.Println(correctedLegalMoves)
+
+			msgResponse := MsgResponse{
+				Type:    "game",
+				Payload: game,
+			}
+			marshalledResponse, err := json.Marshal(msgResponse)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			var keys []*melody.Session
+			for key := range GameConnections.connections[game.ID] {
+				keys = append(keys, key)
+			}
+
+			m.BroadcastMultiple(marshalledResponse, keys)
+
+		//TODO finish cases
+		case "gameResign":
+		case "requestGameUndo":
+		case "responseGameUndo":
 
 		case "joinPlay":
 			PlayConnections.AddConnection(s)
@@ -518,8 +620,6 @@ type Move struct {
 
 func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList, gameRooms *map[string]*Room, mutex *sync.Mutex) error {
 	switch msg.Type {
-
-	case "ready": //TODO remove
 	case "makeMove":
 		gameID := clientList.clients[s].gameID
 		if gameID == "" {

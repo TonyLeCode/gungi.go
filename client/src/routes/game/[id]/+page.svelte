@@ -200,8 +200,8 @@
 				toCoord: hoverItem.coordIndex,
 			};
 			const msg = {
-				type: 'makeMove',
-				payload: move,
+				type: 'makeGameMove',
+				payload: {...move, gameID: get(gameState).id},
 			};
 
 			ws?.send(msg);
@@ -215,8 +215,8 @@
 			};
 
 			const msg = {
-				type: 'makeMove',
-				payload: move,
+				type: 'makeGameMove',
+				payload: {...move, gameID: get(gameState).id},
 			};
 
 			ws?.send(msg);
@@ -229,8 +229,8 @@
 
 	function handleMoveEvent(event: CustomEvent) {
 		const msg = {
-			type: 'makeMove',
-			payload: event.detail,
+			type: 'makeGameMove',
+			payload: {...event.detail, gameID: get(gameState).id},
 		};
 		msg.payload.fromCoord = msg.payload.fromCoord;
 		msg.payload.toCoord = msg.payload.toCoord;
@@ -274,8 +274,9 @@
 	function handleReadyEvent(event: CustomEvent) {
 		console.log('ready');
 		const msg = {
-			type: 'makeMove',
+			type: 'makeGameMove',
 			payload: {
+				gameID: get(gameState).id,
 				fromPiece: -1,
 				fromCoord: 0,
 				moveType: 4,
@@ -316,6 +317,11 @@
 			if (unsubGameMsg) unsubGameMsg();
 			if (unsubGameMsg2) unsubGameMsg2();
 			if (unsubConnect) unsubConnect();
+			const msg = {
+				type: "leaveGame",
+				payload: get(gameState).id
+			}
+			ws?.send(msg)
 			// $ws?.removeEventListener('message', handleGameMsg);
 		};
 	});
