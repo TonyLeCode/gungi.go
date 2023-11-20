@@ -20,12 +20,12 @@
 		containerRef.scrollTop = currentIndex * 36;
 	}
 
-	function handleCopy(){
-		const state = get(gameState)
-		console.log(state)
-		let headings = `[game_id: ${state.id}]\n[ruleset: ${state.ruleset}]\n[type: ${state.type}]\n[date_started: ${state.date_started}]\n[white: ${state.player1}]\n[black: ${state.player2}]\n\n`
-		const history = get(moveHistory).join(" ")
-		navigator.clipboard.writeText(headings + history)
+	function handleCopy() {
+		const state = get(gameState);
+		console.log(state);
+		let headings = `[game_id: ${state.id}]\n[ruleset: ${state.ruleset}]\n[type: ${state.type}]\n[date_started: ${state.date_started}]\n[white: ${state.player1}]\n[black: ${state.player2}]\n\n`;
+		const history = get(moveHistory).join(' ');
+		navigator.clipboard.writeText(headings + history);
 	}
 
 	function startAutoplay() {
