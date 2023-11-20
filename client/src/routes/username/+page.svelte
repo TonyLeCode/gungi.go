@@ -1,43 +1,42 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { PageData } from './$types.js';
+  import { page } from '$app/stores';
 
 	export let data: PageData;
-	const { form, errors, constraints, enhance, message } = superForm(data.form, { taintedMessage: null });
+  const onboard = $page.url.searchParams.get("onboard")
+  $: onboardBool = onboard === 'true'
+  $: username = data?.session?.user.user_metadata?.username
+	const { form, errors, constraints, enhance } = superForm(data.form, { taintedMessage: null });
 </script>
 
 <main>
-	<form class="login" method="POST" use:enhance>
-		<h2>Login</h2>
+  {#if onboardBool}
+    <h2 class="onboard">
+      You have been given a randomly generated username, you can change it here now or later.
+    </h2>
+  {/if}
+	<form class="register" method="POST" use:enhance>
+		<h2>Change Username</h2>
 		<fieldset>
 			<div class="input-group">
-				<label for="email">Email:</label>
-				<input
-					id="email"
-					name="email"
-					type="email"
-					bind:value={$form.email}
-					aria-invalid={$errors.email ? 'true' : undefined}
-					{...$constraints.email}
-				/>
-				{#if $errors.email}<div class="invalid">{$errors.email}</div>{/if}
+				<div class="current-username-label">Current Username:</div>
+				<div class="current-username">{username}</div>
 			</div>
 			<div class="input-group">
-				<label for="password">Password:</label>
+				<label for="changeUsername">Change Username To:</label>
 				<input
-					id="password"
-					name="password"
-					type="password"
-					bind:value={$form.password}
-					aria-invalid={$errors.password ? 'true' : undefined}
-					{...$constraints.password}
+					id="changeUsername"
+					name="changeUsername"
+					type="input"
+					bind:value={$form.username}
+					aria-invalid={$errors.username ? 'true' : undefined}
+					{...$constraints.username}
 				/>
-				{#if $errors.password}<div class="invalid">{$errors.password}</div>{/if}
+				{#if $errors.username}<div class="invalid">{$errors.username}</div>{/if}
 			</div>
-			{#if $message}<div class="invalid">{$message}</div>{/if}
 		</fieldset>
-		<button class="button-primary" type="submit">Login</button>
-		<a href="/register" class="button-ghost">Register</a>
+		<button class="button-primary" type="submit">Change Username</button>
 	</form>
 </main>
 
@@ -47,7 +46,14 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+    flex-direction: column;
 	}
+  .current-username{
+    background-color: rgb(var(--bg-3));
+    color: rgba(var(--font), .6);
+    border-radius: 4px;
+		padding: 0.25rem 0.75rem;
+  }
 	input {
 		/* border: 1.5px solid rgba(var(--primary), 0.25); */
 		display: block;
@@ -64,11 +70,6 @@
 			// outline-offset: 2px;
 		}
 	}
-	h2{
-		text-align: center;
-		font-size: 1.25rem;
-		font-weight: 600;
-	}
 	.input-group {
 		position: relative;
 		margin-bottom: 1.25rem;
@@ -80,13 +81,22 @@
 		margin-top: 4px;
 		// bottom: -1.75rem;
 	}
+  .onboard{
+    margin-top: 2rem;
+    max-width: 50ch;
+  }
+	h2 {
+		text-align: center;
+		font-size: 1.25rem;
+		font-weight: 600;
+	}
 	fieldset {
 		padding: 1rem 0;
 	}
 	.button-ghost {
 		text-align: center;
 	}
-	.login {
+	.register {
 		gap: 1rem;
 		display: flex;
 		flex-direction: column;
@@ -100,9 +110,6 @@
 			0px 2px 5px rgba(0, 0, 0, 0.05);
 		box-sizing: content-box;
 		min-height: 25rem;
-		margin-bottom: 10rem;
-	}
-	a {
-		margin-bottom: 1rem;
+    margin-bottom: 10rem;
 	}
 </style>

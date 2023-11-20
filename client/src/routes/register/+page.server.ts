@@ -2,10 +2,10 @@ import { AuthApiError } from '@supabase/supabase-js';
 import type { PageServerLoad } from './$types';
 import { redirect, type Actions, fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import { superValidate } from 'sveltekit-superforms/server';
+import { message, superValidate } from 'sveltekit-superforms/server';
+import { uniqueNamesGenerator, animals, colors, adjectives, NumberDictionary, type Config } from 'unique-names-generator';
 
 const schema = z.object({
-	username: z.string().min(3).max(24),
 	email: z.string().email(),
 	password: z.string().min(6).max(64),
 });
@@ -26,6 +26,15 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
+		const numberDictionary = NumberDictionary.generate({ length: 4 });
+		const nameGenConfig: Config = {
+			dictionaries: [adjectives, colors, animals, numberDictionary],
+			separator: '',
+			length: 4,
+			style: 'capital',
+		}
+		const randomName = uniqueNamesGenerator(nameGenConfig)
+
 		//TODO unique username validation on backend
 		// return setError(form, 'username', 'Username already exists')
 
@@ -34,7 +43,8 @@ export const actions: Actions = {
 			password: form.data.password,
 			options: {
 				data: {
-					username: form.data.username,
+					// username: form.data.username,
+					username: randomName,
 				},
 			},
 		});
@@ -42,6 +52,7 @@ export const actions: Actions = {
 		if (error) {
 			console.log(error);
 			if (error instanceof AuthApiError && error.status === 400) {
+				//TODO handle error here and on client side with messages
 				return fail(400, {
 					error: 'Invalid Registration',
 				});
@@ -51,8 +62,7 @@ export const actions: Actions = {
 			});
 		} else {
 			console.log('registered: ', data);
+			return message(form, "success")
 		}
-
-		return { form };
 	},
 };
