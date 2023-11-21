@@ -68,19 +68,19 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 }
 
 const createUndo = `-- name: CreateUndo :one
-INSERT INTO undo_request (game_id, for_user, from_user)
+INSERT INTO undo_request (game_id, sender_id, receiver_id)
 VALUES ($1, $2, $3)
 RETURNING id
 `
 
 type CreateUndoParams struct {
-	GameID   uuid.UUID `json:"game_id"`
-	ForUser  uuid.UUID `json:"for_user"`
-	FromUser uuid.UUID `json:"from_user"`
+	GameID     uuid.UUID `json:"game_id"`
+	SenderID   uuid.UUID `json:"sender_id"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
 }
 
 func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createUndo, arg.GameID, arg.ForUser, arg.FromUser)
+	row := q.db.QueryRowContext(ctx, createUndo, arg.GameID, arg.SenderID, arg.ReceiverID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -307,7 +307,7 @@ func (q *Queries) GetRoomList(ctx context.Context) ([]GetRoomListRow, error) {
 }
 
 const getUndos = `-- name: GetUndos :many
-SELECT id, game_id, for_user, from_user FROM undo_request
+SELECT id, game_id, sender_id, receiver_id, status FROM undo_request
 WHERE game_id = $1
 `
 
@@ -323,8 +323,9 @@ func (q *Queries) GetUndos(ctx context.Context, gameID uuid.UUID) ([]UndoRequest
 		if err := rows.Scan(
 			&i.ID,
 			&i.GameID,
-			&i.ForUser,
-			&i.FromUser,
+			&i.SenderID,
+			&i.ReceiverID,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}

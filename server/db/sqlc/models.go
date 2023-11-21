@@ -64,8 +64,9 @@ type Game struct {
 }
 
 type Profile struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
+	ID                        uuid.UUID `json:"id"`
+	Username                  string    `json:"username"`
+	IsUsernameOnboardComplete bool      `json:"is_username_onboard_complete"`
 }
 
 type RoomList struct {
@@ -79,8 +80,9 @@ type RoomList struct {
 }
 
 type UndoRequest struct {
-	ID       int64     `json:"id"`
-	GameID   uuid.UUID `json:"game_id"`
-	ForUser  uuid.UUID `json:"for_user"`
-	FromUser uuid.UUID `json:"from_user"`
+	ID         int64     `json:"id"`
+	GameID     uuid.UUID `json:"game_id"`
+	SenderID   uuid.UUID `json:"sender_id"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
+	Status     string    `json:"status"`
 }

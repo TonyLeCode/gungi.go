@@ -60,7 +60,7 @@ SET current_state = $2, history = $3
 WHERE id = $1;
 
 -- name: CreateUndo :one
-INSERT INTO undo_request (game_id, for_user, from_user)
+INSERT INTO undo_request (game_id, sender_id, receiver_id)
 VALUES ($1, $2, $3)
 RETURNING id;
 
