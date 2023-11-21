@@ -54,8 +54,13 @@ WHERE profiles.username = $1;
 SELECT username FROM profiles
 WHERE profiles.id = $1;
 
--- name: GetUserData :one
-SELECT username, is_username_onboard_complete FROM profiles
+-- name: GetOnboarding :one
+SELECT is_username_onboard_complete FROM profiles
+WHERE profiles.id = $1;
+
+-- name: UpdateOnboarding :exec
+UPDATE profiles
+SET is_username_onboard_complete = true
 WHERE profiles.id = $1;
 
 -- name: ChangeUsername :exec

@@ -57,7 +57,8 @@ func main() {
 	e.GET("/ws", ws2(m, &db))
 	// e.GET("/ws2", ws(m, &dbs))
 
-	e.POST("/user/getdata", db.GetUserData)
+	verify.GET("/user/onboarding", db.GetOnboarding)
+	verify.PUT("/user/onboarding", db.PostOnboarding)
 
 	e.Logger.Fatal(e.Start("localhost:5080"))
 }

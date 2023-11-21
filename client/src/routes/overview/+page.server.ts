@@ -22,7 +22,6 @@ export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) =>
 	const token = session?.access_token;
 	// console.log('token', session?.access_token);
 	// const url = 'http://localhost:8080/getongoinggamelist';
-	fetch('');
 	const url = `http://${import.meta.env.VITE_API_URL}/getongoinggamelist`;
 	const options = {
 		headers: {

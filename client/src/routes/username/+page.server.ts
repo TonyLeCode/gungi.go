@@ -3,6 +3,8 @@ import type { PageServerLoad } from './$types';
 import { redirect, type Actions, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { superValidate } from 'sveltekit-superforms/server';
+import { page } from '$app/stores';
+import { get } from 'svelte/store';
 
 const schema = z.object({
 	username: z.string().min(3).max(24),
@@ -10,11 +12,26 @@ const schema = z.object({
 
 //TODO custom error message
 //TODO should say "Username must contain at least 3 character(s)" instead of "String must contain at least 3 character(s)"
-export const load: PageServerLoad = async ({ locals: { getSession } }) => {
+export const load: PageServerLoad = async ({ locals: { getSession }, url }) => {
+	const onboard = url.searchParams.get('onboard');
+
 	const session = await getSession();
 	if (!session) {
 		throw redirect(308, '/');
 	}
+
+	if (onboard) {
+		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/onboarding`;
+		const token = session.access_token;
+		const options = {
+			method: 'PUT',
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		};
+		fetch(fetchUrl, options);
+	}
+
 	const form = await superValidate(schema);
 	return { form };
 };

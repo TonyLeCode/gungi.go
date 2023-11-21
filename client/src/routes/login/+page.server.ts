@@ -46,9 +46,21 @@ export const actions: Actions = {
 			throw error(500, {
 				message: 'Server error. Try again later.',
 			});
-		} else {
-			console.log('logged in', supabaseResponse.data);
-			throw redirect(303, '/overview');
 		}
+		// console.log('logged in', supabaseResponse.data);
+		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/onboarding`;
+		const token = supabaseResponse.data.session.access_token
+		const options = {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		};
+		const res = await fetch(fetchUrl, options);
+		if (res.ok) {
+			const hasOnboarded = await res.json();
+			if (!hasOnboarded) throw redirect(308, '/username?onboard=true')
+		}
+
+		// throw redirect(303, '/overview');
 	},
 } satisfies Actions;

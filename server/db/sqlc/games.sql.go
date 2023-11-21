@@ -208,6 +208,18 @@ func (q *Queries) GetIdFromUsername(ctx context.Context, username string) (uuid.
 	return id, err
 }
 
+const getOnboarding = `-- name: GetOnboarding :one
+SELECT is_username_onboard_complete FROM profiles
+WHERE profiles.id = $1
+`
+
+func (q *Queries) GetOnboarding(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, getOnboarding, id)
+	var is_username_onboard_complete bool
+	err := row.Scan(&is_username_onboard_complete)
+	return is_username_onboard_complete, err
+}
+
 const getOngoingGames = `-- name: GetOngoingGames :many
 SELECT 
     games.id, 
@@ -346,23 +358,6 @@ func (q *Queries) GetUndos(ctx context.Context, gameID uuid.UUID) ([]UndoRequest
 	return items, nil
 }
 
-const getUserData = `-- name: GetUserData :one
-SELECT username, is_username_onboard_complete FROM profiles
-WHERE profiles.id = $1
-`
-
-type GetUserDataRow struct {
-	Username                  string `json:"username"`
-	IsUsernameOnboardComplete bool   `json:"is_username_onboard_complete"`
-}
-
-func (q *Queries) GetUserData(ctx context.Context, id uuid.UUID) (GetUserDataRow, error) {
-	row := q.db.QueryRow(ctx, getUserData, id)
-	var i GetUserDataRow
-	err := row.Scan(&i.Username, &i.IsUsernameOnboardComplete)
-	return i, err
-}
-
 const getUsernameFromId = `-- name: GetUsernameFromId :one
 SELECT username FROM profiles
 WHERE profiles.id = $1
@@ -399,5 +394,16 @@ WHERE id = $1
 
 func (q *Queries) RemoveUndo(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, removeUndo, id)
+	return err
+}
+
+const updateOnboarding = `-- name: UpdateOnboarding :exec
+UPDATE profiles
+SET is_username_onboard_complete = true
+WHERE profiles.id = $1
+`
+
+func (q *Queries) UpdateOnboarding(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateOnboarding, id)
 	return err
 }

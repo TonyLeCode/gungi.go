@@ -16,22 +16,18 @@ type UserDataRequest struct {
 	ID string `json:"id"`
 }
 
-func (dbConn *DBConn) GetUserData(c echo.Context) error {
+func (dbConn *DBConn) GetOnboarding(c echo.Context) error {
 	ctx := context.Background()
-	request := new(UserDataRequest)
-	if err := c.Bind(request); err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
-	}
 
-	id, err := uuid.Parse(request.ID)
+	sub := c.Get("sub").(string)
+	subid, err := uuid.Parse(sub)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
+		return c.JSON(http.StatusBadRequest, "bad request")
 	}
-	log.Println(id)
 
 	queries := db.New(dbConn.Conn)
 
-	userData, err := queries.GetUserData(ctx, id)
+	userData, err := queries.GetOnboarding(ctx, subid)
 	if err != nil {
 		log.Println(userData)
 		log.Println(err)
@@ -39,4 +35,23 @@ func (dbConn *DBConn) GetUserData(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, userData)
+}
+
+func (dbConn *DBConn) PostOnboarding(c echo.Context) error {
+	ctx := context.Background()
+
+	sub := c.Get("sub").(string)
+	subid, err := uuid.Parse(sub)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	queries := db.New(dbConn.Conn)
+
+	err = queries.UpdateOnboarding(ctx, subid)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	return c.NoContent(200)
 }
