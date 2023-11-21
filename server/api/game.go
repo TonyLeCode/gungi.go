@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
 )
 
 type SerializedGame struct {

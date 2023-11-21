@@ -1,23 +1,24 @@
 package api
 
 import (
-	"database/sql"
+	"context"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DBConn struct {
-	Conn *sql.DB
+	Conn *pgxpool.Pool
 }
 
 // Create a connection to database
 func (db *DBConn) PostgresConnect(dbSource string) error {
-	conn, err := sql.Open("postgres", dbSource)
+	conn, err := pgxpool.New(context.Background(), dbSource)
 	if err != nil {
 		return err
 	}
 
-	if err = conn.Ping(); err != nil {
+	ctx := context.Background()
+	if err = conn.Ping(ctx); err != nil {
 		return err
 	}
 

@@ -16,7 +16,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
-	"github.com/redis/go-redis/v9"
 )
 
 // type UserConn struct {
@@ -179,21 +178,21 @@ type makeGameMoveMsg struct {
 	ToCoord   int    `json:"toCoord"`
 }
 
-func RedisRoomExists(r *redis.Client, roomKey string) error {
-	ctx := context.Background()
-	exists, err := r.Exists(ctx, roomKey).Result()
-	if err != nil {
-		return err
-	}
+// func RedisRoomExists(r *redis.Client, roomKey string) error {
+// 	ctx := context.Background()
+// 	exists, err := r.Exists(ctx, roomKey).Result()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if exists == 0 {
-		_, err = r.Do(ctx, "JSON.SET", roomKey, "$", "[]").Result()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// 	if exists == 0 {
+// 		_, err = r.Do(ctx, "JSON.SET", roomKey, "$", "[]").Result()
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	PlayConnections := PlayConnections{
@@ -736,26 +735,26 @@ func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs
 	return nil
 }
 
-func RedisGetGameRooms(r *redis.Client) ([]SerializedGameRoom, error) {
-	ctx := context.Background()
-	err := RedisRoomExists(r, "game_rooms")
-	if err != nil {
-		log.Println("Error: ", err)
-		return []SerializedGameRoom{}, err
-	}
+// func RedisGetGameRooms(r *redis.Client) ([]SerializedGameRoom, error) {
+// 	ctx := context.Background()
+// 	err := RedisRoomExists(r, "game_rooms")
+// 	if err != nil {
+// 		log.Println("Error: ", err)
+// 		return []SerializedGameRoom{}, err
+// 	}
 
-	val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
-	if err != nil {
-		log.Println("Error: ", err)
-		return []SerializedGameRoom{}, err
-	}
+// 	val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
+// 	if err != nil {
+// 		log.Println("Error: ", err)
+// 		return []SerializedGameRoom{}, err
+// 	}
 
-	var roomList []SerializedGameRoom
-	err = json.Unmarshal([]byte(val.(string)), &roomList)
-	if err != nil {
-		log.Println("Error: ", err)
-		return []SerializedGameRoom{}, err
-	}
+// 	var roomList []SerializedGameRoom
+// 	err = json.Unmarshal([]byte(val.(string)), &roomList)
+// 	if err != nil {
+// 		log.Println("Error: ", err)
+// 		return []SerializedGameRoom{}, err
+// 	}
 
-	return roomList, nil
-}
+// 	return roomList, nil
+// }

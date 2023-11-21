@@ -10,7 +10,6 @@ import (
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
 )
 
 type UserDataRequest struct {
