@@ -43,6 +43,16 @@ create table
     constraint room_list_host_fkey foreign key (host) references auth.users (id) on update cascade on delete cascade
   ) tablespace pg_default;
 
+  create table
+  public.profiles (
+    id uuid not null,
+    username text not null,
+    is_username_onboard_complete boolean not null default false,
+    constraint profiles_pkey primary key (id),
+    constraint profiles_username_key unique (username),
+    constraint profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade
+  ) tablespace pg_default;
+
 CREATE SCHEMA auth;
 
   create table
@@ -124,13 +134,3 @@ where
 create unique index users_email_partial_key on auth.users using btree (email)
 where
   (is_sso_user = false);
-
-create table
-  public.profiles (
-    id uuid not null,
-    username text not null,
-    is_username_onboard_complete boolean not null default false,
-    constraint profiles_pkey primary key (id),
-    constraint profiles_username_key unique (username),
-    constraint profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade
-  ) tablespace pg_default;

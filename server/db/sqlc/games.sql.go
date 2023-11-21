@@ -13,6 +13,22 @@ import (
 	"github.com/google/uuid"
 )
 
+const changeUsername = `-- name: ChangeUsername :exec
+UPDATE profiles
+SET username = $1
+WHERE profiles.id = $2
+`
+
+type ChangeUsernameParams struct {
+	Username string    `json:"username"`
+	ID       uuid.UUID `json:"id"`
+}
+
+func (q *Queries) ChangeUsername(ctx context.Context, arg ChangeUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, changeUsername, arg.Username, arg.ID)
+	return err
+}
+
 const createGame = `-- name: CreateGame :one
 INSERT INTO games (current_state, ruleset, type, user_1, user_2)
 VALUES ($1, $2, $3, 
@@ -338,6 +354,23 @@ func (q *Queries) GetUndos(ctx context.Context, gameID uuid.UUID) ([]UndoRequest
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserData = `-- name: GetUserData :one
+SELECT username, is_username_onboard_complete FROM profiles
+WHERE profiles.id = $1
+`
+
+type GetUserDataRow struct {
+	Username                  string `json:"username"`
+	IsUsernameOnboardComplete bool   `json:"is_username_onboard_complete"`
+}
+
+func (q *Queries) GetUserData(ctx context.Context, id uuid.UUID) (GetUserDataRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserData, id)
+	var i GetUserDataRow
+	err := row.Scan(&i.Username, &i.IsUsernameOnboardComplete)
+	return i, err
 }
 
 const getUsernameFromId = `-- name: GetUsernameFromId :one

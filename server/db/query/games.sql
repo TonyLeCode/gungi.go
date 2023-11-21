@@ -54,6 +54,15 @@ WHERE profiles.username = $1;
 SELECT username FROM profiles
 WHERE profiles.id = $1;
 
+-- name: GetUserData :one
+SELECT username, is_username_onboard_complete FROM profiles
+WHERE profiles.id = $1;
+
+-- name: ChangeUsername :exec
+UPDATE profiles
+SET username = $1
+WHERE profiles.id = $2;
+
 -- name: MakeMove :exec
 UPDATE games
 SET current_state = $2, history = $3
