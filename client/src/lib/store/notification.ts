@@ -5,7 +5,7 @@ export type notificationType = {
 	type: string;
 	title: string;
 	msg: string | null;
-	component: ConstructorOfATypedSvelteComponent | null;
+	component?: ConstructorOfATypedSvelteComponent;
 };
 
 export const notifications = writable<notificationType[]>([]);

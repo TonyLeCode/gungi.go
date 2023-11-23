@@ -3,8 +3,6 @@ import type { PageServerLoad } from './$types';
 import { redirect, type Actions, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { superValidate } from 'sveltekit-superforms/server';
-import { page } from '$app/stores';
-import { get } from 'svelte/store';
 
 const schema = z.object({
 	username: z.string().min(3).max(24),

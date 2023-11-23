@@ -4,6 +4,7 @@
 	import NotificationItem from './NotificationItem.svelte';
 	import { nanoid } from 'nanoid';
 	import { fly } from 'svelte/transition';
+	import { get } from 'svelte/store';
 
 	onMount(() => {
 		AddNotification({
@@ -13,6 +14,8 @@
 			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
 		} as notificationType);
 	});
+	console.log(get(notifications))
+	//TODO notification bug, store is shared state on server...
 </script>
 
 <ul>

@@ -52,7 +52,7 @@ func main() {
 
 	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 
-	e.GET("/getgame/:id", db.GetGameRoute)
+	e.GET("/game/:id", db.GetGameWithUndoRoute)
 
 	e.GET("/ws", ws2(m, &db))
 	// e.GET("/ws2", ws(m, &dbs))

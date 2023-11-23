@@ -44,11 +44,55 @@
 	import { onMount } from 'svelte';
 	import { createService } from '$lib/store/contextHelper';
 	import type { Readable, Writable } from 'svelte/store';
-	import { get } from 'svelte/store';
+	import { get, writable } from 'svelte/store';
 	import { createGameStore } from '$lib/store/gameState';
+	import { AddNotification } from '$lib/store/notification';
+	import { nanoid } from 'nanoid';
+	import UndoDialogue from './UndoDialogue.svelte';
 
+	type undoRequests = {
+		receiver_username: string;
+		sender_username: string;
+		status: 'pending' | 'accept' | 'reject';
+	};
 	export let data;
-	const gameStore = createGameStore(data.data, data.session?.user.user_metadata.username);
+	const username = data.session?.user.user_metadata.username;
+	const undoRequests: undoRequests[] = data.gameData.undo_requests;
+	let undoDialogBool = false;
+	console.log(undoRequests);
+	for (let i = 0; i < undoRequests.length; i++) {
+		if (undoRequests[i].receiver_username === username && undoRequests[i].status === 'pending') {
+			undoDialogBool = true;
+		} else if (undoRequests[i].sender_username === username && undoRequests[i].status === 'accept') {
+			const msg = {
+				type: 'completeGameUndo',
+				payload: '',
+			};
+			ws?.send(msg);
+			AddNotification({
+				id: nanoid(),
+				title: 'Accepted',
+				type: 'default',
+				msg: 'Your undo request has been accepted',
+			});
+			//TODO delete undo request
+		} else if (undoRequests[i].sender_username === username && undoRequests[i].status === 'reject') {
+			const msg = {
+				type: 'completeGameUndo',
+				payload: '',
+			};
+			ws?.send(msg);
+			AddNotification({
+				id: nanoid(),
+				title: 'Rejected',
+				type: 'default',
+				msg: 'Your undo request has been rejected',
+			});
+			//TODO delete undo request
+		}
+	}
+	// const undoRequests = writable(data.gameData.undo_requests)
+	const gameStore = createGameStore(data.gameData, data.session?.user.user_metadata.username);
 	gameStateContext.set(gameStore.gameState);
 	player1NameContext.set(gameStore.player1Name);
 	player2NameContext.set(gameStore.player2Name);
@@ -201,7 +245,7 @@
 			};
 			const msg = {
 				type: 'makeGameMove',
-				payload: {...move, gameID: get(gameState).id},
+				payload: { ...move, gameID: get(gameState).id },
 			};
 
 			ws?.send(msg);
@@ -216,7 +260,7 @@
 
 			const msg = {
 				type: 'makeGameMove',
-				payload: {...move, gameID: get(gameState).id},
+				payload: { ...move, gameID: get(gameState).id },
 			};
 
 			ws?.send(msg);
@@ -230,7 +274,7 @@
 	function handleMoveEvent(event: CustomEvent) {
 		const msg = {
 			type: 'makeGameMove',
-			payload: {...event.detail, gameID: get(gameState).id},
+			payload: { ...event.detail, gameID: get(gameState).id },
 		};
 		msg.payload.fromCoord = msg.payload.fromCoord;
 		msg.payload.toCoord = msg.payload.toCoord;
@@ -247,7 +291,30 @@
 					// currentState = FenToBoard(boardState.current_state);
 					break;
 				case 'undoRequest':
-					//TODO undo request popup
+					console.log("request undo")
+					undoDialogBool = true;
+					break;
+				case 'undoResponse':
+					if (res.payload === 'accept') {
+						AddNotification({
+							id: nanoid(),
+							title: 'Accepted',
+							type: 'default',
+							msg: 'Your undo request has been accepted',
+						});
+					} else {
+						AddNotification({
+							id: nanoid(),
+							title: 'Rejected',
+							type: 'default',
+							msg: 'Your undo request has been rejected',
+						});
+					}
+					const msg = {
+						type: 'completeGameUndo',
+						payload: '',
+					};
+					ws?.send(msg);
 					break;
 			}
 		} catch (err) {
@@ -267,7 +334,16 @@
 	function handleUndoEvent(event: CustomEvent) {
 		console.log('requestUndo');
 		const msg = {
-			type: 'requestUndo',
+			type: 'requestGameUndo',
+		};
+		ws?.send(msg);
+	}
+
+	function handleUndoResponseEvent(event: CustomEvent) {
+		console.log('requestUndo');
+		const msg = {
+			type: 'responseGameUndo',
+			payload: event.detail.response,
 		};
 		ws?.send(msg);
 	}
@@ -318,10 +394,10 @@
 			if (unsubGameMsg2) unsubGameMsg2();
 			if (unsubConnect) unsubConnect();
 			const msg = {
-				type: "leaveGame",
-				payload: get(gameState).id
-			}
-			ws?.send(msg)
+				type: 'leaveGame',
+				payload: get(gameState).id,
+			};
+			ws?.send(msg);
 			// $ws?.removeEventListener('message', handleGameMsg);
 		};
 	});
@@ -383,6 +459,7 @@
 		{disableStackDialogue}
 		text={moveDialogueText}
 	/>
+	<UndoDialogue on:undoResponse={handleUndoResponseEvent} bind:showModal={undoDialogBool} />
 </main>
 
 <style lang="scss">

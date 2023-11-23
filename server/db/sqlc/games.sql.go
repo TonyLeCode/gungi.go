@@ -12,6 +12,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const changeUndo = `-- name: ChangeUndo :one
+UPDATE undo_request
+SET status = $1
+WHERE receiver_id = $2 AND game_id = $3
+RETURNING undo_request.sender_id
+`
+
+type ChangeUndoParams struct {
+	Status     string    `json:"status"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
+	GameID     uuid.UUID `json:"game_id"`
+}
+
+func (q *Queries) ChangeUndo(ctx context.Context, arg ChangeUndoParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, changeUndo, arg.Status, arg.ReceiverID, arg.GameID)
+	var sender_id uuid.UUID
+	err := row.Scan(&sender_id)
+	return sender_id, err
+}
+
 const changeUsername = `-- name: ChangeUsername :exec
 UPDATE profiles
 SET username = $1
@@ -84,21 +104,43 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 
 const createUndo = `-- name: CreateUndo :one
 INSERT INTO undo_request (game_id, sender_id, receiver_id)
-VALUES ($1, $2, $3)
-RETURNING id
+VALUES (
+    $1,
+    (
+        SELECT
+            profiles.id
+        FROM
+            profiles
+        WHERE
+            profiles.username = $2
+    ),
+    (
+        SELECT
+            CASE
+                WHEN games.user_1 = profiles.id THEN games.user_2
+                ELSE games.user_1
+            END
+        FROM
+            games
+        JOIN
+            profiles ON profiles.username = $2
+        WHERE
+            games.id = $1
+    )
+)
+RETURNING receiver_id
 `
 
 type CreateUndoParams struct {
-	GameID     uuid.UUID `json:"game_id"`
-	SenderID   uuid.UUID `json:"sender_id"`
-	ReceiverID uuid.UUID `json:"receiver_id"`
+	GameID   uuid.UUID `json:"game_id"`
+	Username string    `json:"username"`
 }
 
-func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createUndo, arg.GameID, arg.SenderID, arg.ReceiverID)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createUndo, arg.GameID, arg.Username)
+	var receiver_id uuid.UUID
+	err := row.Scan(&receiver_id)
+	return receiver_id, err
 }
 
 const deleteRoom = `-- name: DeleteRoom :one
@@ -192,6 +234,84 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 		&i.Type,
 		&i.Player1,
 		&i.Player2,
+	)
+	return i, err
+}
+
+const getGameWithUndo = `-- name: GetGameWithUndo :one
+SELECT 
+    games.id,
+    games.fen,
+    games.history,
+    games.completed,
+    games.date_started,
+    games.date_finished,
+    games.current_state,
+    games.ruleset,
+    games.type,
+    user1.username AS player1,
+    user2.username AS player2,
+    CASE
+        WHEN COUNT(undo_request.game_id) > 0 THEN
+            json_agg(
+                json_build_object(
+                    'sender_username', sender.username,
+                    'receiver_username', receiver.username,
+                    'status', undo_request.status
+                )
+            )
+        ELSE
+            '[]'::json
+    END AS undo_requests
+FROM 
+    games
+JOIN 
+    profiles AS user1 ON user1.id = games.user_1
+JOIN 
+    profiles AS user2 ON user2.id = games.user_2
+LEFT JOIN
+    undo_request ON undo_request.game_id = games.id
+LEFT JOIN 
+    profiles AS sender ON sender.id = undo_request.sender_id
+LEFT JOIN 
+    profiles AS receiver ON receiver.id = undo_request.receiver_id
+WHERE
+    games.id = $1
+GROUP BY
+    games.id, user1.username, user2.username
+`
+
+type GetGameWithUndoRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Fen          pgtype.Text        `json:"fen"`
+	History      pgtype.Text        `json:"history"`
+	Completed    bool               `json:"completed"`
+	DateStarted  pgtype.Timestamptz `json:"date_started"`
+	DateFinished pgtype.Timestamptz `json:"date_finished"`
+	CurrentState string             `json:"current_state"`
+	Ruleset      string             `json:"ruleset"`
+	Type         string             `json:"type"`
+	Player1      string             `json:"player1"`
+	Player2      string             `json:"player2"`
+	UndoRequests []byte             `json:"undo_requests"`
+}
+
+func (q *Queries) GetGameWithUndo(ctx context.Context, id uuid.UUID) (GetGameWithUndoRow, error) {
+	row := q.db.QueryRow(ctx, getGameWithUndo, id)
+	var i GetGameWithUndoRow
+	err := row.Scan(
+		&i.ID,
+		&i.Fen,
+		&i.History,
+		&i.Completed,
+		&i.DateStarted,
+		&i.DateFinished,
+		&i.CurrentState,
+		&i.Ruleset,
+		&i.Type,
+		&i.Player1,
+		&i.Player2,
+		&i.UndoRequests,
 	)
 	return i, err
 }
@@ -327,37 +447,6 @@ func (q *Queries) GetRoomList(ctx context.Context) ([]GetRoomListRow, error) {
 	return items, nil
 }
 
-const getUndos = `-- name: GetUndos :many
-SELECT id, game_id, sender_id, receiver_id, status FROM undo_request
-WHERE game_id = $1
-`
-
-func (q *Queries) GetUndos(ctx context.Context, gameID uuid.UUID) ([]UndoRequest, error) {
-	rows, err := q.db.Query(ctx, getUndos, gameID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []UndoRequest
-	for rows.Next() {
-		var i UndoRequest
-		if err := rows.Scan(
-			&i.ID,
-			&i.GameID,
-			&i.SenderID,
-			&i.ReceiverID,
-			&i.Status,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUsernameFromId = `-- name: GetUsernameFromId :one
 SELECT username FROM profiles
 WHERE profiles.id = $1
@@ -389,11 +478,16 @@ func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {
 
 const removeUndo = `-- name: RemoveUndo :exec
 DELETE FROM undo_request
-WHERE id = $1
+WHERE sender_id = $1 AND game_id = $2
 `
 
-func (q *Queries) RemoveUndo(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, removeUndo, id)
+type RemoveUndoParams struct {
+	SenderID uuid.UUID `json:"sender_id"`
+	GameID   uuid.UUID `json:"game_id"`
+}
+
+func (q *Queries) RemoveUndo(ctx context.Context, arg RemoveUndoParams) error {
+	_, err := q.db.Exec(ctx, removeUndo, arg.SenderID, arg.GameID)
 	return err
 }
 

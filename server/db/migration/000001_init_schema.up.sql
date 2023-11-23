@@ -23,8 +23,9 @@ create table
     game_id uuid not null,
     sender_id uuid not null,
     receiver_id uuid not null,
-    status text not null,
+    status text not null default 'pending'::text,
     constraint undo_request_pkey primary key (id),
+    constraint undo_request_game_id_sender_id_unique unique (game_id, sender_id),
     constraint undo_request_game_id_fkey foreign key (game_id) references games (id) on update cascade on delete cascade,
     constraint undo_request_receiver_id_fkey foreign key (receiver_id) references auth.users (id) on update cascade on delete cascade,
     constraint undo_request_sender_id_fkey foreign key (sender_id) references auth.users (id) on update cascade on delete cascade

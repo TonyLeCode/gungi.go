@@ -38,6 +38,48 @@ JOIN
 WHERE
     games.id = $1;
 
+-- name: GetGameWithUndo :one
+SELECT 
+    games.id,
+    games.fen,
+    games.history,
+    games.completed,
+    games.date_started,
+    games.date_finished,
+    games.current_state,
+    games.ruleset,
+    games.type,
+    user1.username AS player1,
+    user2.username AS player2,
+    CASE
+        WHEN COUNT(undo_request.game_id) > 0 THEN
+            json_agg(
+                json_build_object(
+                    'sender_username', sender.username,
+                    'receiver_username', receiver.username,
+                    'status', undo_request.status
+                )
+            )
+        ELSE
+            '[]'::json
+    END AS undo_requests
+FROM 
+    games
+JOIN 
+    profiles AS user1 ON user1.id = games.user_1
+JOIN 
+    profiles AS user2 ON user2.id = games.user_2
+LEFT JOIN
+    undo_request ON undo_request.game_id = games.id
+LEFT JOIN 
+    profiles AS sender ON sender.id = undo_request.sender_id
+LEFT JOIN 
+    profiles AS receiver ON receiver.id = undo_request.receiver_id
+WHERE
+    games.id = $1
+GROUP BY
+    games.id, user1.username, user2.username;
+
 -- name: CreateGame :one
 INSERT INTO games (current_state, ruleset, type, user_1, user_2)
 VALUES ($1, $2, $3, 
@@ -75,16 +117,41 @@ WHERE id = $1;
 
 -- name: CreateUndo :one
 INSERT INTO undo_request (game_id, sender_id, receiver_id)
-VALUES ($1, $2, $3)
-RETURNING id;
-
--- name: GetUndos :many
-SELECT * FROM undo_request
-WHERE game_id = $1;
+VALUES (
+    $1,
+    (
+        SELECT
+            profiles.id
+        FROM
+            profiles
+        WHERE
+            profiles.username = $2
+    ),
+    (
+        SELECT
+            CASE
+                WHEN games.user_1 = profiles.id THEN games.user_2
+                ELSE games.user_1
+            END
+        FROM
+            games
+        JOIN
+            profiles ON profiles.username = $2
+        WHERE
+            games.id = $1
+    )
+)
+RETURNING receiver_id;
 
 -- name: RemoveUndo :exec
 DELETE FROM undo_request
-WHERE id = $1;
+WHERE sender_id = $1 AND game_id = $2;
+
+-- name: ChangeUndo :one
+UPDATE undo_request
+SET status = $1
+WHERE receiver_id = $2 AND game_id = $3
+RETURNING undo_request.sender_id;
 
 -- name: CreateRoom :exec
 INSERT INTO public.room_list (host_id, description, rules, type, color)
