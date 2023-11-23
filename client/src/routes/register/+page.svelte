@@ -44,12 +44,13 @@
 			});
 		}
 	});
-	onDestroy(unsub)
+	onDestroy(unsub);
 </script>
 
 <main>
 	{#if $message === 'success'}
 		<h2 class="registered">🎉 Registration Successful! 🎉</h2>
+		<h3>Please check your email for confirmation</h3>
 	{/if}
 	<form class="register" method="POST" use:enhance>
 		<h2>Register</h2>
