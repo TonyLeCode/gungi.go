@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"strings"
 	"sync"
@@ -12,16 +11,10 @@ import (
 	"github.com/TonyLeCode/gungi.go/server/auth"
 	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/TonyLeCode/gungi.go/server/gungi"
-	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
 )
-
-// type UserConn struct {
-// 	Username string
-// 	Conn     *melody.Session
-// }
 
 type PlayConnections struct {
 	connections map[*melody.Session]bool
@@ -62,82 +55,11 @@ func (gc *GameConnections) RemoveConnection(gameID uuid.UUID, s *melody.Session)
 	delete(gc.connections[gameID], s)
 }
 
-// type ClientList struct {
-// 	clients []*melody.Session
-// 	mu      sync.RWMutex
-// }
-
 // This won't scale, find solution in future
 func RemoveIndex(s []int, index int) []int {
 	ret := make([]int, 0)
 	ret = append(ret, s[:index]...)
 	return append(ret, s[index+1:]...)
-}
-
-type client struct {
-	username string
-	route    string
-	gameID   string
-}
-
-type clientList struct {
-	clients map[*melody.Session]client
-	mutex   sync.Mutex
-}
-
-func (c *clientList) AddClient(s *melody.Session, username string) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	c.clients[s] = client{username: username}
-}
-
-func (c *clientList) RemoveClient(s *melody.Session) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	delete(c.clients, s)
-}
-
-func (c *clientList) ChangeRoute(s *melody.Session, route string) error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	if entry, ok := c.clients[s]; ok {
-		entry.route = route
-		c.clients[s] = entry
-	} else {
-		return errors.New("unable to change route")
-	}
-	return nil
-}
-
-type Room struct {
-	clients map[*melody.Session]bool
-	mutex   sync.Mutex
-}
-
-func (r *Room) AddClient(s *melody.Session) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	r.clients[s] = true
-}
-
-func (r *Room) RemoveClient(s *melody.Session) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	delete(r.clients, s)
-}
-
-type PlayerMove struct {
-	Type string `json:"type"`
-	Data struct {
-		MoveType  int `json:"moveType"`
-		FromCoord int `json:"fromCoord"`
-		ToCoord   int `json:"toCoord"`
-	}
 }
 
 type GameRoomType struct {
@@ -153,11 +75,6 @@ type CreateGameRoomRequest struct {
 	Type        string `json:"type"`
 	Color       string `json:"color"`
 	Rules       string `json:"rules"`
-}
-
-type SerializedGameRoom struct {
-	GameRoomType
-	RoomID uuid.UUID `json:"roomid"`
 }
 
 type MsgPayload struct {
@@ -177,22 +94,6 @@ type makeGameMoveMsg struct {
 	MoveType  int    `json:"moveType"`
 	ToCoord   int    `json:"toCoord"`
 }
-
-// func RedisRoomExists(r *redis.Client, roomKey string) error {
-// 	ctx := context.Background()
-// 	exists, err := r.Exists(ctx, roomKey).Result()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if exists == 0 {
-// 		_, err = r.Do(ctx, "JSON.SET", roomKey, "$", "[]").Result()
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	PlayConnections := PlayConnections{
@@ -794,159 +695,5 @@ func getGame(dbs *api.DBConn, gameID string) (api.GameWithMoves, error) {
 		log.Println("Error: ", err)
 		return api.GameWithMoves{}, err
 	}
-
-	// msgResponse := MsgResponse{
-	// 	Type:    "game",
-	// 	Payload: game,
-	// }
 	return game, nil
 }
-
-type Move struct {
-	FromPiece int `json:"fromPiece"`
-	FromCoord int `json:"fromCoord"`
-	MoveType  int `json:"moveType"`
-	ToCoord   int `json:"toCoord"`
-}
-
-func handleGameMessages(msg MsgPayload, m *melody.Melody, s *melody.Session, dbs *api.DBConn, ctx context.Context, clientList *clientList, gameRooms *map[string]*Room, mutex *sync.Mutex) error {
-	switch msg.Type {
-	case "makeMove":
-		gameID := clientList.clients[s].gameID
-		if gameID == "" {
-			return errors.New("could not find gameID")
-		}
-
-		game, err := getGame(dbs, gameID)
-		if err != nil {
-			return err
-		}
-
-		var move Move
-		err = json.Unmarshal(msg.Payload, &move)
-		if err != nil {
-			return err
-		}
-
-		newBoard := gungi.CreateBoard("revised") //TODO change hardcode
-		err = newBoard.SetBoardFromFen(game.CurrentState)
-		if err != nil {
-			return err
-		}
-		newBoard.SetHistory(strings.Fields(game.History.String))
-		newBoard.PrintBoard()
-		// log.Println(move)
-		// log.Println("fen: ", newBoard.BoardToFen())
-		// log.Println(newBoard.TurnColor)
-		// log.Println(utils.GetColor(move.FromPiece))
-		err = newBoard.MakeMove(move.FromPiece, utils.IndexToSquare(move.FromCoord), move.MoveType, utils.IndexToSquare(move.ToCoord))
-		if err != nil {
-			return err
-		}
-		newBoard.PrintBoard()
-		log.Println("fen: ", newBoard.BoardToFen())
-
-		game.CurrentState = newBoard.BoardToFen()
-		game.History.String = newBoard.SerializeHistory()
-		game.History.Valid = true
-
-		makeMoveParams := db.MakeMoveParams{
-			ID:           game.ID,
-			CurrentState: game.CurrentState,
-			History:      game.History,
-		}
-		queries := db.New(dbs.Conn)
-		err = queries.MakeMove(ctx, makeMoveParams)
-		if err != nil {
-			return err
-		}
-
-		_, legalMoves := newBoard.GetLegalMoves()
-		correctedLegalMoves := make(map[int][]int)
-		for key, element := range legalMoves {
-			correctedKey := utils.SquareToIndex(key)
-			for _, index := range element {
-				correctedElement := utils.SquareToIndex(index)
-				correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
-			}
-		}
-		game.MoveList = correctedLegalMoves
-		log.Println(correctedLegalMoves)
-
-		msgResponse := MsgResponse{
-			Type:    "game",
-			Payload: game,
-		}
-		payload, err := json.Marshal(msgResponse)
-		if err != nil {
-			return err
-		}
-		for session := range (*gameRooms)[gameID].clients {
-			session.Write(payload)
-		}
-	case "requestUndo":
-		gameID := clientList.clients[s].gameID
-		if gameID == "" {
-			return errors.New("could not find gameID")
-		}
-
-		// gameUUID, err := uuid.Parse(gameID)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// queryParams := db.CreateUndoParams{
-		// 	GameID: gameUUID,
-		// 	Color:  "w",
-		// }
-
-		// queries := db.New(dbs.PostgresDB)
-		// undoID, err := queries.CreateUndo(ctx, queryParams)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// msgResponse := MsgResponse{
-		// 	Type:    "requestUndo",
-		// 	Payload: undoID.String(),
-		// }
-
-		// payload, err := json.Marshal(msgResponse)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-		// 	// clientList.clients[q].username
-		// 	// gameRooms[q]
-		// 	return q == s //TODO only send to opponent
-		// })
-	case "responseUndo":
-	case "resign":
-	}
-	return nil
-}
-
-// func RedisGetGameRooms(r *redis.Client) ([]SerializedGameRoom, error) {
-// 	ctx := context.Background()
-// 	err := RedisRoomExists(r, "game_rooms")
-// 	if err != nil {
-// 		log.Println("Error: ", err)
-// 		return []SerializedGameRoom{}, err
-// 	}
-
-// 	val, err := r.Do(ctx, "JSON.GET", "game_rooms").Result()
-// 	if err != nil {
-// 		log.Println("Error: ", err)
-// 		return []SerializedGameRoom{}, err
-// 	}
-
-// 	var roomList []SerializedGameRoom
-// 	err = json.Unmarshal([]byte(val.(string)), &roomList)
-// 	if err != nil {
-// 		log.Println("Error: ", err)
-// 		return []SerializedGameRoom{}, err
-// 	}
-
-// 	return roomList, nil
-// }

@@ -1,7 +1,6 @@
-import { writable, derived, get } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import { reverseList } from '$lib/helpers';
 import { FenToBoard } from '$lib/utils/utils';
-import { createService } from './contextHelper';
 
 export interface BoardState {
 	completed: boolean;
@@ -9,7 +8,7 @@ export interface BoardState {
 	date_finished: { Time: string; Valid: boolean };
 	date_started: string;
 	fen: { String: string; Valid: boolean };
-	history: { String: string; Valid: boolean };
+	history: string;
 	id: string;
 	moveList: { [key: string]: number[] };
 	player1: string;
@@ -28,7 +27,7 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		if (data.player2 === username) return 'b';
 		return 'spectator';
 	});
-	const moveHistory = derived(gameState, (data) => data.history.String.split(' '));
+	const moveHistory = derived(gameState, (data) => data.history.split(' '));
 	const manualFlip = writable(false);
 	const isViewReversed = derived([player1Name, player2Name, manualFlip], ([player1Name, player2Name, manualFlip]) => {
 		if (username !== player1Name && username !== player2Name) manualFlip;
