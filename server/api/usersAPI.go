@@ -37,7 +37,7 @@ func (dbConn *DBConn) GetOnboarding(c echo.Context) error {
 	return c.JSON(http.StatusOK, userData)
 }
 
-func (dbConn *DBConn) PostOnboarding(c echo.Context) error {
+func (dbConn *DBConn) PutOnboarding(c echo.Context) error {
 	ctx := context.Background()
 
 	sub := c.Get("sub").(string)
@@ -49,6 +49,39 @@ func (dbConn *DBConn) PostOnboarding(c echo.Context) error {
 	queries := db.New(dbConn.Conn)
 
 	err = queries.UpdateOnboarding(ctx, subid)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	return c.NoContent(200)
+}
+
+type ChangeUsernameParams struct {
+	Username string `json:"username"`
+}
+
+func (dbConn *DBConn) ChangeUsername(c echo.Context) error {
+	ctx := context.Background()
+
+	sub := c.Get("sub").(string)
+	subid, err := uuid.Parse(sub)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	newUsername := new(ChangeUsernameParams)
+	if err := c.Bind(newUsername); err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	queries := db.New(dbConn.Conn)
+
+	changeUsernameParams := db.ChangeUsernameParams{
+		Username: newUsername.Username,
+		ID:       subid,
+	}
+
+	err = queries.ChangeUsername(ctx, changeUsernameParams)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "bad request")
 	}

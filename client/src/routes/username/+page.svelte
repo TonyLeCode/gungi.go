@@ -24,10 +24,10 @@
 				<div class="current-username">{username}</div>
 			</div>
 			<div class="input-group">
-				<label for="changeUsername">Change Username To:</label>
+				<label for="username">Change Username To:</label>
 				<input
-					id="changeUsername"
-					name="changeUsername"
+					id="username"
+					name="username"
 					type="input"
 					bind:value={$form.username}
 					aria-invalid={$errors.username ? 'true' : undefined}

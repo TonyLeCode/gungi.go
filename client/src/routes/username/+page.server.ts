@@ -1,11 +1,11 @@
 // import { AuthApiError } from '@supabase/supabase-js';
 import type { PageServerLoad } from './$types';
-import { redirect, type Actions, fail } from '@sveltejs/kit';
+import { redirect, type Actions, fail, error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { superValidate } from 'sveltekit-superforms/server';
+import { message, superValidate } from 'sveltekit-superforms/server';
 
 const schema = z.object({
-	username: z.string().min(3).max(24),
+	username: z.string().min(3).max(28),
 });
 
 //TODO custom error message
@@ -41,33 +41,30 @@ export const actions: Actions = {
 			return fail(400, { form });
 		}
 
+		const session = await locals.getSession();
+		if (!session) {
+			throw redirect(308, '/');
+		}
+
+		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/changename`;
+		const token = session.access_token;
+		const options = {
+			method: 'PUT',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ username: form.data.username }),
+		};
+		const res = await fetch(fetchUrl, options);
+		if (!res.ok) {
+			throw error(500)
+		}
+		await locals.supabase.auth.refreshSession(session)
+
 		//TODO unique username validation on backend
 		// return setError(form, 'username', 'Username already exists')
 
-		// const { data, error } = await locals.supabase.auth.signUp({
-		// 	email: form.data.email,
-		// 	password: form.data.password,
-		// 	options: {
-		// 		data: {
-		// 			username: form.data.username,
-		// 		},
-		// 	},
-		// });
-
-		// if (error) {
-		// 	console.log(error);
-		// 	if (error instanceof AuthApiError && error.status === 400) {
-		// 		return fail(400, {
-		// 			error: 'Invalid Registration',
-		// 		});
-		// 	}
-		// 	return fail(500, {
-		// 		error: 'Server error. Try again later.',
-		// 	});
-		// } else {
-		// 	console.log('registered: ', data);
-		// }
-
-		return { form };
+		return message(form, 'changed');
 	},
 };
