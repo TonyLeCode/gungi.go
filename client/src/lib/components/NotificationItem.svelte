@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RemoveNotification, type notificationType } from '$lib/store/notification';
+	import { notifications, type notificationType } from '$lib/store/notification';
 	import { tweened } from 'svelte/motion';
 	import { linear } from 'svelte/easing';
 
@@ -12,7 +12,7 @@
 	duration.set(0);
 
 	$: if ($duration === 0) {
-		RemoveNotification(notification.id);
+		notifications?.remove(notification.id);
 	}
 </script>
 
@@ -33,7 +33,7 @@
 	<button
 		class="close"
 		on:click={() => {
-			RemoveNotification(notification.id);
+			notifications?.remove(notification.id);
 		}}><img draggable="false" src="/closeCircle.svg" alt="exit dialog" width="35px" height="35px" /></button
 	>
 </div>

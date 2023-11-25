@@ -1,5 +1,5 @@
 import { readable } from 'svelte/store';
-import { AddNotification, type notificationType } from './notification';
+import { notifications, type notificationType } from './notification';
 import { nanoid } from 'nanoid';
 import { browser } from '$app/environment';
 
@@ -64,9 +64,7 @@ interface msgType {
 // }
 
 function createWsStore() {
-	if (!browser) {
-		return;
-	}
+	if (!browser) return;
 	const newSocket = new WebSocket(`ws://${import.meta.env.VITE_API_URL}/ws`);
 	const { subscribe } = readable<wsConnStateType>('closed', (set) => {
 		newSocket.addEventListener('open', () => {
@@ -77,7 +75,7 @@ function createWsStore() {
 		});
 		newSocket.addEventListener('close', () => {
 			set('closed');
-			AddNotification({
+			notifications?.add({
 				id: nanoid(),
 				title: 'Disconnected',
 				type: 'default',

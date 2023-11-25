@@ -1,25 +1,27 @@
 <script lang="ts">
-	import { AddNotification, notifications, type notificationType } from '$lib/store/notification';
+	import { notifications, type notificationType } from '$lib/store/notification';
 	import { onMount } from 'svelte';
 	import NotificationItem from './NotificationItem.svelte';
 	import { nanoid } from 'nanoid';
 	import { fly } from 'svelte/transition';
-	import { get } from 'svelte/store';
+	import { get, writable } from 'svelte/store';
+
+	$: notificationsStore = notifications?.store ?? writable<notificationType[]>([])
 
 	onMount(() => {
-		AddNotification({
+		notifications?.add({
 			id: nanoid(),
 			title: 'Game Accepted',
 			type: 'default',
 			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
 		} as notificationType);
 	});
-	console.log(get(notifications))
+	// console.log(get(notifications?.store))
 	//TODO notification bug, store is shared state on server...
 </script>
 
 <ul>
-	{#each $notifications as notification (notification.id)}
+	{#each $notificationsStore as notification (notification.id)}
 		<li transition:fly|global={{ x: '16px', duration: 250 }}><NotificationItem {notification} /></li>
 	{/each}
 </ul>

@@ -3,7 +3,7 @@
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
 	import RoomList from './RoomList.svelte';
-	import { AddNotification, type notificationType } from '$lib/store/notification';
+	import { notifications, type notificationType } from '$lib/store/notification';
 	import { nanoid } from 'nanoid';
 	import { ws } from '$lib/store/websocket';
 
@@ -39,7 +39,7 @@
 					roomList = data.payload;
 					break;
 				case 'roomAccepted':
-					AddNotification({
+					notifications?.add({
 						id: nanoid(),
 						title: 'Game Accepted',
 						type: 'default',

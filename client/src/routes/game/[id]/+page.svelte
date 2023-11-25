@@ -46,7 +46,7 @@
 	import type { Readable, Writable } from 'svelte/store';
 	import { get, writable } from 'svelte/store';
 	import { createGameStore } from '$lib/store/gameState';
-	import { AddNotification } from '$lib/store/notification';
+	import { notifications } from '$lib/store/notification';
 	import { nanoid } from 'nanoid';
 	import UndoDialogue from './UndoDialogue.svelte';
 
@@ -69,7 +69,7 @@
 				payload: '',
 			};
 			ws?.send(msg);
-			AddNotification({
+			notifications?.add({
 				id: nanoid(),
 				title: 'Accepted',
 				type: 'default',
@@ -82,7 +82,7 @@
 				payload: '',
 			};
 			ws?.send(msg);
-			AddNotification({
+			notifications?.add({
 				id: nanoid(),
 				title: 'Rejected',
 				type: 'default',
@@ -296,14 +296,14 @@
 					break;
 				case 'undoResponse':
 					if (res.payload === 'accept') {
-						AddNotification({
+						notifications?.add({
 							id: nanoid(),
 							title: 'Accepted',
 							type: 'default',
 							msg: 'Your undo request has been accepted',
 						});
 					} else {
-						AddNotification({
+						notifications?.add({
 							id: nanoid(),
 							title: 'Rejected',
 							type: 'default',

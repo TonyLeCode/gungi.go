@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 
 export type notificationType = {
@@ -8,18 +9,28 @@ export type notificationType = {
 	component?: ConstructorOfATypedSvelteComponent;
 };
 
-export const notifications = writable<notificationType[]>([]);
+function createNotificationStore() {
+	if (!browser) return;
+	const notifications = writable<notificationType[]>([]);
 
-export function AddNotification(notification: notificationType) {
-	notifications.update((items) => {
-		const newNotifications = [...items, notification];
-		return newNotifications;
-	});
+	function AddNotification(notification: notificationType) {
+		notifications.update((items) => {
+			const newNotifications = [...items, notification];
+			return newNotifications;
+		});
+	}
+
+	function RemoveNotification(id: string) {
+		notifications.update((items) => {
+			const filtered = items.filter((item) => item.id !== id);
+			return filtered;
+		});
+	}
+	return {
+		store: notifications,
+		add: AddNotification,
+		remove: RemoveNotification
+	}
 }
 
-export function RemoveNotification(id: string) {
-	notifications.update((items) => {
-		const filtered = items.filter((item) => item.id !== id);
-		return filtered;
-	});
-}
+export const notifications = createNotificationStore()
