@@ -17,6 +17,7 @@ type Ruleset interface {
 	SerializeHistory() string
 	ConvertInputCoord(coord int) int
 	ConvertOutputCoord(coord int) int
+	GetTurnColor() int
 }
 
 type Game struct {
@@ -87,4 +88,8 @@ func (g *Game) ConvertInputCoord(coord int) int {
 
 func (g *Game) ConvertOutputCoord(coord int) int {
 	return g.Ruleset.ConvertOutputCoord(coord)
+}
+
+func (g *Game) GetTurnColor() int {
+	return g.Ruleset.GetTurnColor()
 }

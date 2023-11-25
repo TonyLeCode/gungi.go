@@ -42,11 +42,11 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "-" + toFile + toRank
 		// Ex. L4D-4D
 	case ATTACK:
+		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "x" + utils.EncodeSingleChar(r.BoardSquares[toCoord].GetTop()) + toFile + toRank
+
 		r.RemovePiece(fromCoord)
 		r.RemovePiece(toCoord)
 		r.PlacePiece(piece, toCoord)
-
-		str = utils.EncodeSingleChar(piece) + fromFile + fromRank + "x" + utils.EncodeSingleChar(r.BoardSquares[toCoord].GetTop()) + toFile + toRank
 		// Ex. L4Dxy5D
 	case PLACE:
 		r.Hand[piece]--
@@ -55,13 +55,17 @@ func (r *Revised) MakeMove(piece int, fromCoord int, moveType int, toCoord int) 
 		str = utils.EncodeSingleChar(piece) + toFile + toRank
 		// Ex. L4D
 	case READY:
-		r.Ready[r.TurnColor] = true
 		if r.TurnColor == 0 {
 			str = "w-r"
 		} else {
 			str = "b-r"
 		}
-		r.TurnColor = utils.OppositeColor(r.TurnColor)
+		r.Ready[r.TurnColor] = true
+		if r.Ready[utils.OppositeColor(r.TurnColor)] {
+			r.TurnColor = BLACK
+		} else {
+			r.TurnColor = utils.OppositeColor(r.TurnColor)
+		}
 	}
 	r.History = append(r.History, str)
 
@@ -90,24 +94,16 @@ func (r *Revised) UndoMove() {
 	}
 
 	lastMove := r.History[len(r.History)-1]
-	if strings.Contains(lastMove, "-") {
-		fromPiece := utils.DecodeSingleChar(string(lastMove[0]))
-		fromCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
-		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[5]))-1, utils.RevertRank(string(lastMove[4]))-1)
-
-		r.RemovePiece(toCoord)
-		r.PlacePiece(fromPiece, fromCoord)
-
-		if fromPiece%13 == MARSHAL {
-			r.MarshalCoords[utils.OppositeColor(r.TurnColor)] = fromCoord
-		}
-
+	if lastMove == "w-r" || lastMove == "b-r" {
+		//ready
+		r.Ready[utils.OppositeColor(r.TurnColor)] = false
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
 		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
 	} else if strings.Contains(lastMove, "x") {
+		//attack
 		fromPiece := utils.DecodeSingleChar(string(lastMove[0]))
-		toPiece := utils.DecodeSingleChar(string(lastMove[0]))
+		toPiece := utils.DecodeSingleChar(string(lastMove[4]))
 		fromCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
 		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[6]))-1, utils.RevertRank(string(lastMove[5]))-1)
 
@@ -122,12 +118,24 @@ func (r *Revised) UndoMove() {
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
 		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
-	} else if lastMove == "w-r" || lastMove == "b-r" {
-		r.Ready[utils.OppositeColor(r.TurnColor)] = false
+	} else if strings.Contains(lastMove, "-") {
+		//stack or move
+		fromPiece := utils.DecodeSingleChar(string(lastMove[0]))
+		fromCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
+		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[5]))-1, utils.RevertRank(string(lastMove[4]))-1)
+
+		r.RemovePiece(toCoord)
+		r.PlacePiece(fromPiece, fromCoord)
+
+		if fromPiece%13 == MARSHAL {
+			r.MarshalCoords[utils.OppositeColor(r.TurnColor)] = fromCoord
+		}
+
 		r.History = RemoveIndexStr(r.History, len(r.History)-1)
 		r.TurnColor = utils.OppositeColor(r.TurnColor)
 		r.TurnNumber--
 	} else if len(lastMove) == 3 {
+		//place
 		piece := utils.DecodeSingleChar(string(lastMove[0]))
 		toCoord := utils.CoordsToSquare(utils.LetterToFile(string(lastMove[2]))-1, utils.RevertRank(string(lastMove[1]))-1)
 
@@ -350,7 +358,6 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 		}
 
 	case READY:
-		log.Println("ready?")
 		if r.Ready[r.TurnColor] {
 			log.Println(r.Ready)
 			return errors.New("already readied")

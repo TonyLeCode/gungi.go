@@ -141,6 +141,10 @@ type Revised struct {
 	TurnNumber    int
 }
 
+func (r Revised) GetTurnColor() int {
+	return r.TurnColor
+}
+
 func (r Revised) PieceCount() (int, int) {
 	wCount := 0
 	bCount := 0

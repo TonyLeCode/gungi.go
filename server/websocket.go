@@ -250,6 +250,20 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			board.SetHistory(strings.Fields(game.History.String))
 			board.PrintBoard()
 
+			username, exists := s.Get("username")
+			if !exists {
+				log.Println("Error: Username does not exist")
+				return
+			}
+
+			if board.GetTurnColor() == 0 && game.Player1 != username {
+				log.Println("Error: Wrong color")
+				return
+			} else if board.GetTurnColor() == 1 && game.Player2 != username {
+				log.Println("Error: Wrong color")
+				return
+			}
+
 			err = board.MakeMove(makeGameMoveMsg.FromPiece, board.ConvertInputCoord(makeGameMoveMsg.FromCoord), makeGameMoveMsg.MoveType, board.ConvertInputCoord(makeGameMoveMsg.ToCoord))
 			if err != nil {
 				log.Println("Error: ", err)
