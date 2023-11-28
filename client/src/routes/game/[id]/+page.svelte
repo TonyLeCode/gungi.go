@@ -363,17 +363,7 @@
 	}
 
 	onMount(() => {
-		// doesn't work because socket will be empty/undefined
-		// const socket = $ws
-		// if (socket){
-		// 	socket.addEventListener('message', handleGameMsg);
-		// }
-		let unsubGameMsg2: (() => void) | undefined;
-		const unsubGameMsg = ws?.subscribe((val) => {
-			if (val) {
-				unsubGameMsg2 = ws?.addMsgListener(handleGameMsg);
-			}
-		});
+		const unsubGameMsg2 = ws?.addMsgListener(handleGameMsg);
 
 		const unsubConnect = ws?.subscribe((val) => {
 			if (val === 'connected') {
@@ -390,7 +380,7 @@
 			}
 		});
 		return () => {
-			if (unsubGameMsg) unsubGameMsg();
+			// if (unsubGameMsg) unsubGameMsg();
 			if (unsubGameMsg2) unsubGameMsg2();
 			if (unsubConnect) unsubConnect();
 			const msg = {

@@ -53,6 +53,9 @@ func (gc *GameConnections) RemoveConnection(gameID uuid.UUID, s *melody.Session)
 	defer gc.mu.Unlock()
 
 	delete(gc.connections[gameID], s)
+	if len(gc.connections[gameID]) == 0 {
+		delete(gc.connections, gameID)
+	}
 }
 
 // This won't scale, find solution in future
@@ -134,7 +137,6 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 
 		switch unmarshal.Type {
 		case "auth":
-			log.Println("auth1")
 			var token string
 			err := json.Unmarshal(unmarshal.Payload, &token)
 			if err != nil {
@@ -179,7 +181,6 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println("Error: ", err)
 				return
 			}
-			log.Println("auth2")
 			err = s.Write(payload)
 			if err != nil {
 				log.Println("Error: ", err)
@@ -212,9 +213,6 @@ func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 		case "leaveGame":
 			var gameID string
 			err = json.Unmarshal(unmarshal.Payload, &gameID)
-			log.Println("gameID", gameID)
-			log.Println("gameID", unmarshal.Payload)
-			log.Println("gameID", unmarshal)
 			if err != nil {
 				log.Println("Error: ", err)
 				return

@@ -83,7 +83,6 @@ function createWsStore() {
 			} as notificationType);
 		});
 		newSocket.addEventListener('message', (event) => {
-			console.log('authhh');
 			try {
 				const data = JSON.parse(event.data);
 				if (data.type == 'auth') {
