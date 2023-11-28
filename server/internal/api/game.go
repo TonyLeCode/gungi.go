@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
 	"github.com/whitemonarch/gungi-server/server/gungi"
+	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 
 	"github.com/labstack/echo/v4"
 )

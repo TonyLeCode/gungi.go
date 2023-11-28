@@ -7,9 +7,35 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
-	"github.com/whitemonarch/gungi-server/server/api"
-	"github.com/whitemonarch/gungi-server/server/auth"
+	"github.com/spf13/viper"
+
+	"github.com/whitemonarch/gungi-server/server/internal/api"
+	"github.com/whitemonarch/gungi-server/server/internal/auth"
+	"github.com/whitemonarch/gungi-server/server/internal/ws"
 )
+
+// Config stores all configuration of the application
+// The values are read by viper from a config file or environment variables
+type Config struct {
+	DB_SOURCE           string `mapstructure:"DB_SOURCE"`
+	SUPABASE_JWT_SECRET string `mapstructure:"SUPABASE_JWT_SECRET"`
+}
+
+// LoadConfig reads configuration from file or environment variables
+func LoadConfig(path string) (config Config, err error) {
+	viper.AddConfigPath(path)
+	viper.SetConfigFile(".env")
+
+	viper.AutomaticEnv()
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
+	}
+
+	err = viper.Unmarshal(&config)
+	return
+}
 
 func main() {
 	// board := gungi.Board{}
@@ -54,7 +80,7 @@ func main() {
 
 	e.GET("/game/:id", db.GetGameWithUndoRoute)
 
-	e.GET("/ws", ws2(m, &db))
+	e.GET("/ws", ws.WS(m, &db))
 	// e.GET("/ws2", ws(m, &dbs))
 
 	verify.GET("/user/onboarding", db.GetOnboarding)

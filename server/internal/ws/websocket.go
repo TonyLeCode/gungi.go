@@ -1,4 +1,4 @@
-package main
+package ws
 
 import (
 	"context"
@@ -10,10 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
-	"github.com/whitemonarch/gungi-server/server/api"
-	"github.com/whitemonarch/gungi-server/server/auth"
-	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
+
 	"github.com/whitemonarch/gungi-server/server/gungi"
+	"github.com/whitemonarch/gungi-server/server/internal/api"
+	"github.com/whitemonarch/gungi-server/server/internal/auth"
+	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 )
 
 type PlayConnections struct {
@@ -98,7 +99,7 @@ type makeGameMoveMsg struct {
 	ToCoord   int    `json:"toCoord"`
 }
 
-func ws2(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
+func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	PlayConnections := PlayConnections{
 		connections: make(map[*melody.Session]bool),
 		mu:          sync.RWMutex{},

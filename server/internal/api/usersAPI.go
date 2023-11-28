@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
+	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 )
 
 type UserDataRequest struct {
