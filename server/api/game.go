@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strings"
 
-	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
-	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
+	"github.com/whitemonarch/gungi-server/server/gungi"
 
 	"github.com/labstack/echo/v4"
 )

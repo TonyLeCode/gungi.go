@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
+	"github.com/whitemonarch/gungi-server/server/gungi/utils"
 )
 
 func getColor(piece int) int {

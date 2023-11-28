@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/TonyLeCode/gungi.go/server/gungi/utils"
+	"github.com/whitemonarch/gungi-server/server/gungi/utils"
 )
 
 // Piece must be colorless

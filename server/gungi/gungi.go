@@ -1,6 +1,6 @@
 package gungi
 
-import "github.com/TonyLeCode/gungi.go/server/gungi/revised"
+import "github.com/whitemonarch/gungi-server/server/gungi/revised"
 
 type Ruleset interface {
 	InitializeBoard()

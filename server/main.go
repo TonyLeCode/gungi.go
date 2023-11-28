@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/TonyLeCode/gungi.go/server/api"
-	"github.com/TonyLeCode/gungi.go/server/auth"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
+	"github.com/whitemonarch/gungi-server/server/api"
+	"github.com/whitemonarch/gungi-server/server/auth"
 )
 
 func main() {

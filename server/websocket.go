@@ -7,13 +7,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TonyLeCode/gungi.go/server/api"
-	"github.com/TonyLeCode/gungi.go/server/auth"
-	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
-	"github.com/TonyLeCode/gungi.go/server/gungi"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
+	"github.com/whitemonarch/gungi-server/server/api"
+	"github.com/whitemonarch/gungi-server/server/auth"
+	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
+	"github.com/whitemonarch/gungi-server/server/gungi"
 )
 
 type PlayConnections struct {

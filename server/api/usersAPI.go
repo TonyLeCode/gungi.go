@@ -2,14 +2,14 @@ package api
 
 import (
 
-	// "github.com/TonyLeCode/gungi.go/server/db"
+	// "github.com/whitemonarch/gungi-server/server/db"
 	"context"
 	"log"
 	"net/http"
 
-	db "github.com/TonyLeCode/gungi.go/server/db/sqlc"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	db "github.com/whitemonarch/gungi-server/server/db/sqlc"
 )
 
 type UserDataRequest struct {
