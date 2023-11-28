@@ -13,7 +13,6 @@ import (
 
 	"github.com/whitemonarch/gungi-server/server/gungi"
 	"github.com/whitemonarch/gungi-server/server/internal/api"
-	"github.com/whitemonarch/gungi-server/server/internal/auth"
 	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 )
 
@@ -99,6 +98,8 @@ type makeGameMoveMsg struct {
 	ToCoord   int    `json:"toCoord"`
 }
 
+type msgHandler = map[string]func()
+
 func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	PlayConnections := PlayConnections{
 		connections: make(map[*melody.Session]bool),
@@ -108,6 +109,11 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 		connections: make(map[uuid.UUID]map[*melody.Session]bool),
 		mu:          sync.RWMutex{},
 	}
+
+	msgHandlers := msgHandler{
+		"auth": func() {},
+	}
+	log.Println(msgHandlers)
 
 	m.HandleConnect(func(s *melody.Session) {
 		log.Println("Connected2", s)
@@ -138,56 +144,6 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 
 		switch unmarshal.Type {
 		case "auth":
-			var token string
-			err := json.Unmarshal(unmarshal.Payload, &token)
-			if err != nil {
-				log.Println("Error: ", err)
-				return
-			}
-			claims, err := auth.AuthenticateSupabaseToken(token)
-			if err != nil {
-				log.Println(err)
-				// 0 means failed
-				authResponse := MsgResponse{
-					Type:    "auth",
-					Payload: "0",
-				}
-				payload, err := json.Marshal(authResponse)
-				if err != nil {
-					log.Println("Error: ", err)
-				} else {
-					err = m.BroadcastFilter(payload, func(q *melody.Session) bool {
-						return q == s
-					})
-					if err != nil {
-						log.Println("Error: ", err)
-					}
-				}
-				return
-			}
-
-			metadata := claims["user_metadata"].(map[string]interface{})
-			username := metadata["username"].(string)
-			id := claims["sub"].(string)
-			s.Set("username", username)
-			s.Set("id", id)
-
-			// 1 means authenticated
-			authResponse := MsgResponse{
-				Type:    "auth",
-				Payload: "1",
-			}
-			payload, err := json.Marshal(authResponse)
-			if err != nil {
-				log.Println("Error: ", err)
-				return
-			}
-			err = s.Write(payload)
-			if err != nil {
-				log.Println("Error: ", err)
-				return
-			}
-			return
 
 		case "joinGame":
 			//deletes previous game to prevent memory leak
