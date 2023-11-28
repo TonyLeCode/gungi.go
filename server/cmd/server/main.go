@@ -38,9 +38,6 @@ func LoadConfig(path string) (config Config, err error) {
 }
 
 func main() {
-	// board := gungi.Board{}
-	// board.InitializeBoard()
-	// board.PrintBoard()
 	config, err := LoadConfig("./")
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
@@ -76,12 +73,10 @@ func main() {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
+	e.GET("/game/:id", db.GetGameWithUndoRoute)
 	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 
-	e.GET("/game/:id", db.GetGameWithUndoRoute)
-
 	e.GET("/ws", ws.WS(m, &db))
-	// e.GET("/ws2", ws(m, &dbs))
 
 	verify.GET("/user/onboarding", db.GetOnboarding)
 	verify.PUT("/user/onboarding", db.PutOnboarding)
