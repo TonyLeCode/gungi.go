@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -13,57 +12,9 @@ import (
 
 	"github.com/whitemonarch/gungi-server/server/gungi"
 	"github.com/whitemonarch/gungi-server/server/internal/api"
+	"github.com/whitemonarch/gungi-server/server/internal/auth"
 	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 )
-
-type PlayConnections struct {
-	connections map[*melody.Session]bool
-	mu          sync.RWMutex
-}
-type GameConnections struct {
-	connections map[uuid.UUID]map[*melody.Session]bool
-	mu          sync.RWMutex
-}
-
-func (pc *PlayConnections) AddConnection(s *melody.Session) {
-	pc.mu.Lock()
-	defer pc.mu.Unlock()
-
-	pc.connections[s] = true
-}
-func (pc *PlayConnections) RemoveConnection(s *melody.Session) {
-	pc.mu.Lock()
-	defer pc.mu.Unlock()
-
-	delete(pc.connections, s)
-}
-
-func (gc *GameConnections) AddConnection(gameID uuid.UUID, s *melody.Session) {
-	gc.mu.Lock()
-	defer gc.mu.Unlock()
-
-	if _, ok := gc.connections[gameID]; !ok {
-		gc.connections[gameID] = make(map[*melody.Session]bool)
-	}
-
-	gc.connections[gameID][s] = true
-}
-func (gc *GameConnections) RemoveConnection(gameID uuid.UUID, s *melody.Session) {
-	gc.mu.Lock()
-	defer gc.mu.Unlock()
-
-	delete(gc.connections[gameID], s)
-	if len(gc.connections[gameID]) == 0 {
-		delete(gc.connections, gameID)
-	}
-}
-
-// This won't scale, find solution in future
-func RemoveIndex(s []int, index int) []int {
-	ret := make([]int, 0)
-	ret = append(ret, s[:index]...)
-	return append(ret, s[index+1:]...)
-}
 
 type GameRoomType struct {
 	Host        string `json:"host"`
@@ -80,12 +31,12 @@ type CreateGameRoomRequest struct {
 	Rules       string `json:"rules"`
 }
 
-type MsgPayload struct {
+type ClientMsg struct {
 	Type    string          `json:"type"`
 	Payload json.RawMessage `json:"payload"`
 }
 
-type MsgResponse struct {
+type ServerMsg struct {
 	Type    string      `json:"type"`
 	Payload interface{} `json:"payload"`
 }
@@ -98,92 +49,138 @@ type makeGameMoveMsg struct {
 	ToCoord   int    `json:"toCoord"`
 }
 
-type msgHandler = map[string]func()
-
 func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
-	PlayConnections := PlayConnections{
-		connections: make(map[*melody.Session]bool),
-		mu:          sync.RWMutex{},
-	}
-	GameConnections := GameConnections{
-		connections: make(map[uuid.UUID]map[*melody.Session]bool),
-		mu:          sync.RWMutex{},
-	}
+	// PlayConnections := PlayConnections{
+	// 	connections: make(map[*melody.Session]bool),
+	// 	mu:          sync.RWMutex{},
+	// }
+	// GameConnections := GameConnections{
+	// 	connections: make(map[uuid.UUID]map[*melody.Session]bool),
+	// 	mu:          sync.RWMutex{},
+	// }
+	listeners := Listeners{}
+	sessions := Sessions{}
 
-	msgHandlers := msgHandler{
-		"auth": func() {},
-	}
-	log.Println(msgHandlers)
+	// log.Println(msgHandlers)
 
 	m.HandleConnect(func(s *melody.Session) {
-		log.Println("Connected2", s)
+		log.Println("Connected", s)
 	})
 
 	m.HandleDisconnect(func(s *melody.Session) {
-		if gameID, ok := s.Get("game"); ok {
-			if gameUUID, err := uuid.Parse(gameID.(string)); err == nil {
-				log.Println("Removed Game Connection")
-				GameConnections.RemoveConnection(gameUUID, s)
-			}
-		} else if _, ok := PlayConnections.connections[s]; ok {
-			log.Println("Removed Play Connection")
-			PlayConnections.RemoveConnection(s)
-		}
-		log.Println("Disconnect")
+		log.Println("Disconnect", s, sessions[s].ID)
+		sessions.RemoveUser(s)
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		// ctx := context.Background()
-
-		var unmarshal MsgPayload
-		err := json.Unmarshal(msg, &unmarshal)
+		var clientMsg ClientMsg
+		err := json.Unmarshal(msg, &clientMsg)
 		if err != nil {
 			log.Println("Error: ", err)
 			return
 		}
 
-		switch unmarshal.Type {
+		switch clientMsg.Type {
 		case "auth":
+			var token string
+			err := json.Unmarshal(clientMsg.Payload, &token)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			claims, err := auth.AuthenticateSupabaseToken(token)
+			if err != nil {
+				log.Println(err)
 
-		case "joinGame":
-			//deletes previous game to prevent memory leak
-			if gameID, ok := s.Get("game"); ok {
-				if gameUUID, err := uuid.Parse(gameID.(string)); err == nil {
-					log.Println("Removed Game Connection")
-					GameConnections.RemoveConnection(gameUUID, s)
+				m := ServerMsg{
+					Type:    "auth",
+					Payload: "failure",
 				}
+
+				b, err := json.Marshal(m)
+				if err != nil {
+					log.Println("Error: ", err)
+					return
+				}
+
+				err = s.Write(b)
+				if err != nil {
+					log.Println("Error: ", err)
+				}
+				return
 			}
 
+			// metadata := claims["user_metadata"].(map[string]interface{})
+			// username := metadata["username"].(string)
+			userid := claims["sub"].(string)
+			userUUID, err := uuid.Parse(userid)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			sessions.AddUser(s, userUUID)
+			// s.Set("username", username)
+			// s.Set("id", id)
+
+			m := ServerMsg{
+				Type:    "auth",
+				Payload: "success",
+			}
+			b, err := json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			err = s.Write(b)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+		case "joinGame":
+			//deletes previous game to prevent memory leak
+			// if gameID, ok := s.Get("game"); ok {
+			// 	if gameUUID, err := uuid.Parse(gameID.(string)); err == nil {
+			// 		log.Println("Removed Game Connection")
+			// 		GameConnections.RemoveConnection(gameUUID, s)
+			// 	}
+			// }
+
 			var gameID string
-			err = json.Unmarshal(unmarshal.Payload, &gameID)
+			err = json.Unmarshal(clientMsg.Payload, &gameID)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
 			if gameUUID, err := uuid.Parse(gameID); err == nil {
-				GameConnections.AddConnection(gameUUID, s)
+				unsub := listeners.AddListenerGame(s, gameUUID)
+				sessions.ChangeUnsub(s, unsub)
 				log.Println("Joined Game: ", gameUUID)
-				log.Println("Conns: ", GameConnections.connections)
-				s.Set("game", gameID)
+				log.Println("Conns: ", listeners.listeners)
+				// GameConnections.AddConnection(gameUUID, s)
+				// log.Println("Joined Game: ", gameUUID)
+				// log.Println("Conns: ", GameConnections.connections)
+				// s.Set("game", gameID)
 			}
 
 		case "leaveGame":
 			var gameID string
-			err = json.Unmarshal(unmarshal.Payload, &gameID)
+			err = json.Unmarshal(clientMsg.Payload, &gameID)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
 			if gameUUID, err := uuid.Parse(gameID); err == nil {
+				listeners.RemoveListenerGame(s, gameUUID)
 				log.Println("Left Game: ", gameUUID)
-				GameConnections.RemoveConnection(gameUUID, s)
-				log.Println("Conns: ", GameConnections.connections)
+				log.Println("Conns: ", listeners.listeners)
+				// GameConnections.RemoveConnection(gameUUID, s)
+				// log.Println("Conns: ", GameConnections.connections)
 			}
 
 		case "makeGameMove":
 			ctx := context.Background()
 			var makeGameMoveMsg makeGameMoveMsg
-			err = json.Unmarshal(unmarshal.Payload, &makeGameMoveMsg)
+			err = json.Unmarshal(clientMsg.Payload, &makeGameMoveMsg)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
@@ -255,21 +252,23 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			game.MoveList = correctedLegalMoves
 			log.Println(correctedLegalMoves)
 
-			msgResponse := MsgResponse{
+			m := ServerMsg{
 				Type:    "game",
 				Payload: game,
 			}
-			marshalledResponse, err := json.Marshal(msgResponse)
+			b, err := json.Marshal(m)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
 			}
-			var keys []*melody.Session
-			for key := range GameConnections.connections[game.ID] {
-				keys = append(keys, key)
-			}
 
-			m.BroadcastMultiple(marshalledResponse, keys)
+			listeners.EmitGameMsg(b, game.ID)
+			// var keys []*melody.Session
+			// for key := range GameConnections.connections[game.ID] {
+			// 	keys = append(keys, key)
+			// }
+
+			// m.BroadcastMultiple(marshalledResponse, keys)
 
 		//TODO finish cases
 		case "gameResign":
@@ -296,23 +295,36 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
-			for key := range GameConnections.connections[gameUUID] {
-				if id, exists := key.Get("id"); exists && id.(string) == receiverID.String() {
-					msgResponse := MsgResponse{
-						Type:    "undoRequest",
-						Payload: "",
-					}
-					marshalledResponse, err := json.Marshal(msgResponse)
-					if err != nil {
-						log.Println("Error: ", err)
-						return
-					}
-					err = key.Write(marshalledResponse)
-					if err != nil {
-						log.Println("Error: ", err)
-					}
-				}
+			m := ServerMsg{
+				Type:    "undoRequest",
+				Payload: "",
 			}
+			b, err := json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			listeners.EmitGameMsgFilter(b, gameUUID, func(s *melody.Session) bool {
+				return sessions[s].ID == receiverID
+			})
+
+			// for key := range GameConnections.connections[gameUUID] {
+			// 	if id, exists := key.Get("id"); exists && id.(string) == receiverID.String() {
+			// 		ServerMsg := ServerMsg{
+			// 			Type:    "undoRequest",
+			// 			Payload: "",
+			// 		}
+			// 		marshalledResponse, err := json.Marshal(ServerMsg)
+			// 		if err != nil {
+			// 			log.Println("Error: ", err)
+			// 			return
+			// 		}
+			// 		err = key.Write(marshalledResponse)
+			// 		if err != nil {
+			// 			log.Println("Error: ", err)
+			// 		}
+			// 	}
+			// }
 
 		case "responseGameUndo":
 			ctx := context.Background()
@@ -339,7 +351,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			}
 
 			var undoResponse string
-			err = json.Unmarshal(unmarshal.Payload, &undoResponse)
+			err = json.Unmarshal(clientMsg.Payload, &undoResponse)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
@@ -394,23 +406,25 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 					return
 				}
 
-				msgResponse := MsgResponse{
+				m := ServerMsg{
 					Type:    "game",
 					Payload: game,
 				}
 
-				marshalledResponse, err := json.Marshal(msgResponse)
+				b, err := json.Marshal(m)
 				if err != nil {
 					log.Println("Error: ", err)
 					return
 				}
 
-				var keys []*melody.Session
-				for key := range GameConnections.connections[game.ID] {
-					keys = append(keys, key)
-				}
+				listeners.EmitGameMsg(b, gameUUID)
 
-				m.BroadcastMultiple(marshalledResponse, keys)
+				// var keys []*melody.Session
+				// for key := range GameConnections.connections[game.ID] {
+				// 	keys = append(keys, key)
+				// }
+
+				// m.BroadcastMultiple(marshalledResponse, keys)
 			}
 
 			sender_id, err := dbConn.ResponseGameUndo(undoResponse, userUUID, gameUUID)
@@ -419,23 +433,37 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
-			for key := range GameConnections.connections[gameUUID] {
-				if id, exists := key.Get("id"); exists && id.(string) == sender_id.String() {
-					msgResponse := MsgResponse{
-						Type:    "undoResponse",
-						Payload: undoResponse,
-					}
-					marshalledResponse, err := json.Marshal(msgResponse)
-					if err != nil {
-						log.Println("Error: ", err)
-						return
-					}
-					err = key.Write(marshalledResponse)
-					if err != nil {
-						log.Println("Error: ", err)
-					}
-				}
+			m := ServerMsg{
+				Type:    "undoResponse",
+				Payload: undoResponse,
 			}
+			b, err := json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			listeners.EmitGameMsgFilter(b, gameUUID, func(s *melody.Session) bool {
+				return sessions[s].ID == sender_id
+			})
+
+			// for key := range GameConnections.connections[gameUUID] {
+			// 	if id, exists := key.Get("id"); exists && id.(string) == sender_id.String() {
+			// 		ServerMsg := ServerMsg{
+			// 			Type:    "undoResponse",
+			// 			Payload: undoResponse,
+			// 		}
+			// 		marshalledResponse, err := json.Marshal(ServerMsg)
+			// 		if err != nil {
+			// 			log.Println("Error: ", err)
+			// 			return
+			// 		}
+			// 		err = key.Write(marshalledResponse)
+			// 		if err != nil {
+			// 			log.Println("Error: ", err)
+			// 		}
+			// 	}
+			// }
 
 		case "completeGameUndo":
 			gameID, exists := s.Get("game")
@@ -467,16 +495,21 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			}
 
 		case "joinPlay":
-			PlayConnections.AddConnection(s)
+			// PlayConnections.AddConnection(s)
+			// log.Println("Joined Play")
+			// log.Println("Conns: ", PlayConnections.connections)
+			unsub := listeners.AddListenerRooms(s)
+			sessions.ChangeUnsub(s, unsub)
 			log.Println("Joined Play")
-			log.Println("Conns: ", PlayConnections.connections)
+			log.Println("Conns: ", listeners.listeners)
+
 			// TODO host id to username
 			roomList, err := dbConn.GetRoomList()
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			roomListMsg := MsgResponse{
+			roomListMsg := ServerMsg{
 				Type:    "roomList",
 				Payload: roomList,
 			}
@@ -488,13 +521,16 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			s.Write(marshaledRoomListMsg)
 
 		case "leavePlay":
+			listeners.RemoveListenerRooms(s)
 			log.Println("Left Play")
-			PlayConnections.RemoveConnection(s)
-			log.Println("Conns: ", PlayConnections.connections)
+			log.Println("Conns: ", listeners.listeners)
+			// log.Println("Left Play")
+			// PlayConnections.RemoveConnection(s)
+			// log.Println("Conns: ", PlayConnections.connections)
 
 		case "createPlayRoom":
 			var roomPayload CreateGameRoomRequest
-			err := json.Unmarshal(unmarshal.Payload, &roomPayload)
+			err := json.Unmarshal(clientMsg.Payload, &roomPayload)
 			if err != nil {
 				log.Println("Error: ", err)
 				return
@@ -516,23 +552,26 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println(err)
 				return
 			}
-			roomListMsg := MsgResponse{
+			m := ServerMsg{
 				Type:    "roomList",
 				Payload: roomList,
 			}
-			marshaledRoomListMsg, err := json.Marshal(roomListMsg)
+			b, err := json.Marshal(m)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
-			err = m.BroadcastFilter(marshaledRoomListMsg, func(q *melody.Session) bool {
-				return PlayConnections.connections[q]
-			})
-			if err != nil {
-				log.Println(err)
-				return
-			}
+			listeners.EmitRoomMsg(b)
+
+			//TODO keys to array
+			// err = m.BroadcastFilter(marshaledRoomListMsg, func(q *melody.Session) bool {
+			// 	return PlayConnections.connections[q]
+			// })
+			// if err != nil {
+			// 	log.Println(err)
+			// 	return
+			// }
 
 		case "acceptPlayRoom":
 			username, exists := s.Get("username")
@@ -541,7 +580,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			}
 
 			var roomid string
-			err := json.Unmarshal(unmarshal.Payload, &roomid)
+			err := json.Unmarshal(clientMsg.Payload, &roomid)
 			if err != nil {
 				log.Println(err)
 				return
@@ -565,7 +604,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println(err)
 				return
 			}
-			gameAcceptedMsg := MsgResponse{
+			gameAcceptedMsg := ServerMsg{
 				Type:    "roomAccepted",
 				Payload: gameID,
 			}
@@ -575,6 +614,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
+			//TODO change broadcast
 			m.BroadcastFilter(marshaledGameAcceptedMsg, func(q *melody.Session) bool {
 				qUsername, exists := q.Get("username")
 				if !exists {
@@ -588,26 +628,28 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println(err)
 				return
 			}
-			updatedRoomListMsg := MsgResponse{
+
+			m := ServerMsg{
 				Type:    "roomList",
 				Payload: roomList,
 			}
-			marshaledUpdatedRoomListMsg, err := json.Marshal(updatedRoomListMsg)
+			b, err := json.Marshal(m)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
-			var keys []*melody.Session
-			for key := range PlayConnections.connections {
-				keys = append(keys, key)
-			}
+			listeners.EmitRoomMsg(b)
+			// var keys []*melody.Session
+			// for key := range PlayConnections.connections {
+			// 	keys = append(keys, key)
+			// }
 
-			m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
+			// m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
 
 		case "cancelPlayRoom":
 			var roomid string
-			err := json.Unmarshal(unmarshal.Payload, &roomid)
+			err := json.Unmarshal(clientMsg.Payload, &roomid)
 			if err != nil {
 				log.Println(err)
 				return
@@ -630,22 +672,25 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println(err)
 				return
 			}
-			updatedRoomListMsg := MsgResponse{
+
+			m := ServerMsg{
 				Type:    "roomList",
 				Payload: roomList,
 			}
-			marshaledUpdatedRoomListMsg, err := json.Marshal(updatedRoomListMsg)
+			b, err := json.Marshal(m)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
-			var keys []*melody.Session
-			for key := range PlayConnections.connections {
-				keys = append(keys, key)
-			}
+			listeners.EmitRoomMsg(b)
 
-			m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
+			// var keys []*melody.Session
+			// for key := range PlayConnections.connections {
+			// 	keys = append(keys, key)
+			// }
+
+			// m.BroadcastMultiple(marshaledUpdatedRoomListMsg, keys)
 		}
 	})
 

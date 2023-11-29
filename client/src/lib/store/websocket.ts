@@ -86,7 +86,7 @@ function createWsStore() {
 			try {
 				const data = JSON.parse(event.data);
 				if (data.type == 'auth') {
-					data.payload == '1' ? set('connected') : newSocket.close();
+					data.payload == 'success' ? set('connected') : newSocket.close();
 				}
 			} catch (err) {
 				console.error('Error: ', err);
