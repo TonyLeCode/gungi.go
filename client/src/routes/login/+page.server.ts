@@ -34,20 +34,15 @@ export const actions: Actions = {
 		if (supabaseResponse.error) {
 			console.log(supabaseResponse.error);
 			if (supabaseResponse.error instanceof AuthApiError && supabaseResponse.error.status === 400) {
-				// return fail(400, {
-				// 	error: "Invalid Login Info"
-				// })
-				// return fail(400, { form });
+				if (supabaseResponse.error.message === "Email not confirmed") {
+					return message(form, 'Email not verified');
+				}
 				return message(form, 'Invalid login info');
 			}
-			// return fail(500, {
-			// 	error: 'Server error. Try again later.',
-			// });
 			throw error(500, {
 				message: 'Server error. Try again later.',
 			});
 		}
-		// console.log('logged in', supabaseResponse.data);
 		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/onboarding`;
 		const token = supabaseResponse.data.session.access_token
 		const options = {
