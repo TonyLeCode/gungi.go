@@ -27,6 +27,8 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.user_1,
+    games.user_2,
     user1.username AS player1,
     user2.username AS player2
 FROM 
@@ -49,6 +51,8 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.user_1,
+    games.user_2,
     user1.username AS player1,
     user2.username AS player2,
     CASE
@@ -82,10 +86,7 @@ GROUP BY
 
 -- name: CreateGame :one
 INSERT INTO games (current_state, ruleset, type, user_1, user_2)
-VALUES ($1, $2, $3, 
-        (SELECT id FROM profiles AS u1 WHERE u1.username = $4),
-        (SELECT id FROM profiles AS u2 WHERE u2.username = $5)
-)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id;
 
 -- name: GetIdFromUsername :one
@@ -119,24 +120,15 @@ WHERE id = $1;
 INSERT INTO undo_request (game_id, sender_id, receiver_id)
 VALUES (
     $1,
-    (
-        SELECT
-            profiles.id
-        FROM
-            profiles
-        WHERE
-            profiles.username = $2
-    ),
+    $2,
     (
         SELECT
             CASE
-                WHEN games.user_1 = profiles.id THEN games.user_2
+                WHEN games.user_1 = $2 THEN games.user_2
                 ELSE games.user_1
             END
         FROM
             games
-        JOIN
-            profiles ON profiles.username = $2
         WHERE
             games.id = $1
     )
@@ -155,7 +147,7 @@ RETURNING undo_request.sender_id;
 
 -- name: CreateRoom :exec
 INSERT INTO public.room_list (host_id, description, rules, type, color)
-VALUES ((SELECT id FROM profiles AS u1 WHERE u1.username = $1), $2, $3, $4, $5);
+VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetRoomList :many
 SELECT

@@ -11,14 +11,16 @@ const ROOM_KEY = "roomlist"
 
 type Sessions map[*melody.Session]*User
 type User struct {
-	ID    uuid.UUID
-	Unsub func()
+	ID     uuid.UUID
+	GameID uuid.UUID
+	Unsub  func()
 }
 
 func (ss *Sessions) AddUser(s *melody.Session, id uuid.UUID) {
 	(*ss)[s] = &User{
-		ID:    id,
-		Unsub: nil,
+		ID:     id,
+		Unsub:  nil,
+		GameID: uuid.Nil,
 	}
 }
 
@@ -30,6 +32,13 @@ func (ss *Sessions) ChangeUnsub(s *melody.Session, unsub func()) {
 		(*ss)[s].Unsub()
 	}
 	(*ss)[s].Unsub = unsub
+}
+
+func (ss *Sessions) ChangeGame(s *melody.Session, gameID uuid.UUID) {
+	if _, ok := (*ss)[s]; !ok {
+		return
+	}
+	(*ss)[s].GameID = gameID
 }
 
 func (ss *Sessions) RemoveUser(s *melody.Session) {
@@ -149,6 +158,14 @@ func (l *Listeners) EmitRoomMsg(msg []byte) error {
 		if err := s.Write(msg); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (l *Listeners) EmitRoomMsgFilter(msg []byte, fn func(s *melody.Session) bool) error {
+	err := l.EmitMsgFilter(msg, ROOM_KEY, fn)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -50,19 +50,16 @@ func (q *Queries) ChangeUsername(ctx context.Context, arg ChangeUsernameParams) 
 
 const createGame = `-- name: CreateGame :one
 INSERT INTO games (current_state, ruleset, type, user_1, user_2)
-VALUES ($1, $2, $3, 
-        (SELECT id FROM profiles AS u1 WHERE u1.username = $4),
-        (SELECT id FROM profiles AS u2 WHERE u2.username = $5)
-)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id
 `
 
 type CreateGameParams struct {
-	CurrentState string `json:"current_state"`
-	Ruleset      string `json:"ruleset"`
-	Type         string `json:"type"`
-	Username     string `json:"username"`
-	Username_2   string `json:"username_2"`
+	CurrentState string    `json:"current_state"`
+	Ruleset      string    `json:"ruleset"`
+	Type         string    `json:"type"`
+	User1        uuid.UUID `json:"user_1"`
+	User2        uuid.UUID `json:"user_2"`
 }
 
 func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UUID, error) {
@@ -70,8 +67,8 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 		arg.CurrentState,
 		arg.Ruleset,
 		arg.Type,
-		arg.Username,
-		arg.Username_2,
+		arg.User1,
+		arg.User2,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -80,20 +77,20 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UU
 
 const createRoom = `-- name: CreateRoom :exec
 INSERT INTO public.room_list (host_id, description, rules, type, color)
-VALUES ((SELECT id FROM profiles AS u1 WHERE u1.username = $1), $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateRoomParams struct {
-	Username    string `json:"username"`
-	Description string `json:"description"`
-	Rules       string `json:"rules"`
-	Type        string `json:"type"`
-	Color       string `json:"color"`
+	HostID      uuid.UUID `json:"host_id"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 	_, err := q.db.Exec(ctx, createRoom,
-		arg.Username,
+		arg.HostID,
 		arg.Description,
 		arg.Rules,
 		arg.Type,
@@ -106,24 +103,15 @@ const createUndo = `-- name: CreateUndo :one
 INSERT INTO undo_request (game_id, sender_id, receiver_id)
 VALUES (
     $1,
-    (
-        SELECT
-            profiles.id
-        FROM
-            profiles
-        WHERE
-            profiles.username = $2
-    ),
+    $2,
     (
         SELECT
             CASE
-                WHEN games.user_1 = profiles.id THEN games.user_2
+                WHEN games.user_1 = $2 THEN games.user_2
                 ELSE games.user_1
             END
         FROM
             games
-        JOIN
-            profiles ON profiles.username = $2
         WHERE
             games.id = $1
     )
@@ -133,11 +121,11 @@ RETURNING receiver_id
 
 type CreateUndoParams struct {
 	GameID   uuid.UUID `json:"game_id"`
-	Username string    `json:"username"`
+	SenderID uuid.UUID `json:"sender_id"`
 }
 
 func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createUndo, arg.GameID, arg.Username)
+	row := q.db.QueryRow(ctx, createUndo, arg.GameID, arg.SenderID)
 	var receiver_id uuid.UUID
 	err := row.Scan(&receiver_id)
 	return receiver_id, err
@@ -193,6 +181,8 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.user_1,
+    games.user_2,
     user1.username AS player1,
     user2.username AS player2
 FROM 
@@ -215,6 +205,8 @@ type GetGameRow struct {
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
 	Type         string             `json:"type"`
+	User1        uuid.UUID          `json:"user_1"`
+	User2        uuid.UUID          `json:"user_2"`
 	Player1      string             `json:"player1"`
 	Player2      string             `json:"player2"`
 }
@@ -232,6 +224,8 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 		&i.CurrentState,
 		&i.Ruleset,
 		&i.Type,
+		&i.User1,
+		&i.User2,
 		&i.Player1,
 		&i.Player2,
 	)
@@ -249,6 +243,8 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.user_1,
+    games.user_2,
     user1.username AS player1,
     user2.username AS player2,
     CASE
@@ -291,6 +287,8 @@ type GetGameWithUndoRow struct {
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
 	Type         string             `json:"type"`
+	User1        uuid.UUID          `json:"user_1"`
+	User2        uuid.UUID          `json:"user_2"`
 	Player1      string             `json:"player1"`
 	Player2      string             `json:"player2"`
 	UndoRequests []byte             `json:"undo_requests"`
@@ -309,6 +307,8 @@ func (q *Queries) GetGameWithUndo(ctx context.Context, id uuid.UUID) (GetGameWit
 		&i.CurrentState,
 		&i.Ruleset,
 		&i.Type,
+		&i.User1,
+		&i.User2,
 		&i.Player1,
 		&i.Player2,
 		&i.UndoRequests,
