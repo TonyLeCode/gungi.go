@@ -1,14 +1,11 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabaseClient';
 	import Modal from './Modal.svelte';
-	// TODO verify unique username
-	//TODO verification
 
 	export let showModal: boolean;
 	let email: string;
 	let password: string;
 	let username: string;
-	console.log(supabase.auth.signUp);
 
 	const handleSignUp = async () => {
 		const { data, error } = await supabase.auth.signUp({

@@ -4,7 +4,7 @@
 	import NotificationItem from './NotificationItem.svelte';
 	import { nanoid } from 'nanoid';
 	import { fly } from 'svelte/transition';
-	import { get, writable } from 'svelte/store';
+	import { writable } from 'svelte/store';
 
 	$: notificationsStore = notifications?.store ?? writable<notificationType[]>([])
 
@@ -16,8 +16,6 @@
 			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
 		} as notificationType);
 	});
-	// console.log(get(notifications?.store))
-	//TODO notification bug, store is shared state on server...
 </script>
 
 <ul>
@@ -32,7 +30,6 @@
 		bottom: 2rem;
 		right: 2rem;
 		z-index: 10;
-		// border: 1px red solid;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;

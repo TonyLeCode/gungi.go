@@ -27,33 +27,10 @@
 	const turnColor = turnColorContext.get();
 	const moveListUI = moveListUIContext.get();
 
-	// export const boardState = new Array(81).fill(['']);
 	export let dragAndDrop: dragAndDropFunction;
 	export let drop: dropFunction;
-	// export let moveList: { [key: number]: number[] };
-	// $: console.log(moveList);
-	// $: console.log(moveList);
 
 	const dispatch = createEventDispatcher();
-
-	// function transformObject(
-	// 	obj: { [key: number]: number[] },
-	// 	shouldCreateNewObject: boolean
-	// ): { [key: number]: number[] } {
-	// 	const transformedObj: { [key: number]: number[] } = {};
-
-	// 	if (shouldCreateNewObject) {
-	// 		for (const key in obj) {
-	// 			const transformedKey = 80 - parseInt(key, 10);
-	// 			const transformedValues = obj[key].map((value) => 80 - value);
-	// 			transformedObj[transformedKey] = transformedValues;
-	// 		}
-	// 	} else {
-	// 		return obj;
-	// 	}
-
-	// 	return transformedObj;
-	// }
 
 	function GetImage2(tier: number, piece: number): string {
 		const encodedPiece = DecodePiece(piece).toLowerCase();
@@ -66,8 +43,6 @@
 			return reverseList(arr);
 		} else return arr;
 	}
-	// $: boardState = reverseIfBlack(gameData);
-	// $: console.log(boardState)
 	let fileCoords = [9, 8, 7, 6, 5, 4, 3, 2, 1];
 	let rankCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 	const unsubscribe = isViewReversed.subscribe((val) => {
@@ -95,7 +70,6 @@
 		const items = {
 			coordIndex: correctedIndex,
 			piece: piece,
-			// stack: boardState[index],
 		};
 		return {
 			mouseEnterItem: items,
@@ -138,7 +112,6 @@
 
 	function onClick(index: number) {
 		const square = get(boardUI)[index];
-		// console.log(String(index) + JSON.stringify(square));
 
 		if (get(userColor) != get(turnColor)) {
 			highlightIndex = -1;
@@ -159,11 +132,9 @@
 		}
 		highlightIndex = index;
 		moveIndices = get(moveListUI)[highlightIndex];
-		// console.log(moveIndices)
 	}
 
 	function moveHighlight(index: number): boolean {
-		// console.log(moveList[highlightIndex])
 		return $moveList[highlightIndex]?.includes(index);
 	}
 
@@ -228,7 +199,6 @@
 	}
 
 	.board {
-		/* box-shadow: 0px 7px 50px 5px rgba(230, 106, 5, 0.25); */
 		box-shadow:
 			0px 7px 50px 5px rgba(230, 106, 5, 0.25),
 			0px 5px 10px rgba(230, 106, 5, 0.25);

@@ -4,11 +4,11 @@
 
 	let dialog: HTMLDialogElement;
 	$: showModal = showModal;
-	// $: if (dialog && showModal) dialog.showModal();
 	$: dialog && showModal ? dialog.showModal() : dialog?.close();
 </script>
 
-<dialog class:cursor={backdropExit}
+<dialog
+	class:cursor={backdropExit}
 	bind:this={dialog}
 	on:close={() => {
 		showModal = false;
@@ -58,7 +58,7 @@
 		&::backdrop {
 			background-color: rgba(146, 146, 146, 0.5);
 		}
-		&::backdrop.cursor{
+		&::backdrop.cursor {
 			cursor: pointer;
 		}
 		&[open]::backdrop {

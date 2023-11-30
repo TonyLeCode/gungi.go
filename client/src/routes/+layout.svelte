@@ -10,8 +10,6 @@
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
-	// $: console.log($wsConnState)
-	// $: console.log(supabase)
 
 	onMount(() => {
 		const {
@@ -23,7 +21,6 @@
 		});
 		const token = session?.access_token;
 		if (token) {
-			// websocketConnect(`ws://${import.meta.env.VITE_API_URL}/ws`, session.access_token);
 			//TODO websocket as spectator
 			ws?.subscribe((val) => {
 				if (val === 'connecting') {
@@ -34,7 +31,6 @@
 
 		return () => {
 			subscription.unsubscribe();
-			// $ws?.close();
 			ws?.close();
 		};
 	});

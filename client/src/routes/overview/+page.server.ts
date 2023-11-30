@@ -1,6 +1,3 @@
-// import { VITE_API_URL } from './../../../.svelte-kit/ambient.d';
-// import { getServerSession } from '@supabase/auth-helpers-sveltekit'
-
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -20,8 +17,6 @@ export interface Game {
 export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) => {
 	const session = await getSession();
 	const token = session?.access_token;
-	// console.log('token', session?.access_token);
-	// const url = 'http://localhost:8080/getongoinggamelist';
 	const url = `http://${import.meta.env.VITE_API_URL}/getongoinggamelist`;
 	const options = {
 		headers: {

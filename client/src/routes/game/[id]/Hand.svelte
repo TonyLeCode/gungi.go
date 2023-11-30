@@ -17,11 +17,8 @@
 		player1HandCountContext,
 		player2HandCountContext,
 		isUserTurnContext,
-		isViewReversedContext,
 	} from './+page.svelte';
-	import { get } from 'svelte/store';
 	import Stack from './Stack.svelte';
-	//TODO player hand list
 
 	const manualFlip = manualFlipContext.get();
 	const player1HandList = player1HandListContext.get();
@@ -36,24 +33,12 @@
 	const player1HandCount = player1HandCountContext.get();
 	const player2HandCount = player2HandCountContext.get();
 	const isUserTurn = isUserTurnContext.get();
-	const isViewReversed = isViewReversedContext.get();
-	// export let playerColor: string;
-	// export let player1: string;
-	// export let player2: string;
-	// export let hands: number[][];
-	// export let onBoardBlack: number | undefined;
-	// export let onBoardWhite: number | undefined;
 	export let dragAndDrop: dragAndDropFunction;
 	export let stack: number[];
-	// export let reversed: boolean;
-	// export let isPlayerTurn: boolean;
-	// export let player1Ready: boolean;
-	// export let player2Ready: boolean;
 
 	const dispatch = createEventDispatcher();
 
 	function readyDisplay(num: number, playerColor: string): string {
-		//TODO not reactive...
 		if (num === 0) {
 			if (playerColor === 'w' && $isPlayer2Ready) {
 				return '- ready';
@@ -96,10 +81,6 @@
 			<h3 class="name">{$userColor === 'w' ? $player2Name : $player1Name} {readyDisplay(0, $userColor)}</h3>
 			<div>On Board: <span>{$userColor === 'w' ? $player2ArmyCount : $player1ArmyCount}</span></div>
 			<div>
-				<!-- In Hand: <span
-					>{hands[$userColor === 'w' ? 1 : 0].reduce((a, b) => {
-						return a + b;
-					})}</span> -->
 				In Hand: <span>{$userColor === 'b' ? $player1HandCount : $player2HandCount}</span>
 			</div>
 		</div>
@@ -123,11 +104,6 @@
 		<div class="hand-info">
 			<h3 class="name">{$userColor === 'w' ? $player1Name : $player2Name} {readyDisplay(1, $userColor)}</h3>
 			<span>On Board: {$userColor === 'w' ? $player1ArmyCount : $player2ArmyCount}</span>
-			<!-- <span
-				>In Hand: {hands[$userColor === 'w' ? 0 : 1].reduce((a, b) => {
-					return a + b;
-				})}</span
-			> -->
 			In Hand: <span>{$userColor === 'w' ? $player1HandCount : $player2HandCount}</span>
 		</div>
 		<div class="hand">
@@ -159,7 +135,6 @@
 
 <style lang="scss">
 	.name {
-		/* color: rgb(var(--primary)); */
 		margin-right: auto;
 		margin-left: 0.5rem;
 		position: relative;
@@ -181,10 +156,7 @@
 	.hand-container {
 		display: flex;
 		flex-direction: column;
-		/* border: 2px solid rgba(255, 77, 7, 0.7); */
 		background-color: rgb(var(--bg-2));
-		/* background-color: rgb(255, 255, 255); */
-		// box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		box-shadow:
 			0px 2px 55px rgba(0, 0, 0, 0.07),
 			0px 4px 15px rgba(0, 0, 0, 0.05);
@@ -197,7 +169,6 @@
 		gap: 1rem;
 	}
 	.hand {
-		/* background-color: rgb(199, 199, 199); */
 		display: grid;
 		grid-template-columns: repeat(auto-fit, 3rem);
 		gap: 1rem;
@@ -209,11 +180,9 @@
 		gap: 1rem;
 		padding: 0.5rem 1rem;
 		padding-bottom: 1rem;
-		/* justify-content: space-between; */
 	}
 
 	.buttons {
-		/* background-color: red; */
 		display: flex;
 		gap: 1rem;
 		justify-content: center;

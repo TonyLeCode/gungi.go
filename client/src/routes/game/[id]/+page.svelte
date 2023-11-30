@@ -1,7 +1,5 @@
 <script lang="ts" context="module">
 	import type { BoardState } from '$lib/store/gameState';
-	// const gameContext = createGameContext('')
-	// const gameStore = createService<BoardState>('')
 	export const gameStateContext = createService<Writable<BoardState>>('gameState');
 	export const player1NameContext = createService<Readable<string>>('player1Name');
 	export const player2NameContext = createService<Readable<string>>('player2Name');
@@ -28,10 +26,7 @@
 <script lang="ts">
 	import Board from './Board.svelte';
 	import {
-		DecodePiece,
 		DecodePieceFull,
-		FenToBoard,
-		FenToHand,
 		GetPieceColor,
 		IndexToCoords,
 	} from '$lib/utils/utils.js';
@@ -75,7 +70,6 @@
 				type: 'default',
 				msg: 'Your undo request has been accepted',
 			});
-			//TODO delete undo request
 		} else if (undoRequests[i].sender_username === username && undoRequests[i].status === 'reject') {
 			const msg = {
 				type: 'completeGameUndo',
@@ -88,10 +82,8 @@
 				type: 'default',
 				msg: 'Your undo request has been rejected',
 			});
-			//TODO delete undo request
 		}
 	}
-	// const undoRequests = writable(data.gameData.undo_requests)
 	const gameStore = createGameStore(data.gameData, data.session?.user.user_metadata.username);
 	gameStateContext.set(gameStore.gameState);
 	player1NameContext.set(gameStore.player1Name);
@@ -114,7 +106,6 @@
 	moveListUIContext.set(gameStore.moveListUI);
 	boardStateContext.set(gameStore.boardState);
 	boardUIContext.set(gameStore.boardUI);
-	// let boardState = data.data;
 	const boardState = gameStore.boardState;
 	const boardUI = gameStore.boardUI;
 	const isPlayer1Ready = gameStore.isPlayer1Ready;
@@ -122,20 +113,6 @@
 	const gameState = gameStore.gameState;
 	const userColor = gameStore.userColor;
 	const turnColor = gameStore.turnColor;
-	// const
-
-	// $: currentState = FenToBoard(boardState.current_state);
-	// $: console.log("currentstate: ", currentState)
-	// console.log(boardState);
-	// $: moveList = boardState.moveList;
-	// console.log(boardState);
-	// console.log(data?.params.id);
-	// console.log(data);
-	// for(let i in hands[0]){
-	// 	const encoded = DecodePiece(i).toLocaleLowerCase()
-	// 	console.log(`/pieces/w1${encoded}.svg`)
-	// }
-	//FenToBoard on board size
 
 	const { dragAndDrop, drop } = createDragAndDrop();
 
@@ -148,35 +125,13 @@
 	let showMoveDialogue = false;
 	let moveDialogueInfo: MoveType;
 
-	// function countPiecesOnBoard(fen: string) {
-	// 	const pieces = fen.split(' ')[0];
-	// 	const matchW = pieces.match(/[A-Z]/g);
-	// 	const matchB = pieces.match(/[a-z]/g);
-	// 	return [matchW?.length ?? 0, matchB?.length ?? 0];
-	// }
-	// function reverseNameIfBlack(isBlack: boolean): string {
-	// 	return !isBlack ? boardState.player1 : boardState.player2;
-	// }
-
 	let moveDialogueText = '';
 	let disableAttackDialogue = false;
 	let disableStackDialogue = false;
 	let menuState = 0;
 	let stack: number[] = [];
-	// countPiecesOnBoard(data.data.current_state)
-	//TODO get fen to hand
-	// $: hands = FenToHand(boardState.current_state);
-	// $: [onBoardWhite, onBoardBlack] = countPiecesOnBoard(boardState.current_state);
-	// $: turnColor = boardState.current_state.split(' ')[2];
-	// $: turnPlayer = turnColor === 'w' ? boardState.player1 : boardState.player2;
-	// $: playerColor = boardState.player1 === data.session?.user.user_metadata.username ? 'w' : 'b';
-	// $: console.log(playerColor);
-	// $: isPlayerTurn = turnColor === playerColor;
-	// $: player1Ready = boardState.current_state.split(' ')[3][0] == 1;
-	// $: player2Ready = boardState.current_state.split(' ')[3][1] == 1;
 
 	function handleDropEvent(event: CustomEvent) {
-		// console.log(event.detail);
 		disableAttackDialogue = true;
 		disableStackDialogue = true;
 
@@ -287,8 +242,6 @@
 			switch (res.type) {
 				case 'game':
 					gameStore.gameState.set(res.payload);
-					// boardState = res.payload;
-					// currentState = FenToBoard(boardState.current_state);
 					break;
 				case 'undoRequest':
 					console.log("request undo")
@@ -363,15 +316,10 @@
 	}
 
 	onMount(() => {
-		const unsubGameMsg2 = ws?.addMsgListener(handleGameMsg);
+		const unsubGameMsg = ws?.addMsgListener(handleGameMsg);
 
 		const unsubConnect = ws?.subscribe((val) => {
 			if (val === 'connected') {
-				// const msg = {
-				// 	type: 'route',
-				// 	payload: 'game',
-				// };
-				// ws?.send(msg);
 				const msg2 = {
 					type: 'joinGame',
 					payload: get(gameStore.gameState).id,
@@ -380,15 +328,13 @@
 			}
 		});
 		return () => {
-			// if (unsubGameMsg) unsubGameMsg();
-			if (unsubGameMsg2) unsubGameMsg2();
+			if (unsubGameMsg) unsubGameMsg();
 			if (unsubConnect) unsubConnect();
 			const msg = {
 				type: 'leaveGame',
 				payload: get(gameState).id,
 			};
 			ws?.send(msg);
-			// $ws?.removeEventListener('message', handleGameMsg);
 		};
 	});
 </script>
@@ -453,11 +399,6 @@
 </main>
 
 <style lang="scss">
-	// main {
-	// 	display: flex;
-	// 	max-width: 90rem;
-	// 	margin: 0 auto;
-	// }
 	main {
 		max-width: 90rem;
 		margin: 0 auto;
@@ -474,12 +415,9 @@
 	}
 
 	.tabs {
-		/* background-color: red; */
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		/* gap: 1rem; */
 		justify-content: center;
-		/* margin-left: 10%; */
 		margin: 1rem 0;
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		border-radius: 4px;
@@ -508,15 +446,10 @@
 	}
 
 	.side-menu {
-		/* background-color: gray; */
-		// margin-left: auto;
 		margin: 0 auto;
-		// max-width: 36rem;
 		max-width: 44rem;
 		width: 100%;
 		padding: 0 2rem;
-		// margin-top: auto;
-		// margin-bottom: auto;
 	}
 
 	@media only screen and (min-width: 1200px) {

@@ -4,7 +4,6 @@
 	import { linear } from 'svelte/easing';
 
 	export let notification: notificationType;
-	// console.log(notification);
 	let duration = tweened(100, {
 		duration: 5000,
 		easing: linear,
@@ -46,11 +45,8 @@
 		position: absolute;
 		bottom: 0;
 		left: 0;
-		// border-bottom-right-radius: 8px;
-		// border-bottom-left-radius: 8px;
 	}
 	.notification {
-		// border: 1px blue dashed;
 		position: relative;
 		padding: 1rem 2rem;
 		min-width: 21rem;
@@ -61,8 +57,6 @@
 		align-items: center;
 		background-color: rgb(var(--bg-2));
 		border-radius: 8px;
-		// overflow: hidden;
-		// border: 2px rgba(var(--primary), 0.5) solid;
 	}
 	.close {
 		margin-left: auto;

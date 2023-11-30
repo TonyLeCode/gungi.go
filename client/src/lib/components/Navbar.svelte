@@ -3,7 +3,6 @@
 
 	export let session: Session | null;
 	$: session = session;
-	// $: console.log("session!!", session)
 </script>
 
 <nav class="navbar">
@@ -40,7 +39,6 @@
 	}
 	.brand {
 		font-weight: 600;
-		/* font-size: 1.25rem; */
 	}
 	.name {
 		color: rgb(var(--primary));
@@ -48,25 +46,8 @@
 		position: relative;
 		font-weight: 600;
 	}
-	/* .name::before{
-		content: '';
-		width: 15px;
-		height: 15px;
-		border-radius: 50%;
-		background-color: rgb(var(--primary));
-		display:block;
-		position:absolute;
-		left: -1.25rem;
-		margin: auto;
-		top: 0;
-		bottom: 0;
-	} */
 
 	.navbar {
-		/* display: flex; */
-		/* justify-content: space-between; */
-		/* background-color:red; */
-		/* max-width: 1000px; */
 		padding: 0.75rem 1rem;
 		max-width: 120rem;
 		margin: auto;
@@ -78,7 +59,6 @@
 	}
 	.nav-list {
 		display: none;
-		/* margin-left: 2rem; */
 	}
 	.nav-account {
 		display: flex;

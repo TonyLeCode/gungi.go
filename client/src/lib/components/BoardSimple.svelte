@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { reverseList } from '$lib/helpers';
-	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, GetTopStack } from '$lib/utils/utils';
+	import { FenToBoard, GetImage } from '$lib/utils/utils';
 	import type { Game } from '../../routes/overview/+page.server';
 
 	export let gameData: Game;
 	export let userColor: 'w' | 'b' | 'spectator';
-	// console.log(gameData.current_state);
 	$: isUserWhite = userColor === 'w';
 	$: boardState = FenToBoard(gameData.current_state);
 	$: correctedBoardState = isUserWhite ? boardState : reverseList(boardState);

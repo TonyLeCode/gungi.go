@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { moveHistoryContext, gameStateContext } from './+page.svelte';
 	import { get } from 'svelte/store';
 
-	// export let moveHistory: string[];
 	const moveHistory = moveHistoryContext.get();
 	const gameState = gameStateContext.get();
 	let currentIndex = get(moveHistory).length - 1;
 	moveHistory.subscribe((val) => {
 		currentIndex = val.length - 1;
 	});
-	// $: moveHistoryLength = $moveHistory.length
 	let containerRef: HTMLOListElement;
 	let autoplay = false;
 	let autoplayInterval = 1000;

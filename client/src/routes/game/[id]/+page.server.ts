@@ -1,5 +1,3 @@
-// import { VITE_API_URL } from './../../../../.svelte-kit/ambient.d';
-import type { BoardState } from '$lib/store/gameState.js';
 import { error } from '@sveltejs/kit';
 
 export async function load({ fetch, params }) {
