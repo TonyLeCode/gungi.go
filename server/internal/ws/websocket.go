@@ -183,7 +183,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			}
 
 			board.SetHistory(strings.Fields(game.History.String))
-			board.PrintBoard()
+			// board.PrintBoard()
 
 			if board.GetTurnColor() == 0 && game.User1 != sessions[s].ID {
 				log.Println("Error: Wrong color")
@@ -198,7 +198,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println("Error: ", err)
 				return
 			}
-			board.PrintBoard()
+			// board.PrintBoard()
 			log.Println("fen: ", board.BoardToFen())
 
 			game.CurrentState = board.BoardToFen()
@@ -227,7 +227,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				}
 			}
 			game.MoveList = correctedLegalMoves
-			log.Println(correctedLegalMoves)
+			// log.Println(correctedLegalMoves)
 
 			m := ServerMsg{
 				Type:    "game",
@@ -301,9 +301,9 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				}
 
 				board.SetHistory(strings.Fields(game.History.String))
-				board.PrintBoard()
+				// board.PrintBoard()
 				board.UndoMove()
-				board.PrintBoard()
+				// board.PrintBoard()
 				game.CurrentState = board.BoardToFen()
 				game.History.String = board.SerializeHistory()
 				game.History.Valid = true

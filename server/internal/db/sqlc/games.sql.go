@@ -443,6 +443,7 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 
 const getRoomList = `-- name: GetRoomList :many
 SELECT
+    room_list.id,
     room_list.description,
     room_list.rules,
     room_list.type,
@@ -455,11 +456,12 @@ JOIN
 `
 
 type GetRoomListRow struct {
-	Description string `json:"description"`
-	Rules       string `json:"rules"`
-	Type        string `json:"type"`
-	Color       string `json:"color"`
-	Host        string `json:"host"`
+	ID          uuid.UUID `json:"id"`
+	Description string    `json:"description"`
+	Rules       string    `json:"rules"`
+	Type        string    `json:"type"`
+	Color       string    `json:"color"`
+	Host        string    `json:"host"`
 }
 
 func (q *Queries) GetRoomList(ctx context.Context) ([]GetRoomListRow, error) {
@@ -472,6 +474,7 @@ func (q *Queries) GetRoomList(ctx context.Context) ([]GetRoomListRow, error) {
 	for rows.Next() {
 		var i GetRoomListRow
 		if err := rows.Scan(
+			&i.ID,
 			&i.Description,
 			&i.Rules,
 			&i.Type,
