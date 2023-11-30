@@ -103,8 +103,8 @@
 	<div class="hand-container">
 		<div class="hand-info">
 			<h3 class="name">{$userColor === 'w' ? $player1Name : $player2Name} {readyDisplay(1, $userColor)}</h3>
-			<span>On Board: {$userColor === 'w' ? $player1ArmyCount : $player2ArmyCount}</span>
-			In Hand: <span>{$userColor === 'w' ? $player1HandCount : $player2HandCount}</span>
+			<div>On Board: <span>{$userColor === 'w' ? $player1ArmyCount : $player2ArmyCount}</span></div>
+			<div>In Hand:<span>{$userColor === 'w' ? $player1HandCount : $player2HandCount}</span></div>
 		</div>
 		<div class="hand">
 			{#each $userColor === 'w' ? $player1HandList : $player2HandList as amount, i}

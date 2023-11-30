@@ -20,6 +20,7 @@ export interface BoardState {
 
 export function createGameStore(initState: BoardState, username: string | null) {
 	const gameState = writable<BoardState>(initState);
+	const completed = derived(gameState, (data) => data.completed)
 	const player1Name = derived(gameState, (data) => data.player1);
 	const player2Name = derived(gameState, (data) => data.player2);
 	const userColor = derived(gameState, (data) => {
@@ -60,16 +61,22 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		return hand;
 	});
 	const player1ArmyCount = derived(gameState, (data) => {
-		return 5;
+		const pieces = data.current_state.split(' ')[0]
+		const wPieces = pieces.match(/[A-Z]/g);
+		return wPieces?.length ?? 0;
 	});
 	const player2ArmyCount = derived(gameState, (data) => {
-		return 5;
+		const pieces = data.current_state.split(' ')[0]
+		const bPieces = pieces.match(/[a-z]/g);
+		return bPieces?.length ?? 0;
 	});
-	const player1HandCount = derived(gameState, (data) => {
-		return 5;
+	const player1HandCount = derived(player2HandList, (handList) => {
+		const count = handList.reduce((a,b) => a+b)
+		return count;
 	});
-	const player2HandCount = derived(gameState, (data) => {
-		return 5;
+	const player2HandCount = derived(player2HandList, (handList) => {
+		const count = handList.reduce((a,b) => a+b)
+		return count;
 	});
 	const moveList = derived(gameState, (data) => {
 		return data.moveList;
@@ -95,6 +102,7 @@ export function createGameStore(initState: BoardState, username: string | null) 
 
 	return {
 		gameState,
+		completed,
 		player1Name,
 		player2Name,
 		userColor,

@@ -39,7 +39,7 @@
 	import { onMount } from 'svelte';
 	import { createService } from '$lib/store/contextHelper';
 	import type { Readable, Writable } from 'svelte/store';
-	import { get, writable } from 'svelte/store';
+	import { get } from 'svelte/store';
 	import { createGameStore } from '$lib/store/gameState';
 	import { notifications } from '$lib/store/notification';
 	import { nanoid } from 'nanoid';
@@ -54,7 +54,7 @@
 	const username = data.session?.user.user_metadata.username;
 	const undoRequests: undoRequests[] = data.gameData.undo_requests;
 	let undoDialogBool = false;
-	console.log(undoRequests);
+	
 	for (let i = 0; i < undoRequests.length; i++) {
 		if (undoRequests[i].receiver_username === username && undoRequests[i].status === 'pending') {
 			undoDialogBool = true;
