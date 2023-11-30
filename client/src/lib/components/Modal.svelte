@@ -1,33 +1,26 @@
 <script lang="ts">
 	export let showModal: boolean;
-	export let backdropExit: boolean = true;
 
 	let dialog: HTMLDialogElement;
 	$: showModal = showModal;
 	$: dialog && showModal ? dialog.showModal() : dialog?.close();
 </script>
 
+<svelte:window on:keydown={() => {showModal = false}} />
+
 <dialog
-	class:cursor={backdropExit}
 	bind:this={dialog}
 	on:close={() => {
 		showModal = false;
 	}}
-	on:click|self={() => {
-		if (backdropExit) {
-			dialog.close();
-		}
-	}}
 >
-	<div on:click|stopPropagation>
-		{#if backdropExit}
+	<div>
 			<button
 				class="close"
 				on:click={() => {
 					dialog.close();
 				}}><img draggable="false" src="/closeCircle.svg" alt="exit dialog" width="35px" height="35px" /></button
 			>
-		{/if}
 		<slot />
 	</div>
 </dialog>
@@ -57,9 +50,6 @@
 		}
 		&::backdrop {
 			background-color: rgba(146, 146, 146, 0.5);
-		}
-		&::backdrop.cursor {
-			cursor: pointer;
 		}
 		&[open]::backdrop {
 			animation: fade 150ms ease-out;

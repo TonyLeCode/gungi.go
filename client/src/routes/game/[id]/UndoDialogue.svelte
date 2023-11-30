@@ -16,7 +16,7 @@
 	}
 </script>
 
-<Modal bind:showModal backdropExit={false}>
+<Modal bind:showModal>
 	<p>Your opponent has requested<br> an undo</p>
 	<div class="button-container">
 		<button on:click={handleAccept} class="button-primary">Accept Undo</button>
