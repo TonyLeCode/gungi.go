@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions } from '$lib/utils/dragAndDrop';
-	import { DecodePiece, DecodePieceFull, GetPieceColor, IndexToCoords, PieceIsPlayerColor } from '$lib/utils/utils';
+	import type { dragAndDropFunction, dragAndDropItems } from '$lib/utils/dragAndDrop';
+	import { DecodePiece } from '$lib/utils/utils';
 
 	export let color: string;
 	export let piece: number;
@@ -9,13 +9,14 @@
 	export let dragAndDrop: dragAndDropFunction;
 	export let playerColor: string;
 	export let isPlayerTurn: boolean;
+	export let completed: boolean;
 
 	const dispatch = createEventDispatcher();
 
 	const decodedPiece = DecodePiece(piece).toLowerCase();
 
 	function isActive() {
-		return color == playerColor && isPlayerTurn;
+		return color == playerColor && isPlayerTurn && !completed;
 	}
 
 	function dropEvent(items?: dragAndDropItems) {
@@ -43,7 +44,7 @@
 
 <div class={`hand ${color === 'b' ? 'dark-hand' : ''}`}>
 	<img
-		class={`piece ${color == playerColor && isPlayerTurn ? 'piece-hover pointer' : ''}`}
+		class={`piece ${color == playerColor && isPlayerTurn && !completed ? 'piece-hover pointer' : ''}`}
 		draggable="false"
 		use:dragAndDrop={dndOptions(piece)}
 		src={`/pieces/${color}1${decodedPiece}.svg`}

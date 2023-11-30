@@ -2,12 +2,12 @@
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
-	import { DecodePiece, FenToBoard, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
-	import { nanoid } from 'nanoid';
+	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
 	import { get } from 'svelte/store';
 
 	import {
 		boardUIContext,
+		completedContext,
 		isViewReversedContext,
 		isPlayer1ReadyContext,
 		isPlayer2ReadyContext,
@@ -18,6 +18,7 @@
 		moveListContext,
 	} from './+page.svelte';
 	const boardUI = boardUIContext.get();
+	const completed = completedContext.get();
 	const userColor = userColorContext.get();
 	const isViewReversed = isViewReversedContext.get();
 	const isPlayer1Ready = isPlayer1ReadyContext.get();
@@ -91,7 +92,7 @@
 			if (!get(isPlayer1Ready) || !get(isPlayer2Ready)) {
 				return false;
 			}
-			return PieceIsPlayerColor(piece, get(userColor)) && get(isUserTurn);
+			return PieceIsPlayerColor(piece, get(userColor)) && get(isUserTurn) && !get(completed);
 		}
 		if (get(isViewReversed)) {
 			correctedIndex = 80 - index;
@@ -113,7 +114,7 @@
 	function onClick(index: number) {
 		const square = get(boardUI)[index];
 
-		if (get(userColor) != get(turnColor)) {
+		if (get(userColor) != get(turnColor) || get(completed)) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;
@@ -146,6 +147,8 @@
 <div class="board">
 	{#each $boardUI as square, index (String(index) + JSON.stringify(square))}
 		<div
+			role="button"
+			tabindex="0"
 			on:mousedown={() => {
 				onClick(index);
 			}}
@@ -164,7 +167,9 @@
 				<img
 					draggable="false"
 					use:dragAndDrop={dndOptions(index, square[square.length - 1])}
-					class={`piece ${PieceIsPlayerColor(square[square.length - 1], $userColor) && $isUserTurn ? 'pointer' : ''}`}
+					class={`piece ${
+						PieceIsPlayerColor(square[square.length - 1], $userColor) && $isUserTurn && !completed ? 'pointer' : ''
+					}`}
 					src={GetImage(square)}
 					alt=""
 				/>

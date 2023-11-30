@@ -5,6 +5,7 @@
 
 	import {
 		manualFlipContext,
+		completedContext,
 		player1HandListContext,
 		player2HandListContext,
 		userColorContext,
@@ -21,6 +22,7 @@
 	import Stack from './Stack.svelte';
 
 	const manualFlip = manualFlipContext.get();
+	const completed = completedContext.get();
 	const player1HandList = player1HandListContext.get();
 	const player2HandList = player2HandListContext.get();
 	const isPlayer1Ready = isPlayer1ReadyContext.get();
@@ -95,6 +97,7 @@
 						color={$userColor === 'w' ? 'b' : 'w'}
 						piece={i}
 						{amount}
+						completed={$completed}
 					/>
 				{/if}
 			{/each}
@@ -117,6 +120,7 @@
 						color={$userColor === 'w' ? 'w' : 'b'}
 						piece={i}
 						{amount}
+						completed={$completed}
 					/>
 				{/if}
 			{/each}

@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
 	import type { BoardState } from '$lib/store/gameState';
 	export const gameStateContext = createService<Writable<BoardState>>('gameState');
+	export const completedContext = createService<Readable<boolean>>('completed');
 	export const player1NameContext = createService<Readable<string>>('player1Name');
 	export const player2NameContext = createService<Readable<string>>('player2Name');
 	export const userColorContext = createService<Readable<'w' | 'b' | 'spectator'>>('userColor');
@@ -25,11 +26,7 @@
 
 <script lang="ts">
 	import Board from './Board.svelte';
-	import {
-		DecodePieceFull,
-		GetPieceColor,
-		IndexToCoords,
-	} from '$lib/utils/utils.js';
+	import { DecodePieceFull, GetPieceColor, IndexToCoords } from '$lib/utils/utils.js';
 	import Hand from './Hand.svelte';
 	import Chat from './Chat.svelte';
 	import Replay from './Replay.svelte';
@@ -54,7 +51,7 @@
 	const username = data.session?.user.user_metadata.username;
 	const undoRequests: undoRequests[] = data.gameData.undo_requests;
 	let undoDialogBool = false;
-	
+
 	for (let i = 0; i < undoRequests.length; i++) {
 		if (undoRequests[i].receiver_username === username && undoRequests[i].status === 'pending') {
 			undoDialogBool = true;
@@ -86,6 +83,7 @@
 	}
 	const gameStore = createGameStore(data.gameData, data.session?.user.user_metadata.username);
 	gameStateContext.set(gameStore.gameState);
+	completedContext.set(gameStore.completed);
 	player1NameContext.set(gameStore.player1Name);
 	player2NameContext.set(gameStore.player2Name);
 	userColorContext.set(gameStore.userColor);
@@ -113,6 +111,7 @@
 	const gameState = gameStore.gameState;
 	const userColor = gameStore.userColor;
 	const turnColor = gameStore.turnColor;
+	const completed = gameStore.completed;
 
 	const { dragAndDrop, drop } = createDragAndDrop();
 
@@ -244,7 +243,7 @@
 					gameStore.gameState.set(res.payload);
 					break;
 				case 'undoRequest':
-					console.log("request undo")
+					console.log('request undo');
 					undoDialogBool = true;
 					break;
 				case 'undoResponse':
@@ -349,8 +348,12 @@
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
-			{$isPlayer1Ready && $isPlayer2Ready ? '' : 'Drafting -'}
-			{$turnColor === 'w' ? 'White' : 'Black'} To Play
+			{#if $completed}
+				Game Finished
+			{:else}
+				{$isPlayer1Ready && $isPlayer2Ready ? '' : 'Drafting -'}
+				{$turnColor === 'w' ? 'White' : 'Black'} To Play
+			{/if}
 		</div>
 		<div class="tabs">
 			<button
