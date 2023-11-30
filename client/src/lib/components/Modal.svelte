@@ -6,7 +6,11 @@
 	$: dialog && showModal ? dialog.showModal() : dialog?.close();
 </script>
 
-<svelte:window on:keydown={() => {showModal = false}} />
+<svelte:window on:keydown={(e) => {
+	if(e.key === "Escape"){
+		showModal = false
+	}
+}} />
 
 <dialog
 	bind:this={dialog}
