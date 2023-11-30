@@ -56,13 +56,16 @@ a,
 	transition-property: background-color;
 	&:hover:not([disabled]) {
 		background-color: rgb(var(--primary-2));
+		color: rgb(var(--bg));
 	}
 	&:active:not([disabled]) {
 		background-color: rgb(var(--primary-3));
+		color: rgb(var(--bg));
 		box-shadow: none;
 	}
 	&:focus {
 		outline: 2px solid rgba(var(--primary), 0.5);
+		color: rgb(var(--bg));
 		outline-offset: 2px;
 	}
 	&:disabled {

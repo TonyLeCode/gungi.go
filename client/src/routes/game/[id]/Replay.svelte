@@ -18,6 +18,25 @@
 		containerRef.scrollTop = currentIndex * 36;
 	}
 
+	$: headings = `[game_id: ${$gameState.id}]\n[ruleset: ${$gameState.ruleset}]\n[type: ${$gameState.type}]\n[date_started: ${$gameState.date_started}]\n[white: ${$gameState.player1}]\n[black: ${$gameState.player2}]\n\n`;
+	$: textHistory = headings + $moveHistory.join(' ');
+	$: blob = new Blob([textHistory], { type: 'text/plain' });
+	$: url = URL.createObjectURL(blob);
+	$: date = new Date($gameState.date_started)
+	$: year = date.getFullYear();
+	$: month = String(date.getMonth() + 1).padStart(2, '0');
+	$: day = String(date.getDate()).padStart(2, '0');
+	$: formattedDate = `${year}-${month}-${day}`
+
+	$: fileName = `${$gameState.player1}_vs_${$gameState.player2}_${formattedDate}`
+
+	function handleDownload() {
+		const state = get(gameState);
+		let headings = `[game_id: ${state.id}]\n[ruleset: ${state.ruleset}]\n[type: ${state.type}]\n[date_started: ${state.date_started}]\n[white: ${state.player1}]\n[black: ${state.player2}]\n\n`;
+		const history = get(moveHistory).join(' ');
+		const blob = new Blob([headings + history], { type: 'text/plain' });
+	}
+
 	function handleCopy() {
 		const state = get(gameState);
 		console.log(state);
@@ -122,8 +141,11 @@
 			on:click={startAutoplay}>autoplay</button
 		>
 		<input type="number" name="autoplay" bind:value={autoplayInterval} on:change={intervalChange} />
-		<button class="button-primary" on:click={handleCopy}>Copy</button>
 	</div>
+</div>
+<div class="options">
+	<button class="button-primary" on:click={handleCopy}>Copy</button>
+	<a class="button-primary" href={url} download={fileName}>Download</a>
 </div>
 
 <style lang="scss">
@@ -160,6 +182,14 @@
 		margin-bottom: 1rem;
 		padding: 1rem;
 		justify-content: center;
+	}
+	.options {
+		display: flex;
+		margin-bottom: 1rem;
+		padding: 1rem 2rem;
+		gap: 1rem;
+		justify-content: center;
+
 	}
 	.history-list {
 		background-color: rgb(var(--bg-2));
