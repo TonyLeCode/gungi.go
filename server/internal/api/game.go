@@ -406,12 +406,29 @@ func (dbConn *DBConn) GetRoomList() ([]db.GetRoomListRow, error) {
 	return roomList, nil
 }
 
-func (dbConn *DBConn) DeleteRoom(id uuid.UUID) (db.DeleteRoomRow, error) {
+func (dbConn *DBConn) DeleteRoomSafe(roomID uuid.UUID, hostID uuid.UUID) (db.DeleteRoomSafeRow, error) {
+	ctx := context.Background()
+
+	queries := db.New(dbConn.Conn)
+	params := db.DeleteRoomSafeParams{
+		ID:     roomID,
+		HostID: hostID,
+	}
+
+	room, err := queries.DeleteRoomSafe(ctx, params)
+	if err != nil {
+		return db.DeleteRoomSafeRow{}, err
+	}
+
+	return room, nil
+}
+
+func (dbConn *DBConn) DeleteRoom(roomID uuid.UUID) (db.DeleteRoomRow, error) {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.Conn)
 
-	room, err := queries.DeleteRoom(ctx, id)
+	room, err := queries.DeleteRoom(ctx, roomID)
 	if err != nil {
 		return db.DeleteRoomRow{}, err
 	}

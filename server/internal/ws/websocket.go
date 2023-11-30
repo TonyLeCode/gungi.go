@@ -509,7 +509,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
-			_, err = dbConn.DeleteRoom(roomUUID)
+			_, err = dbConn.DeleteRoomSafe(roomUUID, sessions[s].ID)
 			if err != nil {
 				log.Println(err)
 				return

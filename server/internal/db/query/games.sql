@@ -161,6 +161,17 @@ FROM
 JOIN
     public.profiles ON room_list.host_id = profiles.id;
 
+-- name: DeleteRoomSafe :one
+WITH deleted_room AS (
+    DELETE FROM public.room_list
+    WHERE room_list.id = $1 AND room_list.host_id = $2
+    AND EXISTS (SELECT FROM profiles WHERE profiles.id = room_list.host_id)
+    RETURNING *
+)
+SELECT deleted_room.*, profiles.username as host
+FROM deleted_room
+JOIN profiles ON deleted_room.host_id = profiles.id;
+
 -- name: DeleteRoom :one
 WITH deleted_room AS (
     DELETE FROM public.room_list

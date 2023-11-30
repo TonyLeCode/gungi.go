@@ -170,6 +170,50 @@ func (q *Queries) DeleteRoom(ctx context.Context, id uuid.UUID) (DeleteRoomRow, 
 	return i, err
 }
 
+const deleteRoomSafe = `-- name: DeleteRoomSafe :one
+WITH deleted_room AS (
+    DELETE FROM public.room_list
+    WHERE room_list.id = $1 AND room_list.host_id = $2
+    AND EXISTS (SELECT FROM profiles WHERE profiles.id = room_list.host_id)
+    RETURNING id, host_id, description, rules, type, color, created_at
+)
+SELECT deleted_room.id, deleted_room.host_id, deleted_room.description, deleted_room.rules, deleted_room.type, deleted_room.color, deleted_room.created_at, profiles.username as host
+FROM deleted_room
+JOIN profiles ON deleted_room.host_id = profiles.id
+`
+
+type DeleteRoomSafeParams struct {
+	ID     uuid.UUID `json:"id"`
+	HostID uuid.UUID `json:"host_id"`
+}
+
+type DeleteRoomSafeRow struct {
+	ID          uuid.UUID          `json:"id"`
+	HostID      uuid.UUID          `json:"host_id"`
+	Description string             `json:"description"`
+	Rules       string             `json:"rules"`
+	Type        string             `json:"type"`
+	Color       string             `json:"color"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	Host        string             `json:"host"`
+}
+
+func (q *Queries) DeleteRoomSafe(ctx context.Context, arg DeleteRoomSafeParams) (DeleteRoomSafeRow, error) {
+	row := q.db.QueryRow(ctx, deleteRoomSafe, arg.ID, arg.HostID)
+	var i DeleteRoomSafeRow
+	err := row.Scan(
+		&i.ID,
+		&i.HostID,
+		&i.Description,
+		&i.Rules,
+		&i.Type,
+		&i.Color,
+		&i.CreatedAt,
+		&i.Host,
+	)
+	return i, err
+}
+
 const getGame = `-- name: GetGame :one
 SELECT 
     games.id,
