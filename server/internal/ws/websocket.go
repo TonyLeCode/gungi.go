@@ -382,22 +382,22 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			log.Println("Joined Play")
 			log.Println("Conns: ", listeners.listeners)
 
-			// TODO host id to username
 			roomList, err := dbConn.GetRoomList()
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			roomListMsg := ServerMsg{
+
+			m := ServerMsg{
 				Type:    "roomList",
 				Payload: roomList,
 			}
-			marshaledRoomListMsg, err := json.Marshal(roomListMsg)
+			b, err := json.Marshal(m)
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			s.Write(marshaledRoomListMsg)
+			s.Write(b)
 
 		case "leavePlay":
 			listeners.RemoveListenerRooms(s)

@@ -151,7 +151,10 @@ VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetRoomList :many
 SELECT
-    room_list.*,
+    room_list.description,
+    room_list.rules,
+    room_list.type,
+    room_list.color,
     profiles.username AS host
 FROM
     public.room_list
