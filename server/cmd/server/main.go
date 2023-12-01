@@ -26,6 +26,7 @@ type Config struct {
 func LoadConfig() (config Config, err error) {
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()
+	log.Println(viper.Get("PORT"))
 
 	err = viper.ReadInConfig()
 	if err != nil {
@@ -45,7 +46,8 @@ func main() {
 	if port == "" {
 		port = "localhost:5080"
 	} else {
-		port = ":" + port
+		// port = ":" + port
+		port = ":" + viper.Get("PORT").(string)
 	}
 
 	db := api.DBConn{}
