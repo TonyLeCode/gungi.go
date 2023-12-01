@@ -12,7 +12,7 @@ interface msgType {
 
 function createWsStore() {
 	if (!browser) return;
-	const newSocket = new WebSocket(`ws://${import.meta.env.VITE_API_URL}/ws`);
+	const newSocket = new WebSocket(`${import.meta.env.VITE_API_URL}/ws`);
 	const { subscribe } = readable<wsConnStateType>('closed', (set) => {
 		newSocket.addEventListener('open', () => {
 			set('connecting');
