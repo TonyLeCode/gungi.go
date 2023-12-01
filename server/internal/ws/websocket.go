@@ -226,7 +226,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 					correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 				}
 			}
-			//TODO not good order
+			//TODO not good order because db will get updated by MakeMove before checking game result
 			game.MoveList = correctedLegalMoves
 
 			var gameEndString string

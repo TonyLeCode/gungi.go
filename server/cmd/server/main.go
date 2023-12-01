@@ -19,6 +19,7 @@ import (
 type Config struct {
 	DB_SOURCE           string `mapstructure:"DB_SOURCE"`
 	SUPABASE_JWT_SECRET string `mapstructure:"SUPABASE_JWT_SECRET"`
+	PORT                string `mapstructure:"PORT"`
 }
 
 // LoadConfig reads configuration from file or environment variables
@@ -82,7 +83,7 @@ func main() {
 	verify.PUT("/user/onboarding", db.PutOnboarding)
 	verify.PUT("/user/changename", db.ChangeUsername)
 
-	e.Logger.Fatal(e.Start("localhost:5080"))
+	e.Logger.Fatal(e.Start(config.PORT))
 }
 
 func VerifySupabaseTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
