@@ -33,7 +33,7 @@ func LoadConfig() (config Config, err error) {
 		cfg.DB_SOURCE = viper.Get("DB_SOURCE").(string)
 		cfg.SUPABASE_JWT_SECRET = viper.Get("SUPABASE_JWT_SECRET").(string)
 		cfg.PORT = viper.Get("PORT").(string)
-		return config, nil
+		return cfg, nil
 	}
 
 	err = viper.Unmarshal(&cfg)
