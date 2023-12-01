@@ -55,6 +55,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 
 	m.HandleConnect(func(s *melody.Session) {
 		log.Println("Connected", s)
+		sessions.AddSpectator(s)
 	})
 
 	m.HandleDisconnect(func(s *melody.Session) {
@@ -159,7 +160,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 		case "makeGameMove":
 			ctx := context.Background()
 
-			if sessions[s].GameID == uuid.Nil {
+			if sessions[s].GameID == uuid.Nil || sessions[s].ID == uuid.Nil {
 				return
 			}
 
@@ -293,7 +294,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 		case "gameResign":
 			ctx := context.Background()
 			gameID := sessions[s].GameID
-			if gameID == uuid.Nil {
+			if gameID == uuid.Nil || sessions[s].ID == uuid.Nil {
 				return
 			}
 			userID := sessions[s].ID
@@ -340,7 +341,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 
 		case "requestGameUndo":
 			gameID := sessions[s].GameID
-			if gameID == uuid.Nil {
+			if gameID == uuid.Nil || sessions[s].ID == uuid.Nil {
 				return
 			}
 
@@ -365,7 +366,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 
 		case "responseGameUndo":
 			ctx := context.Background()
-			if sessions[s].GameID == uuid.Nil {
+			if sessions[s].GameID == uuid.Nil || sessions[s].ID == uuid.Nil {
 				return
 			}
 
@@ -459,7 +460,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			})
 
 		case "completeGameUndo":
-			if sessions[s].GameID == uuid.Nil {
+			if sessions[s].GameID == uuid.Nil || sessions[s].ID == uuid.Nil {
 				return
 			}
 
@@ -498,6 +499,9 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			log.Println("Conns: ", listeners.listeners)
 
 		case "createPlayRoom":
+			if sessions[s].ID == uuid.Nil {
+				return
+			}
 			var roomPayload CreateGameRoomRequest
 			err := json.Unmarshal(clientMsg.Payload, &roomPayload)
 			if err != nil {
@@ -529,7 +533,9 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			listeners.EmitRoomMsg(b)
 
 		case "acceptPlayRoom":
-
+			if sessions[s].ID == uuid.Nil {
+				return
+			}
 			var roomid string
 			err := json.Unmarshal(clientMsg.Payload, &roomid)
 			if err != nil {
@@ -589,6 +595,9 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			listeners.EmitRoomMsg(b)
 
 		case "cancelPlayRoom":
+			if sessions[s].ID == uuid.Nil {
+				return
+			}
 			var roomid string
 			err := json.Unmarshal(clientMsg.Payload, &roomid)
 			if err != nil {

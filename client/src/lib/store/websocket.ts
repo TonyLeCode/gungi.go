@@ -14,9 +14,9 @@ function createWsStore() {
 	if (!browser) return;
 	const url = dev ? `ws://${import.meta.env.VITE_API_URL}/ws` : `wss://${import.meta.env.VITE_API_URL}/ws`
 	const newSocket = new WebSocket(url);
-	const { subscribe } = readable<wsConnStateType>('closed', (set) => {
+	const { subscribe } = readable<wsConnStateType>('connecting', (set) => {
 		newSocket.addEventListener('open', () => {
-			set('connecting');
+			set('connected');
 		});
 		newSocket.addEventListener('error', () => {
 			set('error');
@@ -34,7 +34,7 @@ function createWsStore() {
 			try {
 				const data = JSON.parse(event.data);
 				if (data.type == 'auth') {
-					data.payload == 'success' ? set('connected') : newSocket.close();
+					// data.payload == 'success' && set('connected');
 				}
 			} catch (err) {
 				console.error('Error: ', err);

@@ -11,16 +11,26 @@ const ROOM_KEY = "roomlist"
 
 type Sessions map[*melody.Session]*User
 type User struct {
-	ID     uuid.UUID
-	GameID uuid.UUID
-	Unsub  func()
+	ID        uuid.UUID
+	GameID    uuid.UUID
+	Spectator bool
+	Unsub     func()
 }
 
 func (ss *Sessions) AddUser(s *melody.Session, id uuid.UUID) {
 	(*ss)[s] = &User{
-		ID:     id,
-		Unsub:  nil,
-		GameID: uuid.Nil,
+		ID:        id,
+		Unsub:     nil,
+		GameID:    uuid.Nil,
+		Spectator: false,
+	}
+}
+func (ss *Sessions) AddSpectator(s *melody.Session) {
+	(*ss)[s] = &User{
+		ID:        uuid.Nil,
+		Unsub:     nil,
+		GameID:    uuid.Nil,
+		Spectator: true,
 	}
 }
 
@@ -42,6 +52,9 @@ func (ss *Sessions) ChangeGame(s *melody.Session, gameID uuid.UUID) {
 }
 
 func (ss *Sessions) RemoveUser(s *melody.Session) {
+	if (*ss)[s] == nil {
+		return
+	}
 	if (*ss)[s].Unsub != nil {
 		(*ss)[s].Unsub()
 	}
