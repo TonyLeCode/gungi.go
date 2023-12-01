@@ -27,6 +27,7 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.result,
     games.user_1,
     games.user_2,
     user1.username AS player1,
@@ -50,6 +51,7 @@ SELECT
     games.date_finished,
     games.current_state,
     games.ruleset,
+    games.result,
     games.type,
     games.user_1,
     games.user_2,
@@ -114,6 +116,11 @@ WHERE profiles.id = $2;
 -- name: MakeMove :exec
 UPDATE games
 SET current_state = $2, history = $3
+WHERE id = $1;
+
+-- name: ChangeGameResult :exec
+UPDATE games
+SET completed = $2, result = $3
 WHERE id = $1;
 
 -- name: CreateUndo :one

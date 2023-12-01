@@ -2,7 +2,7 @@ create table
   public.games (
     id uuid not null default uuid_generate_v4 (),
     fen text null,
-    history text null,
+    history text not null default ''::text,
     completed boolean not null default false,
     date_started timestamp with time zone not null default now(),
     date_finished timestamp with time zone null,
@@ -11,6 +11,7 @@ create table
     type text not null default ''::text,
     user_1 uuid not null,
     user_2 uuid not null,
+    result text null,
     constraint games_pkey primary key (id),
     constraint games_id_key unique (id),
     constraint games_user_1_fkey foreign key (user_1) references auth.users (id),

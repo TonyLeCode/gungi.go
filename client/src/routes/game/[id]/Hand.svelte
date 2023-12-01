@@ -97,7 +97,7 @@
 						color={$userColor === 'w' ? 'b' : 'w'}
 						piece={i}
 						{amount}
-						completed={$completed}
+						completed={$completed.completed}
 					/>
 				{/if}
 			{/each}
@@ -120,7 +120,7 @@
 						color={$userColor === 'w' ? 'w' : 'b'}
 						piece={i}
 						{amount}
-						completed={$completed}
+						completed={$completed.completed}
 					/>
 				{/if}
 			{/each}

@@ -78,12 +78,13 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 type GameWithMoves struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
+	Result       pgtype.Text        `json:"result"`
 	Type         string             `json:"type"`
 	Player1      string             `json:"player1"`
 	Player2      string             `json:"player2"`
@@ -93,12 +94,13 @@ type GameWithMoves struct {
 type GameWithUndo struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
+	Result       pgtype.Text        `json:"result"`
 	Type         string             `json:"type"`
 	User1        uuid.UUID          `json:"user1"`
 	User2        uuid.UUID          `json:"user2"`
@@ -123,7 +125,7 @@ func (dbConn *DBConn) GetGame(id uuid.UUID) (GameWithUndo, error) {
 	if err != nil {
 		return GameWithUndo{}, err
 	}
-	newBoard.SetHistory(strings.Split(game.History.String, " "))
+	newBoard.SetHistory(strings.Split(game.History, " "))
 
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
@@ -143,6 +145,7 @@ func (dbConn *DBConn) GetGame(id uuid.UUID) (GameWithUndo, error) {
 		DateFinished: game.DateFinished,
 		CurrentState: game.CurrentState,
 		Ruleset:      game.Ruleset,
+		Result:       game.Result,
 		Type:         game.Type,
 		User1:        game.User1,
 		User2:        game.User2,
@@ -175,7 +178,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	newBoard.SetHistory(strings.Split(game.History.String, " "))
+	newBoard.SetHistory(strings.Split(game.History, " "))
 
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
@@ -197,6 +200,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 		DateFinished: game.DateFinished,
 		CurrentState: game.CurrentState,
 		Ruleset:      game.Ruleset,
+		Result:       game.Result,
 		Type:         game.Type,
 		Player1:      game.Player1,
 		Player2:      game.Player2,
@@ -209,12 +213,13 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 type GameWithUndoRowAndMoves struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
+	Result       pgtype.Text        `json:"result"`
 	Type         string             `json:"type"`
 	Player1      string             `json:"player1"`
 	Player2      string             `json:"player2"`
@@ -249,7 +254,7 @@ func (dbConn *DBConn) GetGameWithUndoRoute(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	newBoard.SetHistory(strings.Split(game.History.String, " "))
+	newBoard.SetHistory(strings.Split(game.History, " "))
 
 	_, legalMoves := newBoard.GetLegalMoves()
 	correctedLegalMoves := make(map[int][]int)
@@ -286,6 +291,7 @@ func (dbConn *DBConn) GetGameWithUndoRoute(c echo.Context) error {
 		DateFinished: game.DateFinished,
 		CurrentState: game.CurrentState,
 		Ruleset:      game.Ruleset,
+		Result:       game.Result,
 		Type:         game.Type,
 		Player1:      game.Player1,
 		Player2:      game.Player2,

@@ -92,7 +92,7 @@
 			if (!get(isPlayer1Ready) || !get(isPlayer2Ready)) {
 				return false;
 			}
-			return PieceIsPlayerColor(piece, get(userColor)) && get(isUserTurn) && !get(completed);
+			return PieceIsPlayerColor(piece, get(userColor)) && get(isUserTurn) && !get(completed).completed;
 		}
 		if (get(isViewReversed)) {
 			correctedIndex = 80 - index;
@@ -114,7 +114,7 @@
 	function onClick(index: number) {
 		const square = get(boardUI)[index];
 
-		if (get(userColor) != get(turnColor) || get(completed)) {
+		if (get(userColor) != get(turnColor) || get(completed).completed) {
 			highlightIndex = -1;
 			moveIndices = [];
 			return;

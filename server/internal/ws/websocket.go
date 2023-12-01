@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
 
@@ -182,7 +183,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
-			board.SetHistory(strings.Fields(game.History.String))
+			board.SetHistory(strings.Fields(game.History))
 			// board.PrintBoard()
 
 			if board.GetTurnColor() == 0 && game.User1 != sessions[s].ID {
@@ -202,8 +203,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 			log.Println("fen: ", board.BoardToFen())
 
 			game.CurrentState = board.BoardToFen()
-			game.History.String = board.SerializeHistory()
-			game.History.Valid = true
+			game.History = board.SerializeHistory()
 
 			makeMoveParams := db.MakeMoveParams{
 				ID:           game.ID,
@@ -217,7 +217,7 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				return
 			}
 
-			_, legalMoves := board.GetLegalMoves()
+			checkStatus, legalMoves := board.GetLegalMoves()
 			correctedLegalMoves := make(map[int][]int)
 			for key, element := range legalMoves {
 				correctedKey := board.ConvertOutputCoord(key)
@@ -226,8 +226,43 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 					correctedLegalMoves[correctedKey] = append(correctedLegalMoves[correctedKey], correctedElement)
 				}
 			}
+			//TODO not good order
 			game.MoveList = correctedLegalMoves
-			// log.Println(correctedLegalMoves)
+
+			var gameEndString string
+
+			if checkStatus == "checkmated" || checkStatus == "stalemate" {
+				result := pgtype.Text{
+					String: "",
+					Valid:  true,
+				}
+
+				if board.GetTurnColor() == 0 && checkStatus == "checkmated" {
+					result.String = "b"
+					gameEndString = "Black Wins by checkmate!"
+				} else if board.GetTurnColor() == 1 && checkStatus == "checkmated" {
+					result.String = "w"
+					gameEndString = "White Wins by checkmate!"
+				} else {
+					result.String = "stalemate"
+					gameEndString = "Stalemate!"
+				}
+
+				changeGameParams := db.ChangeGameResultParams{
+					ID:        game.ID,
+					Completed: true,
+					Result:    result,
+				}
+
+				err = queries.ChangeGameResult(ctx, changeGameParams)
+				if err != nil {
+					log.Println("Error: ", err)
+					return
+				}
+
+				game.Completed = true
+				game.Result = result
+			}
 
 			m := ServerMsg{
 				Type:    "game",
@@ -238,8 +273,22 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				log.Println("Error: ", err)
 				return
 			}
+			// log.Println(correctedLegalMoves)
 
 			listeners.EmitGameMsg(b, game.ID)
+
+			m = ServerMsg{
+				Type:    "gameEnd",
+				Payload: gameEndString,
+			}
+			b, err = json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+			if gameEndString != "" {
+				listeners.EmitGameMsg(b, game.ID)
+			}
 
 		//TODO finish cases
 		case "gameResign":
@@ -300,13 +349,12 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 					return
 				}
 
-				board.SetHistory(strings.Fields(game.History.String))
+				board.SetHistory(strings.Fields(game.History))
 				// board.PrintBoard()
 				board.UndoMove()
 				// board.PrintBoard()
 				game.CurrentState = board.BoardToFen()
-				game.History.String = board.SerializeHistory()
-				game.History.Valid = true
+				game.History = board.SerializeHistory()
 
 				_, legalMoves := board.GetLegalMoves()
 				correctedLegalMoves := make(map[int][]int)

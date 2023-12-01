@@ -1,7 +1,12 @@
 <script lang="ts" context="module">
 	import type { BoardState } from '$lib/store/gameState';
 	export const gameStateContext = createService<Writable<BoardState>>('gameState');
-	export const completedContext = createService<Readable<boolean>>('completed');
+	export const completedContext = createService<
+		Readable<{
+			completed: boolean;
+			result: string;
+		}>
+	>('completed');
 	export const player1NameContext = createService<Readable<string>>('player1Name');
 	export const player2NameContext = createService<Readable<string>>('player2Name');
 	export const userColorContext = createService<Readable<'w' | 'b' | 'spectator'>>('userColor');
@@ -41,6 +46,7 @@
 	import { notifications } from '$lib/store/notification';
 	import { nanoid } from 'nanoid';
 	import UndoDialogue from './UndoDialogue.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 
 	type undoRequests = {
 		receiver_username: string;
@@ -51,6 +57,8 @@
 	const username = data.session?.user.user_metadata.username;
 	const undoRequests: undoRequests[] = data.gameData.undo_requests;
 	let undoDialogBool = false;
+	let completedBool = false;
+	let completedText = '';
 
 	for (let i = 0; i < undoRequests.length; i++) {
 		if (undoRequests[i].receiver_username === username && undoRequests[i].status === 'pending') {
@@ -112,6 +120,7 @@
 	const userColor = gameStore.userColor;
 	const turnColor = gameStore.turnColor;
 	const completed = gameStore.completed;
+	$: console.log($completed)
 
 	const { dragAndDrop, drop } = createDragAndDrop();
 
@@ -268,6 +277,10 @@
 					};
 					ws?.send(msg);
 					break;
+				case 'gameEnd':
+					completedText = res.payload;
+					completedBool = true;
+					break;
 			}
 		} catch (err) {
 			console.log(event?.data);
@@ -348,8 +361,14 @@
 	</section>
 	<aside class="side-menu">
 		<div class="game-state">
-			{#if $completed}
-				Game Finished
+			{#if $completed.completed}
+				{#if $completed.result === 'b'}
+					Black Wins By Checkmate
+				{:else if $completed.result === 'w'}
+					White Wins By Checkmate
+				{:else if $completed.result === 'stalement'}
+					Stalemate
+				{/if}
 			{:else}
 				{$isPlayer1Ready && $isPlayer2Ready ? '' : 'Drafting -'}
 				{$turnColor === 'w' ? 'White' : 'Black'} To Play
@@ -390,6 +409,11 @@
 			<Replay />
 		{/if}
 	</aside>
+	{#if completedBool}
+		<Modal bind:showModal={completedBool}>
+			<h2 class="completed-text">{completedText}</h2>
+		</Modal>
+	{/if}
 	<MoveDialogue
 		{moveDialogueInfo}
 		on:move={handleMoveEvent}
@@ -417,6 +441,10 @@
 		user-select: none;
 	}
 
+	.completed-text {
+		font-size: 1.2rem;
+		font-weight: 600;
+	}
 	.tabs {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);

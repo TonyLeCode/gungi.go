@@ -8,6 +8,7 @@ export interface BoardState {
 	date_finished: { Time: string; Valid: boolean };
 	date_started: string;
 	fen: { String: string; Valid: boolean };
+	result: string;
 	history: string;
 	id: string;
 	moveList: { [key: string]: number[] };
@@ -20,7 +21,13 @@ export interface BoardState {
 
 export function createGameStore(initState: BoardState, username: string | null) {
 	const gameState = writable<BoardState>(initState);
-	const completed = derived(gameState, (data) => data.completed)
+	const completed = derived(gameState, (data) => {
+		const result = {
+			completed: data.completed,
+			result: data.result,
+		};
+		return result
+	});
 	const player1Name = derived(gameState, (data) => data.player1);
 	const player2Name = derived(gameState, (data) => data.player2);
 	const userColor = derived(gameState, (data) => {
@@ -61,21 +68,21 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		return hand;
 	});
 	const player1ArmyCount = derived(gameState, (data) => {
-		const pieces = data.current_state.split(' ')[0]
+		const pieces = data.current_state.split(' ')[0];
 		const wPieces = pieces.match(/[A-Z]/g);
 		return wPieces?.length ?? 0;
 	});
 	const player2ArmyCount = derived(gameState, (data) => {
-		const pieces = data.current_state.split(' ')[0]
+		const pieces = data.current_state.split(' ')[0];
 		const bPieces = pieces.match(/[a-z]/g);
 		return bPieces?.length ?? 0;
 	});
 	const player1HandCount = derived(player2HandList, (handList) => {
-		const count = handList.reduce((a,b) => a+b)
+		const count = handList.reduce((a, b) => a + b);
 		return count;
 	});
 	const player2HandCount = derived(player2HandList, (handList) => {
-		const count = handList.reduce((a,b) => a+b)
+		const count = handList.reduce((a, b) => a + b);
 		return count;
 	});
 	const moveList = derived(gameState, (data) => {

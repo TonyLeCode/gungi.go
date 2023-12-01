@@ -12,6 +12,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const changeGameResult = `-- name: ChangeGameResult :exec
+UPDATE games
+SET completed = $2, result = $3
+WHERE id = $1
+`
+
+type ChangeGameResultParams struct {
+	ID        uuid.UUID   `json:"id"`
+	Completed bool        `json:"completed"`
+	Result    pgtype.Text `json:"result"`
+}
+
+func (q *Queries) ChangeGameResult(ctx context.Context, arg ChangeGameResultParams) error {
+	_, err := q.db.Exec(ctx, changeGameResult, arg.ID, arg.Completed, arg.Result)
+	return err
+}
+
 const changeUndo = `-- name: ChangeUndo :one
 UPDATE undo_request
 SET status = $1
@@ -225,6 +242,7 @@ SELECT
     games.current_state,
     games.ruleset,
     games.type,
+    games.result,
     games.user_1,
     games.user_2,
     user1.username AS player1,
@@ -242,13 +260,14 @@ WHERE
 type GetGameRow struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
 	Type         string             `json:"type"`
+	Result       pgtype.Text        `json:"result"`
 	User1        uuid.UUID          `json:"user_1"`
 	User2        uuid.UUID          `json:"user_2"`
 	Player1      string             `json:"player1"`
@@ -268,6 +287,7 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 		&i.CurrentState,
 		&i.Ruleset,
 		&i.Type,
+		&i.Result,
 		&i.User1,
 		&i.User2,
 		&i.Player1,
@@ -286,6 +306,7 @@ SELECT
     games.date_finished,
     games.current_state,
     games.ruleset,
+    games.result,
     games.type,
     games.user_1,
     games.user_2,
@@ -324,12 +345,13 @@ GROUP BY
 type GetGameWithUndoRow struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
 	CurrentState string             `json:"current_state"`
 	Ruleset      string             `json:"ruleset"`
+	Result       pgtype.Text        `json:"result"`
 	Type         string             `json:"type"`
 	User1        uuid.UUID          `json:"user_1"`
 	User2        uuid.UUID          `json:"user_2"`
@@ -350,6 +372,7 @@ func (q *Queries) GetGameWithUndo(ctx context.Context, id uuid.UUID) (GetGameWit
 		&i.DateFinished,
 		&i.CurrentState,
 		&i.Ruleset,
+		&i.Result,
 		&i.Type,
 		&i.User1,
 		&i.User2,
@@ -510,9 +533,9 @@ WHERE id = $1
 `
 
 type MakeMoveParams struct {
-	ID           uuid.UUID   `json:"id"`
-	CurrentState string      `json:"current_state"`
-	History      pgtype.Text `json:"history"`
+	ID           uuid.UUID `json:"id"`
+	CurrentState string    `json:"current_state"`
+	History      string    `json:"history"`
 }
 
 func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {

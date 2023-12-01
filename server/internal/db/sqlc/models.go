@@ -49,7 +49,7 @@ type AuthUser struct {
 type Game struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`
-	History      pgtype.Text        `json:"history"`
+	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
 	DateFinished pgtype.Timestamptz `json:"date_finished"`
@@ -58,6 +58,7 @@ type Game struct {
 	Type         string             `json:"type"`
 	User1        uuid.UUID          `json:"user_1"`
 	User2        uuid.UUID          `json:"user_2"`
+	Result       pgtype.Text        `json:"result"`
 }
 
 type Profile struct {
