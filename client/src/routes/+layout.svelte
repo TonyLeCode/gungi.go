@@ -42,3 +42,8 @@
 <Notifications />
 <Navbar {session} />
 <slot />
+
+<style lang='scss' global>
+	@import '../main.scss';
+	@import '../normalize.css';
+</style>
