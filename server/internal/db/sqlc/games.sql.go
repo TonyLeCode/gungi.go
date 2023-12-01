@@ -15,7 +15,7 @@ import (
 const changeGameResult = `-- name: ChangeGameResult :exec
 UPDATE games
 SET completed = $2, result = $3
-WHERE id = $1
+WHERE games.id = $1
 `
 
 type ChangeGameResultParams struct {
@@ -130,7 +130,7 @@ VALUES (
         FROM
             games
         WHERE
-            games.id = $1
+            games.id = $1 AND games.completed = false
     )
 )
 RETURNING receiver_id
@@ -556,6 +556,86 @@ type RemoveUndoParams struct {
 func (q *Queries) RemoveUndo(ctx context.Context, arg RemoveUndoParams) error {
 	_, err := q.db.Exec(ctx, removeUndo, arg.SenderID, arg.GameID)
 	return err
+}
+
+const resignGame = `-- name: ResignGame :one
+WITH updated_game AS (
+    UPDATE games
+    SET 
+        completed = true,
+        result = CASE 
+            WHEN user_1 = $2 THEN 'b/r'
+            WHEN user_2 = $2 THEN 'w/r'
+            ELSE result
+        END
+    WHERE games.id = $1 AND (user_1 = $2 OR user_2 = $2)
+    RETURNING games.id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
+)
+SELECT 
+    ug.id,
+    ug.fen,
+    ug.history,
+    ug.completed,
+    ug.date_started,
+    ug.date_finished,
+    ug.current_state,
+    ug.ruleset,
+    ug.type,
+    ug.result,
+    ug.user_1,
+    ug.user_2,
+    user1.username AS player1,
+    user2.username AS player2
+FROM 
+    updated_game ug
+JOIN 
+    profiles AS user1 ON user1.id = ug.user_1
+JOIN 
+    profiles AS user2 ON user2.id = ug.user_2
+`
+
+type ResignGameParams struct {
+	ID    uuid.UUID `json:"id"`
+	User1 uuid.UUID `json:"user_1"`
+}
+
+type ResignGameRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Fen          pgtype.Text        `json:"fen"`
+	History      string             `json:"history"`
+	Completed    bool               `json:"completed"`
+	DateStarted  pgtype.Timestamptz `json:"date_started"`
+	DateFinished pgtype.Timestamptz `json:"date_finished"`
+	CurrentState string             `json:"current_state"`
+	Ruleset      string             `json:"ruleset"`
+	Type         string             `json:"type"`
+	Result       pgtype.Text        `json:"result"`
+	User1        uuid.UUID          `json:"user_1"`
+	User2        uuid.UUID          `json:"user_2"`
+	Player1      string             `json:"player1"`
+	Player2      string             `json:"player2"`
+}
+
+func (q *Queries) ResignGame(ctx context.Context, arg ResignGameParams) (ResignGameRow, error) {
+	row := q.db.QueryRow(ctx, resignGame, arg.ID, arg.User1)
+	var i ResignGameRow
+	err := row.Scan(
+		&i.ID,
+		&i.Fen,
+		&i.History,
+		&i.Completed,
+		&i.DateStarted,
+		&i.DateFinished,
+		&i.CurrentState,
+		&i.Ruleset,
+		&i.Type,
+		&i.Result,
+		&i.User1,
+		&i.User2,
+		&i.Player1,
+		&i.Player2,
+	)
+	return i, err
 }
 
 const updateOnboarding = `-- name: UpdateOnboarding :exec

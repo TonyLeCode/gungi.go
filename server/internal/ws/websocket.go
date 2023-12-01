@@ -290,8 +290,53 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 				listeners.EmitGameMsg(b, game.ID)
 			}
 
-		//TODO finish cases
 		case "gameResign":
+			ctx := context.Background()
+			gameID := sessions[s].GameID
+			if gameID == uuid.Nil {
+				return
+			}
+			userID := sessions[s].ID
+
+			resignParams := db.ResignGameParams{
+				ID:    gameID,
+				User1: userID,
+			}
+
+			queries := db.New(dbConn.Conn)
+			game, err := queries.ResignGame(ctx, resignParams)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			m := ServerMsg{
+				Type:    "game",
+				Payload: game,
+			}
+
+			b, err := json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			listeners.EmitGameMsg(b, game.ID)
+
+			m = ServerMsg{
+				Type:    "gameResign",
+				Payload: game.Result,
+			}
+
+			b, err = json.Marshal(m)
+			if err != nil {
+				log.Println("Error: ", err)
+				return
+			}
+
+			listeners.EmitGameMsgFilter(b, game.ID, func(s2 *melody.Session) bool {
+				return s2 != s
+			})
 
 		case "requestGameUndo":
 			gameID := sessions[s].GameID

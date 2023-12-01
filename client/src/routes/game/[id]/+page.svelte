@@ -120,7 +120,7 @@
 	const userColor = gameStore.userColor;
 	const turnColor = gameStore.turnColor;
 	const completed = gameStore.completed;
-	$: console.log($completed)
+	$: console.log($completed);
 
 	const { dragAndDrop, drop } = createDragAndDrop();
 
@@ -281,6 +281,16 @@
 					completedText = res.payload;
 					completedBool = true;
 					break;
+				case 'gameResign':
+					console.log(res.payload)
+					if (res.payload === 'w/r') {
+						completedText = "Black Resigns";
+						completedBool = true;
+					} else if (res.payload === 'b/r') {
+						completedText = "White Resigns";
+						completedBool = true;
+					}
+					break;
 			}
 		} catch (err) {
 			console.log(event?.data);
@@ -289,9 +299,8 @@
 	}
 
 	function handleResignEvent(event: CustomEvent) {
-		console.log('resign');
 		const msg = {
-			type: 'resign',
+			type: 'gameResign',
 		};
 		ws?.send(msg);
 	}
@@ -366,6 +375,10 @@
 					Black Wins By Checkmate
 				{:else if $completed.result === 'w'}
 					White Wins By Checkmate
+				{:else if $completed.result === 'b/r'}
+					Black Wins By Resignation
+				{:else if $completed.result === 'w/r'}
+					White Wins By Resignation
 				{:else if $completed.result === 'stalement'}
 					Stalemate
 				{/if}

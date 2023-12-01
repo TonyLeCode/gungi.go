@@ -121,7 +121,43 @@ WHERE id = $1;
 -- name: ChangeGameResult :exec
 UPDATE games
 SET completed = $2, result = $3
-WHERE id = $1;
+WHERE games.id = $1;
+
+-- name: ResignGame :one
+WITH updated_game AS (
+    UPDATE games
+    SET 
+        completed = true,
+        result = CASE 
+            WHEN user_1 = $2 THEN 'b/r'
+            WHEN user_2 = $2 THEN 'w/r'
+            ELSE result
+        END
+    WHERE games.id = $1 AND (user_1 = $2 OR user_2 = $2)
+    RETURNING games.id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
+)
+SELECT 
+    ug.id,
+    ug.fen,
+    ug.history,
+    ug.completed,
+    ug.date_started,
+    ug.date_finished,
+    ug.current_state,
+    ug.ruleset,
+    ug.type,
+    ug.result,
+    ug.user_1,
+    ug.user_2,
+    user1.username AS player1,
+    user2.username AS player2
+FROM 
+    updated_game ug
+JOIN 
+    profiles AS user1 ON user1.id = ug.user_1
+JOIN 
+    profiles AS user2 ON user2.id = ug.user_2;
+
 
 -- name: CreateUndo :one
 INSERT INTO undo_request (game_id, sender_id, receiver_id)
@@ -137,7 +173,7 @@ VALUES (
         FROM
             games
         WHERE
-            games.id = $1
+            games.id = $1 AND games.completed = false
     )
 )
 RETURNING receiver_id;
