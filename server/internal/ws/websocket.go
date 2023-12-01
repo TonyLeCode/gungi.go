@@ -244,8 +244,8 @@ func WS(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 					result.String = "w"
 					gameEndString = "White Wins by checkmate!"
 				} else {
-					result.String = "stalemate"
-					gameEndString = "Stalemate!"
+					result.String = "draw"
+					gameEndString = "Draw!"
 				}
 
 				changeGameParams := db.ChangeGameResultParams{

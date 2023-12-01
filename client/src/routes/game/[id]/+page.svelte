@@ -379,8 +379,8 @@
 					Black Wins By Resignation
 				{:else if $completed.result === 'w/r'}
 					White Wins By Resignation
-				{:else if $completed.result === 'stalement'}
-					Stalemate
+				{:else if $completed.result === 'draw'}
+					Draw
 				{/if}
 			{:else}
 				{$isPlayer1Ready && $isPlayer2Ready ? '' : 'Drafting -'}
