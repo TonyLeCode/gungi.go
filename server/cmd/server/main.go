@@ -43,6 +43,12 @@ func main() {
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
 	}
+	port := config.PORT
+	if port == "" {
+		port = "localhost:5080"
+	} else {
+		port = ":" + port
+	}
 
 	db := api.DBConn{}
 	maxRetries := 5
@@ -83,7 +89,7 @@ func main() {
 	verify.PUT("/user/onboarding", db.PutOnboarding)
 	verify.PUT("/user/changename", db.ChangeUsername)
 
-	e.Logger.Fatal(e.Start(config.PORT))
+	e.Logger.Fatal(e.Start(port))
 }
 
 func VerifySupabaseTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
