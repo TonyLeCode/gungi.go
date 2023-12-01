@@ -4,6 +4,7 @@ import type { PageServerLoad } from './$types';
 import { fail, redirect, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { superValidate, message } from 'sveltekit-superforms/server';
+import { dev } from '$app/environment';
 
 const schema = z.object({
 	email: z.string(),
@@ -43,7 +44,7 @@ export const actions: Actions = {
 				message: 'Server error. Try again later.',
 			});
 		}
-		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/onboarding`;
+		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/onboarding` : `https://${import.meta.env.VITE_API_URL}/user/onboarding`;
 		const token = supabaseResponse.data.session.access_token
 		const options = {
 			headers: {

@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { dev } from '$app/environment';
 
 export interface Game {
 	completed: boolean;
@@ -17,7 +18,7 @@ export interface Game {
 export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) => {
 	const session = await getSession();
 	const token = session?.access_token;
-	const url = `http://${import.meta.env.VITE_API_URL}/getongoinggamelist`;
+	const url = dev ? `http://${import.meta.env.VITE_API_URL}/getongoinggamelist` : `https://${import.meta.env.VITE_API_URL}/getongoinggamelist`;
 	const options = {
 		headers: {
 			Authorization: `Bearer ${token}`,

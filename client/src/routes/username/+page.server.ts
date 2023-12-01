@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { redirect, type Actions, fail, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { message, superValidate } from 'sveltekit-superforms/server';
+import { dev } from '$app/environment';
 
 const schema = z.object({
 	username: z.string().min(3).max(28),
@@ -19,7 +20,7 @@ export const load: PageServerLoad = async ({ locals: { getSession }, url }) => {
 	}
 
 	if (onboard) {
-		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/onboarding`;
+		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/onboarding` : `https://${import.meta.env.VITE_API_URL}/user/onboarding`;
 		const token = session.access_token;
 		const options = {
 			method: 'PUT',
@@ -46,7 +47,7 @@ export const actions: Actions = {
 			throw redirect(308, '/');
 		}
 
-		const fetchUrl = `http://${import.meta.env.VITE_API_URL}/user/changename`;
+		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/changename`: `https://${import.meta.env.VITE_API_URL}/user/changename` ;
 		const token = session.access_token;
 		const options = {
 			method: 'PUT',
