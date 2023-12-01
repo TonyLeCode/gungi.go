@@ -42,7 +42,6 @@ func LoadConfig() (config Config, err error) {
 
 func main() {
 	config, err := LoadConfig()
-	log.Println(config)
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
 	}
