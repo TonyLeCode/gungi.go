@@ -23,10 +23,8 @@ type Config struct {
 }
 
 // LoadConfig reads configuration from file or environment variables
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
+func LoadConfig() (config Config, err error) {
 	viper.SetConfigFile(".env")
-
 	viper.AutomaticEnv()
 
 	err = viper.ReadInConfig()
@@ -39,7 +37,7 @@ func LoadConfig(path string) (config Config, err error) {
 }
 
 func main() {
-	config, err := LoadConfig("./")
+	config, err := LoadConfig()
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
 	}
