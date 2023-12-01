@@ -24,21 +24,25 @@ type Config struct {
 
 // LoadConfig reads configuration from file or environment variables
 func LoadConfig() (config Config, err error) {
+	var cfg Config
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()
-	log.Println(viper.Get("PORT"))
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		return
+		cfg.DB_SOURCE = viper.Get("DB_SOURCE").(string)
+		cfg.SUPABASE_JWT_SECRET = viper.Get("SUPABASE_JWT_SECRET").(string)
+		cfg.PORT = viper.Get("PORT").(string)
+		return config, nil
 	}
 
-	err = viper.Unmarshal(&config)
-	return
+	err = viper.Unmarshal(&cfg)
+	return cfg, err
 }
 
 func main() {
 	config, err := LoadConfig()
+	log.Println(config)
 	if err != nil {
 		log.Fatalln("Cannot load config", err)
 	}
@@ -47,7 +51,7 @@ func main() {
 		port = "localhost:5080"
 	} else {
 		// port = ":" + port
-		port = ":" + viper.Get("PORT").(string)
+		port = ":" + config.PORT
 	}
 
 	db := api.DBConn{}
