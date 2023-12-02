@@ -37,6 +37,7 @@
 	const isUserTurn = isUserTurnContext.get();
 	export let dragAndDrop: dragAndDropFunction;
 	export let stack: number[];
+	export let spectator: boolean = true;
 
 	const dispatch = createEventDispatcher();
 
@@ -127,9 +128,11 @@
 		</div>
 	</div>
 	<div class="buttons">
-		<button class="button-primary" on:click={handleResignButton}>resign</button>
-		<button class="button-primary" on:click={handleUndoButton}>request undo</button>
-		<button class="button-primary" disabled>confirm move</button>
+		{#if !$completed.completed && !spectator}
+			<button class="button-primary" on:click={handleResignButton}>resign</button>
+			<button class="button-primary" on:click={handleUndoButton}>request undo</button>
+		{/if}
+		<!-- <button class="button-primary" disabled>confirm move</button> -->
 		{#if !$isPlayer1Ready || !$isPlayer2Ready}
 			<button class="button-primary" on:click={handleReadyButton}>ready</button>
 		{/if}

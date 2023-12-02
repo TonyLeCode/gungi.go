@@ -415,6 +415,7 @@
 				on:drop={handleDropEvent}
 				{stack}
 				{dragAndDrop}
+				spectator={data.session == null}
 			/>
 		{:else if menuState === 1}
 			<Chat />

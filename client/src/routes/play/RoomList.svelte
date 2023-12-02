@@ -16,6 +16,7 @@
 	export let showRoomDialogue: boolean;
 	export let roomDialogueInfo: Info;
 	export let accept: (roomid: string) => void;
+	$: spectator = username == null;
 
 	function handleCancel(roomid: string) {
 		const payload = {
@@ -32,7 +33,7 @@
 		{#each roomList ?? [] as room, index (room.id)}
 			<li class="room-item fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 				<button
-					disabled={room.host === username ? true : false}
+					disabled={room.host === username || spectator ? true : false}
 					on:click={() => {
 						roomDialogueInfo = room;
 						showRoomDialogue = true;
@@ -45,6 +46,7 @@
 				</button>
 				{#if room.host === username}
 					<button
+						disabled={spectator}
 						on:click={() => {
 							handleCancel(room.id);
 						}}
@@ -53,6 +55,7 @@
 				{:else}
 					<button
 						class="accept button-primary"
+						disabled={spectator}
 						on:click={() => {
 							accept(room.id);
 						}}>Accept</button

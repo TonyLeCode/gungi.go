@@ -114,6 +114,7 @@
 					on:click={() => {
 						showCreateGameDialogue = true;
 					}}
+					disabled={username == null}
 					class="button-primary">Create Game</button
 				>
 			</div>
