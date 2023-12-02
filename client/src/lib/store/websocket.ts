@@ -1,6 +1,5 @@
 import { readable } from 'svelte/store';
-import { notifications, type notificationType } from './notification';
-import { nanoid } from 'nanoid';
+import { topNotification } from './notification';
 import { browser, dev } from '$app/environment';
 
 type wsConnStateType = 'connecting' | 'connected' | 'reconnecting' | 'closed' | 'error';
@@ -23,12 +22,7 @@ function createWsStore() {
 		});
 		newSocket.addEventListener('close', () => {
 			set('closed');
-			notifications?.add({
-				id: nanoid(),
-				title: 'Disconnected',
-				type: 'default',
-				msg: 'Please refresh or come back later',
-			} as notificationType);
+			topNotification?.set('You are disconnected! Please refresh or try again later.')
 		});
 		newSocket.addEventListener('message', (event) => {
 			try {

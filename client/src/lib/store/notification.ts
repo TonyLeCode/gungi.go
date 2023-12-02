@@ -29,8 +29,24 @@ function createNotificationStore() {
 	return {
 		store: notifications,
 		add: AddNotification,
-		remove: RemoveNotification
-	}
+		remove: RemoveNotification,
+	};
 }
 
-export const notifications = createNotificationStore()
+export const notifications = createNotificationStore();
+
+function createTopNotificationStore() {
+	if (!browser) return;
+	const notification = writable<string>('');
+
+	function SetNotification(text: string) {
+		notification.set(text);
+	}
+
+	return {
+		store: notification,
+		set: SetNotification,
+	};
+}
+
+export const topNotification = createTopNotificationStore();

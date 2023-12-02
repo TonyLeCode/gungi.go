@@ -5,12 +5,15 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
 	import { ws } from '$lib/store/websocket';
+	import TopNotification from '$lib/components/TopNotification.svelte';
+	import { topNotification } from '$lib/store/notification';
 
 	export let data: LayoutData;
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
-	$: $ws === 'connected' && session && ws?.authenticate(session.access_token)
+	$: $ws === 'connected' && session && ws?.authenticate(session.access_token);
+	$: notifStore = topNotification?.store
 
 	onMount(() => {
 		const {
@@ -31,11 +34,14 @@
 <svelte:head>
 	<title>White Monarch Server</title>
 </svelte:head>
+{#if $notifStore !== '' && $notifStore !== undefined}
+	<TopNotification text={$notifStore} />
+{/if}
 <Notifications />
 <Navbar {session} />
 <slot />
 
-<style lang='scss' global>
+<style lang="scss" global>
 	@import '../main.scss';
 	@import '../normalize.css';
 </style>
