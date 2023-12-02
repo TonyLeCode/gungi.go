@@ -6,6 +6,10 @@
 	const { form, errors, constraints, enhance, message } = superForm(data.form, { taintedMessage: null });
 </script>
 
+<svelte:head>
+	<title>Login | White Monarch Server</title>
+</svelte:head>
+
 <main>
 	<form class="login" method="POST" use:enhance>
 		<h2>Login</h2>

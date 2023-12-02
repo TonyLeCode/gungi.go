@@ -29,7 +29,7 @@
 </script>
 
 <svelte:head>
-	<title>Gungi.go</title>
+	<title>White Monarch Server</title>
 </svelte:head>
 <Notifications />
 <Navbar {session} />

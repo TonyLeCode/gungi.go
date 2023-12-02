@@ -96,6 +96,10 @@
 	$: console.log($ws);
 </script>
 
+<svelte:head>
+	<title>Room List | White Monarch Server</title>
+</svelte:head>
+
 <main>
 	{#if $ws === 'connecting'}
 		<p class="status-msg fly-up-fade">Loading...</p>

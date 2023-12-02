@@ -15,7 +15,7 @@
 				<!-- <a href="/games">games</a> -->
 				<!-- TODO learning, puzzles, resources, library -->
 			{/if}
-			<a href="/rules">rules</a>
+			<!-- <a href="/rules">rules</a> -->
 		</ul>
 		<ul class="nav-account">
 			{#if session}

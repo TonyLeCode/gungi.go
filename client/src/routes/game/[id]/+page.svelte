@@ -361,7 +361,7 @@
 </script>
 
 <svelte:head>
-	<title>Gungi.go</title>
+	<title>Game | White Monarch Server</title>
 </svelte:head>
 
 <main>

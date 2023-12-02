@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>Gungi.go</title>
+	<title>Register | White Monarch Server</title>
 </svelte:head>
 
 <Modal bind:showModal>
