@@ -2,19 +2,19 @@
 	import { notifications, type notificationType } from '$lib/store/notification';
 	import { onMount } from 'svelte';
 	import NotificationItem from './NotificationItem.svelte';
-	import { nanoid } from 'nanoid';
+	// import { nanoid } from 'nanoid';
 	import { fly } from 'svelte/transition';
 	import { writable } from 'svelte/store';
 
 	$: notificationsStore = notifications?.store ?? writable<notificationType[]>([])
 
 	onMount(() => {
-		notifications?.add({
-			id: nanoid(),
-			title: 'Game Accepted',
-			type: 'default',
-			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
-		} as notificationType);
+		// notifications?.add({
+		// 	id: nanoid(),
+		// 	title: 'Game Accepted',
+		// 	type: 'default',
+		// 	msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
+		// } as notificationType);
 	});
 </script>
 
