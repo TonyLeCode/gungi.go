@@ -10,6 +10,7 @@
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
+	$: $ws === 'connected' && session && ws?.authenticate(session.access_token)
 
 	onMount(() => {
 		const {
@@ -19,15 +20,6 @@
 				invalidate('supabase:auth');
 			}
 		});
-		const token = session?.access_token;
-		if (token) {
-			//TODO websocket as spectator
-			ws?.subscribe((val) => {
-				if (val === 'connecting') {
-					ws?.authenticate(token);
-				}
-			});
-		}
 
 		return () => {
 			subscription.unsubscribe();
