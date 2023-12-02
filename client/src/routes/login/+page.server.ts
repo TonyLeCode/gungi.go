@@ -57,6 +57,6 @@ export const actions: Actions = {
 			if (!hasOnboarded) throw redirect(308, '/username?onboard=true')
 		}
 
-		// throw redirect(303, '/overview');
+		throw redirect(303, '/overview');
 	},
 } satisfies Actions;
