@@ -464,6 +464,75 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 	return items, nil
 }
 
+const getOverview = `-- name: GetOverview :many
+SELECT 
+    games.id, 
+    games.fen, 
+    games.completed, 
+    games.date_started, 
+    games.date_finished,
+    games.current_state,
+    games.result,
+    games.type,
+    games.ruleset,
+    users1.username as username1, 
+    users2.username as username2
+FROM
+    games 
+JOIN 
+    profiles as users1 ON games.user_1 = users1.id
+JOIN 
+    profiles as users2 ON games.user_2 = users2.id
+WHERE
+    users1.id = $1 OR users2.id = $1
+`
+
+type GetOverviewRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Fen          pgtype.Text        `json:"fen"`
+	Completed    bool               `json:"completed"`
+	DateStarted  pgtype.Timestamptz `json:"date_started"`
+	DateFinished pgtype.Timestamptz `json:"date_finished"`
+	CurrentState string             `json:"current_state"`
+	Result       pgtype.Text        `json:"result"`
+	Type         string             `json:"type"`
+	Ruleset      string             `json:"ruleset"`
+	Username1    string             `json:"username1"`
+	Username2    string             `json:"username2"`
+}
+
+func (q *Queries) GetOverview(ctx context.Context, id uuid.UUID) ([]GetOverviewRow, error) {
+	rows, err := q.db.Query(ctx, getOverview, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetOverviewRow
+	for rows.Next() {
+		var i GetOverviewRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fen,
+			&i.Completed,
+			&i.DateStarted,
+			&i.DateFinished,
+			&i.CurrentState,
+			&i.Result,
+			&i.Type,
+			&i.Ruleset,
+			&i.Username1,
+			&i.Username2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRoomList = `-- name: GetRoomList :many
 SELECT
     room_list.id,

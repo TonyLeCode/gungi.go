@@ -84,7 +84,8 @@ func main() {
 	})
 
 	e.GET("/game/:id", db.GetGameWithUndoRoute)
-	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
+	// verify.GET("/getongoinggamelist", db.GetOngoingGameList)
+	verify.GET("/overview", db.GetOverview)
 
 	e.GET("/ws", ws.WS(m, &db))
 

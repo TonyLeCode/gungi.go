@@ -75,6 +75,25 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 	return c.JSON(http.StatusOK, games)
 }
 
+func (dbConn *DBConn) GetOverview(c echo.Context) error {
+	ctx := context.Background()
+
+	sub := c.Get("sub").(string)
+	subid, err := uuid.Parse(sub)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	queries := db.New(dbConn.Conn)
+
+	games, err := queries.GetOverview(ctx, subid)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Internal server error")
+	}
+
+	return c.JSON(http.StatusOK, games)
+}
+
 type GameWithMoves struct {
 	ID           uuid.UUID          `json:"id"`
 	Fen          pgtype.Text        `json:"fen"`

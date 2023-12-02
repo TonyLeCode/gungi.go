@@ -16,6 +16,28 @@ JOIN
 WHERE
     (users1.id = $1 OR users2.id = $1) AND games.completed=false;
 
+-- name: GetOverview :many
+SELECT 
+    games.id, 
+    games.fen, 
+    games.completed, 
+    games.date_started, 
+    games.date_finished,
+    games.current_state,
+    games.result,
+    games.type,
+    games.ruleset,
+    users1.username as username1, 
+    users2.username as username2
+FROM
+    games 
+JOIN 
+    profiles as users1 ON games.user_1 = users1.id
+JOIN 
+    profiles as users2 ON games.user_2 = users2.id
+WHERE
+    users1.id = $1 OR users2.id = $1;
+
 -- name: GetGame :one
 SELECT 
     games.id,

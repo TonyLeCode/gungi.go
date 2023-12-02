@@ -1,29 +1,34 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
+	import { completedContext } from '../game/[id]/+page.svelte';
 	import type { Game } from './+page.server';
 
 	export let data;
 	$: username = data.session?.user.user_metadata.username ?? '';
-	$: sortedGames = [...data.data].sort((a, b) => {
-		if (turnPlayer(a) === turnPlayer(b)) {
-			return 0;
-		}
-		if (isUserTurn(a)) {
+	$: ongoingGames = data.data.filter((game) => {
+		return !game.completed;
+	});
+	$: sortedOngoingGames = ongoingGames.sort((game1, game2) => {
+		if (turnPlayer(game1) === turnPlayer(game2)) return 0;
+		if (isUserTurn(game1)) {
 			return -1;
-		} else if (isUserTurn(b)) {
+		} else if (isUserTurn(game2)) {
 			return 1;
 		}
 		return 0;
+	});
+	$: completedGames = data.data.filter((game) => {
+		return game.completed;
 	});
 
 	function isUser(playername: string) {
 		return username === playername;
 	}
 
-	function getUserColor(player1: string, player2: string) {
-		if (username === player1) {
+	function getUserColor(username1: string, username2: string) {
+		if (username === username1) {
 			return 'w';
-		} else if (username === player2) {
+		} else if (username === username2) {
 			return 'b';
 		}
 		return 'spectator';
@@ -53,7 +58,7 @@
 	<section>
 		<h2>Current Games</h2>
 		<ul class="gameList">
-			{#each sortedGames as game}
+			{#each sortedOngoingGames as game}
 				<li class:your-turn={isUserTurn(game)}>
 					<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
 					<a href={`/game/${game.id}`}
@@ -62,18 +67,33 @@
 					<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
 				</li>
 			{/each}
-			<!-- <BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
-			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
-			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} />
-			<BoardSimple gameData={{current_state:'3,k,5/3,psc,m,4/5,pyt,3/9/9/9/5,PT,P,2/6,F,PS,1/7,M,1 6446122122210/6446212121210 w'}} /> -->
 		</ul>
 	</section>
 	<section>
 		<h2>Game History</h2>
+		<ul class="gameHistoryList">
+			{#each completedGames as game}
+				<li class="historyItem">
+					<a href={`/game/${game.id}`}>
+						<div>{game.date_started?.toString().slice(0, 10)}</div>
+						<div>{game.username1 !== username ? game.username1 : game.username2}</div>
+						<div>{game.type}</div>
+						<div>{game.ruleset}</div>
+						{#if game.result === 'w/r' || game.result === 'w'}
+							<div>W</div>
+						{:else if game.result === 'b/r' || game.result === 'b'}
+							<div>B</div>
+						{:else}
+							<div>Draw</div>
+						{/if}
+					</a>
+				</li>
+			{/each}
+		</ul>
 	</section>
 </main>
 
-<style>
+<style lang="scss">
 	section {
 		max-width: 70rem;
 		margin: 0 auto;
@@ -86,12 +106,12 @@
 		font-size: 1.25rem;
 	}
 
-	li {
+	.gameList li {
 		border-radius: 4px;
 		position: relative;
 	}
 
-	li:hover {
+	.gameList li:hover {
 		outline: rgb(240, 80, 17) solid 6px;
 		/* box-sizing: content-box; */
 	}
@@ -130,5 +150,51 @@
 	.is-user {
 		color: rgb(var(--primary));
 		/* font-weight: 600; */
+	}
+	.gameHistoryList {
+		display: grid;
+		min-height: 4.5rem;
+		gap: 0.5rem;
+		margin: auto;
+		margin-top: 1rem;
+		margin-bottom: 1.5rem;
+		max-width: 50rem;
+	}
+	.historyItem {
+	}
+	.historyItem a {
+		cursor: pointer;
+		text-align:left;
+		display: grid;
+		grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+		width: 100%;
+		min-height: 3.5rem;
+		gap: 1rem;
+		align-items: center;
+		padding: 0.5rem 1.25rem;
+		border-radius: 4px;
+		background-color: rgb(var(--bg-2));
+		box-shadow:
+			0px 5px 25px rgba(0, 0, 0, 0.05),
+			0px 2px 5px rgba(0, 0, 0, 0.05);
+		transition-duration: 150ms;
+		transition-property: background-color;
+		&:hover:not([disabled]) {
+			background-color: rgb(var(--primary));
+			color: rgb(var(--bg-2));
+		}
+		&:active:not([disabled]) {
+			background-color: rgb(var(--primary-3));
+			color: rgb(var(--bg-2));
+		}
+		&:focus {
+			outline: 2px solid rgba(var(--primary), 0.5);
+			outline-offset: 2px;
+		}
+		&:disabled {
+			background-color: rgb(225, 225, 225);
+			font-weight: 300;
+			box-shadow: none;
+		}
 	}
 </style>
