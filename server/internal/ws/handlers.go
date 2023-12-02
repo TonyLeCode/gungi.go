@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -18,12 +19,8 @@ type User struct {
 }
 
 func (ss *Sessions) AddUser(s *melody.Session, id uuid.UUID) {
-	(*ss)[s] = &User{
-		ID:        id,
-		Unsub:     nil,
-		GameID:    uuid.Nil,
-		Spectator: false,
-	}
+	(*ss)[s].ID = id
+	(*ss)[s].Spectator = false
 }
 func (ss *Sessions) AddSpectator(s *melody.Session) {
 	(*ss)[s] = &User{
@@ -45,7 +42,9 @@ func (ss *Sessions) ChangeUnsub(s *melody.Session, unsub func()) {
 }
 
 func (ss *Sessions) ChangeGame(s *melody.Session, gameID uuid.UUID) {
+	log.Println("changing gameid: ", gameID)
 	if _, ok := (*ss)[s]; !ok {
+		log.Println("not okay")
 		return
 	}
 	(*ss)[s].GameID = gameID

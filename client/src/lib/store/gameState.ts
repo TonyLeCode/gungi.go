@@ -38,7 +38,7 @@ export function createGameStore(initState: BoardState, username: string | null) 
 	const moveHistory = derived(gameState, (data) => data.history.split(' '));
 	const manualFlip = writable(false);
 	const isViewReversed = derived([player1Name, player2Name, manualFlip], ([player1Name, player2Name, manualFlip]) => {
-		if (username !== player1Name && username !== player2Name) manualFlip;
+		if (username !== player1Name && username !== player2Name) return manualFlip;
 		const isUserWhite = username === player1Name;
 		return manualFlip === isUserWhite;
 	});
