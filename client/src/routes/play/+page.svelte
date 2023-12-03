@@ -23,8 +23,8 @@
 	$: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
 	let showLive = true;
 	let showCorrespondence = true;
-	$: liveRoomList = sortedList?.filter((room) => room.type === 'live');
-	$: correspondenceRoomList = sortedList?.filter((room) => room.type === 'correspondence');
+	$: liveRoomList = sortedList.filter((room) => room.type === 'live');
+	$: correspondenceRoomList = sortedList.filter((room) => room.type === 'correspondence');
 
 	let showCreateGameDialogue = false;
 	let showRoomDialogue = false;
@@ -35,8 +35,7 @@
 			const data = JSON.parse(event?.data);
 			switch (data.type) {
 				case 'roomList':
-					// console.log(data.payload)
-					roomList = data.payload;
+					roomList = data.payload ?? [];
 					break;
 				case 'roomAccepted':
 					notifications?.add({
