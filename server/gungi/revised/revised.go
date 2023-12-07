@@ -84,6 +84,7 @@ func (s *ListRef) Push(square *Square, color int) {
 	}
 	square.prev = s.Tail[color]
 	square.prev.next = square
+	square.next = nil
 	s.Tail[color] = square
 
 }
