@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { reverseList } from '$lib/helpers';
 	import type { dragAndDropFunction, dragAndDropItems, dragAndDropOptions, dropFunction } from '$lib/utils/dragAndDrop';
-	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
+	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndex, ReverseIndices } from '$lib/utils/utils';
 	import { get } from 'svelte/store';
 
 	import {
@@ -16,7 +16,9 @@
 		userColorContext,
 		moveListUIContext,
 		moveListContext,
+		moveHistoryContext,
 	} from './+page.svelte';
+	import { getSquareCoords } from '$lib/utils/historyParser';
 	const boardUI = boardUIContext.get();
 	const completed = completedContext.get();
 	const userColor = userColorContext.get();
@@ -27,6 +29,10 @@
 	const moveList = moveListContext.get();
 	const turnColor = turnColorContext.get();
 	const moveListUI = moveListUIContext.get();
+	const moveHistory = moveHistoryContext.get();
+
+	$: lastMoveHighlight = getSquareCoords($moveHistory[$moveHistory.length - 1])
+	$: lastMoveHighlightUI = $isViewReversed ? ReverseIndices(lastMoveHighlight) : lastMoveHighlight
 
 	export let dragAndDrop: dragAndDropFunction;
 	export let drop: dropFunction;
@@ -156,7 +162,7 @@
 				handleStackClick(index);
 			}}
 			class="square"
-			class:highlight={highlightIndex == index}
+			class:highlight={highlightIndex == index || lastMoveHighlightUI.includes(index)}
 			class:move-highlight={moveIndices?.includes(index) && $isPlayer1Ready && $isPlayer2Ready}
 			use:drop={dropOptions(index, square)}
 			on:focus={() => {

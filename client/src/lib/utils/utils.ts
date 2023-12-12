@@ -83,7 +83,7 @@ export function RankInvert(num: number): number {
 }
 
 export function FileToLetter(num: number): string {
-	const pieceEnums = {
+	const fileEnums = {
 		1: 'a',
 		2: 'b',
 		3: 'c',
@@ -94,7 +94,33 @@ export function FileToLetter(num: number): string {
 		8: 'h',
 		9: 'i',
 	};
-	return pieceEnums[num];
+	return fileEnums[num];
+}
+
+export function LetterToFile(str: string): number {
+	const fileEnums = {
+		a: 1,
+		b: 2,
+		c: 3,
+		d: 4,
+		e: 5,
+		f: 6,
+		g: 7,
+		h: 8,
+		i: 9,
+	};
+	return fileEnums[str.toLowerCase()];
+}
+
+export function CoordsToSquare(file: number, rank: number): number {
+	return (file-1) + ((9 - rank) * 9)
+}
+
+export function ReverseIndex(index: number): number {
+	return 80 - index
+}
+export function ReverseIndices(indices: number[]): number[] {
+	return indices.map((index) => ReverseIndex(index))
 }
 
 type EncodePieceEnums = {
