@@ -87,7 +87,7 @@ func main() {
 	// verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 	verify.GET("/overview", db.GetOverview)
 
-	e.GET("/ws", ws.WS(m, &db))
+	e.GET("/ws", ws.WSHandler(m, &db))
 
 	verify.GET("/user/onboarding", db.GetOnboarding)
 	verify.PUT("/user/onboarding", db.PutOnboarding)
