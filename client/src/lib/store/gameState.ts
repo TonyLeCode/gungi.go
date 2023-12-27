@@ -77,7 +77,7 @@ export function createGameStore(initState: BoardState, username: string | null) 
 		const bPieces = pieces.match(/[a-z]/g);
 		return bPieces?.length ?? 0;
 	});
-	const player1HandCount = derived(player2HandList, (handList) => {
+	const player1HandCount = derived(player1HandList, (handList) => {
 		const count = handList.reduce((a, b) => a + b);
 		return count;
 	});
