@@ -750,7 +750,7 @@ func (r *Revised) GetPseudoLegalMoves(piece int, coord int, tier int) []int {
 		case 1:
 			offsets = append(offsets, -11, -12, -13, -1, 1, 11, 12, 13)
 		case 2:
-			offsets = append(offsets, -26, -25, -24, -22, -10, -14, -2, 26, 25, 24, 22, 10, 14, 2)
+			offsets = append(offsets, -26, -25, -24, -23, -22, -10, -14, -2, 26, 25, 24, 23, 22, 10, 14, 2)
 		case 3:
 			offsets = append(offsets, -39, -38, -37, -36, -35, -34, -33, -27, -15, -3, -21, -9, 39, 38, 37, 36, 35, 34, 33, 27, 15, 3, 21, 9)
 		}
