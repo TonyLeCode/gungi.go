@@ -120,6 +120,7 @@
 	const userColor = gameStore.userColor;
 	const turnColor = gameStore.turnColor;
 	const completed = gameStore.completed;
+	const moveList = gameStore.moveList;
 	$: console.log($completed);
 
 	const { dragAndDrop, drop } = createDragAndDrop();
@@ -165,23 +166,33 @@
 			if (dragItem.from === 'hand') {
 				piece = dragItem.piece;
 			} else {
-				const fromSquare = $boardState[dragItem?.coordIndex];
+				const fromSquare = get(boardState)[dragItem?.coordIndex];
 				piece = fromSquare[fromSquare.length - 1];
 			}
 			moveDialogueText = `${DecodePieceFull(piece)} ${file.toUpperCase()}${rank} to ${file2.toUpperCase()}${rank2}`;
 		}
 
-		const fromSquare = $boardState[hoverItem?.coordIndex];
-		if (GetPieceColor(fromSquare[fromSquare.length - 1]) != $userColor) {
+		const toSquare = get(boardState)[hoverItem?.coordIndex];
+		if (GetPieceColor(toSquare[toSquare.length - 1]) != $userColor) {
 			disableAttackDialogue = false;
 		}
 
-		const stack = $boardState[hoverItem.coordIndex];
+		const stack = get(boardState)[hoverItem.coordIndex];
 		if (stack?.length != 3) {
 			disableStackDialogue = false;
 		}
+
+		// fortress cannot stack
+		const fromSquare = get(boardState)[dragItem?.coordIndex];
+		if (fromSquare && fromSquare[fromSquare.length - 1] % 13 === 4){
+			disableStackDialogue = true;
+		}
+
+		
 		if (stack?.length != 0 && !dragItem.from) {
-			const square = $boardState[dragItem.coordIndex];
+			const square = get(boardState)[dragItem.coordIndex];
+			const moveIndices = get(moveList)
+			if (!moveIndices[dragItem?.coordIndex].includes(hoverItem.coordIndex)) return;
 
 			moveDialogueInfo = {
 				fromPiece: square[square.length - 1],
@@ -213,7 +224,7 @@
 
 			ws?.send(msg);
 		} else {
-			const square = $boardState[dragItem.coordIndex];
+			const square = get(boardState)[dragItem.coordIndex];
 			const move = {
 				fromPiece: square[square.length - 1],
 				fromCoord: dragItem.coordIndex,
