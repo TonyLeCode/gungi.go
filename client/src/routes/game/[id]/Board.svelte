@@ -118,7 +118,8 @@
 	let highlightIndex: number;
 
 	function onClick(index: number) {
-		const square = get(boardUI)[index];
+		const board = get(boardUI)
+		const square = board[index];
 
 		if (get(userColor) != get(turnColor) || get(completed).completed) {
 			highlightIndex = -1;
@@ -137,8 +138,17 @@
 			moveIndices = [];
 			return;
 		}
+
 		highlightIndex = index;
 		moveIndices = get(moveListUI)[highlightIndex];
+
+		// Fortress can't stack
+		if (square[square.length - 1] % 13 === 4) {
+			moveIndices = moveIndices.filter((moveIndex) => {
+				const attackedSquare = board[moveIndex]
+				return attackedSquare.length <= 1;
+			})
+		}
 	}
 
 	function moveHighlight(index: number): boolean {
