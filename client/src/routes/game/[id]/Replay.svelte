@@ -30,13 +30,6 @@
 
 	$: fileName = `${$gameState.player1}_vs_${$gameState.player2}_${formattedDate}`
 
-	function handleDownload() {
-		const state = get(gameState);
-		let headings = `[game_id: ${state.id}]\n[ruleset: ${state.ruleset}]\n[type: ${state.type}]\n[date_started: ${state.date_started}]\n[white: ${state.player1}]\n[black: ${state.player2}]\n\n`;
-		const history = get(moveHistory).join(' ');
-		const blob = new Blob([headings + history], { type: 'text/plain' });
-	}
-
 	function handleCopy() {
 		const state = get(gameState);
 		console.log(state);

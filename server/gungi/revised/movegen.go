@@ -383,12 +383,14 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	}
 
 	marshalCoord := r.MarshalCoords[r.TurnColor]
+	// log.Println("marshal coord", marshalCoord)
 	marshalMoves := make(map[int]bool)
 	for _, coord := range r.GetPseudoLegalMoves(coloredPiece(MARSHAL, r.TurnColor), marshalCoord, 1) {
 		marshalMoves[coord] = true
 	}
 
 	attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus := r.CheckEnemyMoves(&marshalMoves)
+	// log.Println("check enemy moves", attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus)
 
 	xrayMap := make(map[int]bool)
 	xrayBetweenMap := make(map[int]bool)
@@ -434,8 +436,10 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 				}
 				if checkStatus == "checked" {
 					if len(xraySquares) > 0 && (xrayBetweenMap[move] || move == xrayCoord) {
+						// log.Println(1)
 						moves = append(moves, move)
 					} else if move == attackCoord {
+						// log.Println(2)
 						moves = append(moves, move)
 					}
 				} else if currSquare.coord == pinnedCoord && xrayBetweenMap[move] {
@@ -589,6 +593,8 @@ func (r *Revised) CheckEnemyRanging(piece int, coord int) ([]xraySquares, bool, 
 }
 
 func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquares, int, int, string) {
+	// log.Println("marshal moves: ", marshalMoves)
+	// log.Println("enemy moves: ")
 	enemyColor := utils.OppositeColor(r.TurnColor)
 	currSquare := r.ListRef.Head[enemyColor]
 	var pinnedCoord int = -1
@@ -646,6 +652,7 @@ func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquare
 			}
 		} else {
 			moves := r.GetPseudoLegalMoves(piece, currSquare.coord, len(currSquare.stack))
+			// log.Println(moves)
 			for _, moveCoord := range moves {
 				if (*marshalMoves)[moveCoord] && !(piece%13 == FORTRESS && !r.BoardSquares[moveCoord].IsEmpty()) {
 					delete(*marshalMoves, moveCoord)
