@@ -372,6 +372,8 @@ func (r *Revised) ValidateMove(piece int, fromCoord int, moveType int, toCoord i
 	}
 }
 
+// Coord is the coordinate of the piece to move
+// MoveList is the list of destination
 type Moves struct {
 	Coord    int
 	MoveList []int
@@ -454,8 +456,10 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	}
 
 	filteredMoves := make(map[int][]int)
+	//TODO fix filtered moves when in check
 
 	if checkStatus == "checked" {
+		// filteredMoves[-1] means piece placement from hand
 		if attackCoord != -1 {
 			if len(r.BoardSquares[attackCoord].stack) >= 0 && len(r.BoardSquares[attackCoord].stack) < 3 {
 				filteredMoves[-1] = append(filteredMoves[-1], attackCoord)
@@ -481,7 +485,15 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	}
 
 	for _, moves := range moveList {
-		filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], moves.MoveList...)
+		if checkStatus == "checked" {
+			for _, move := range moves.MoveList {
+				if move == attackCoord {
+					filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], attackCoord)
+				}
+			}
+		} else {
+			filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], moves.MoveList...)
+		}
 	}
 	for move := range marshalMoves {
 		filteredMoves[r.MarshalCoords[r.TurnColor]] = append(filteredMoves[r.MarshalCoords[r.TurnColor]], move)
