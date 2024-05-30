@@ -1,9 +1,21 @@
 <script lang="ts">
 	import { Droppable, draggable } from '$lib/store/dragAndDrop.svelte.ts';
+	import type { DraggableOptions } from '$lib/store/dragAndDrop.svelte.ts';
 	import { getGameStore } from '$lib/store/gameState.svelte';
-	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
+	import { getSquareCoords } from '$lib/utils/historyParser';
+	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
 
 	const boardStore = getGameStore();
+
+	let selectedSquareIndex = $state(-1);
+	let selectedMoveIndices = $derived.by(() => {
+		if (selectedSquareIndex === -1) return [];
+		return boardStore.moveListUI[selectedSquareIndex]
+	});
+	let lastMoveHighlightIndex = $derived.by(() => {
+		const lastMove = getSquareCoords(boardStore.moveHistory[boardStore.moveHistory.length - 1])
+		return boardStore.isViewReversed ? ReverseIndices(lastMove) : lastMove
+	})
 
 	let fileCoords = $derived(boardStore.isViewReversed ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [9, 8, 7, 6, 5, 4, 3, 2, 1]);
 	let rankCoords = $derived(
@@ -25,6 +37,28 @@
 		return isPlayerPiece && !isDraftingPhase;
 	}
 
+	function selectSquareIndex(index: number) {
+		if (selectedSquareIndex === index) {
+			selectedSquareIndex = -1;
+		} else {
+			selectedSquareIndex = index;
+		}
+	}
+
+	function draggableOptions(index: number, stack: number[]): DraggableOptions {
+		return {
+			startEvent: () => {
+				selectSquareIndex(index);
+			},
+			dragReleaseEvent: () => {
+				selectSquareIndex(-1);
+			},
+			active: () => {
+				return isActive(stack);
+			},
+		};
+	}
+
 	type dropItem = {
 		destinationIndex: number;
 		destinationStack: number[];
@@ -33,26 +67,28 @@
 </script>
 
 <div class="board">
-	{#each boardStore.boardUI as square, index (String(index) + JSON.stringify(square))}
+	{#each boardStore.boardUI as stack, index (String(index) + JSON.stringify(stack))}
 		<div
 			class="square"
-			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: square } }}
+			class:highlight={selectedSquareIndex === index || lastMoveHighlightIndex.includes(index)}
+			class:move-highlight={selectedMoveIndices.includes(index) && boardStore.isPlayer1Ready && boardStore.isPlayer2Ready}
+			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: stack } }}
 		>
-			{#if square.length > 0}
+			{#if stack.length > 0}
 				<img
 					draggable="false"
-					use:draggable={{ active: isActive(square) }}
-					class={`piece ${isActive(square) ? 'pointer' : ''}`}
-					src={GetImage(square)}
+					use:draggable={draggableOptions(index, stack)}
+					class={`piece ${isActive(stack) ? 'pointer' : ''}`}
+					src={GetImage(stack)}
 					alt=""
 				/>
 			{/if}
 
-			{#if square.length > 1}
+			{#if stack.length > 1}
 				<img
 					draggable="false"
 					class="piece-under"
-					src={GetImage2(square.length - 1, square[square.length - 2])}
+					src={GetImage2(stack.length - 1, stack[stack.length - 2])}
 					alt=""
 				/>
 			{/if}

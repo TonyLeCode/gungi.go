@@ -8,56 +8,79 @@ type dropOptions<T> = {
 
 export class Droppable<T> {
 	hoverItem = $state<T | null>(null);
-  isDragging = $state(false);
-	constructor() {
-  }
+	isDragging = $state(false);
+	constructor() {}
 
-	addDroppable( node: HTMLElement, options?: dropOptions<T>) {
+	addDroppable(node: HTMLElement, options?: dropOptions<T>) {
 		function mouseLeave(this: Droppable<T>) {
-      if (!this.isDragging) return;
-      if (options?.mouseLeaveEvent){
-        options.mouseLeaveEvent();
-      }
-      if (options?.mouseEnterItem){
-        this.hoverItem = null;
-      }
-    }
+			if (!this.isDragging) return;
+			if (options?.mouseLeaveEvent) {
+				options.mouseLeaveEvent();
+			}
+			if (options?.mouseEnterItem) {
+				this.hoverItem = null;
+			}
+		}
 		function mouseEnter(this: Droppable<T>) {
-      if (!this.isDragging) return;
-      if (options?.mouseEnterEvent){
-        options.mouseEnterEvent();
-      }
-      if (options?.mouseEnterItem){
-        this.hoverItem = options.mouseEnterItem;
-      }
+			if (!this.isDragging) return;
+			if (options?.mouseEnterEvent) {
+				options.mouseEnterEvent();
+			}
+			if (options?.mouseEnterItem) {
+				this.hoverItem = options.mouseEnterItem;
+			}
 		}
 		node.addEventListener('mouseleave', mouseLeave.bind(this));
 		node.addEventListener('mouseenter', mouseEnter.bind(this));
 	}
 }
 
+const timeThreshold = 200;
 let initialX = 0;
 let initialY = 0;
 let offsetX = 0;
 let offsetY = 0;
+let clickTimeout: number | undefined;
+let longPress = false;
+let startTime: number | undefined;
 let unsubMoveHandler: () => void;
 let unsubReleaseHandler: () => void;
 
-type draggableOptions = {
-  startEvent?: () => void;
-  dragEvent?: () => void;
-  releaseEvent?: () => void;
-  setDragItem?: unknown;
-  active?: boolean | (() => boolean);
+export type DraggableOptions = {
+	startEvent?: () => void;
+	dragEvent?: () => void;
+	releaseEvent?: () => void;
+	longReleaseEvent?: () => void;
+	shortReleaseEvent?: () => void;
+	dragReleaseEvent?: () => void;
+	setDragItem?: unknown;
+	active?: boolean | (() => boolean);
 };
 
-export function draggable(node: HTMLElement, options: draggableOptions = {}) {
-  const { startEvent, dragEvent, releaseEvent, setDragItem, active = true } = options;
+export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
+	const {
+		startEvent,
+		dragEvent,
+		releaseEvent,
+		longReleaseEvent,
+		shortReleaseEvent,
+		dragReleaseEvent,
+		setDragItem,
+		active = true,
+	} = options;
 
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent | TouchEvent) {
 			let dx = 0;
 			let dy = 0;
+
+			if (clickTimeout !== undefined) {
+				clearTimeout(clickTimeout);
+				clickTimeout = undefined;
+				startTime = undefined;
+				longPress = false;
+			}
+
 			if (e instanceof TouchEvent) {
 				e.preventDefault();
 				dx = e.touches[0].clientX + offsetX - initialX;
@@ -74,6 +97,34 @@ export function draggable(node: HTMLElement, options: draggableOptions = {}) {
 	function dragReleaseHandler(node: HTMLElement) {
 		return function () {
 			console.log('release');
+			if (startTime !== undefined) {
+				const endTime = Date.now();
+				const duration = endTime - startTime;
+				if (duration < timeThreshold) {
+					console.log('short press');
+					if (typeof shortReleaseEvent === 'function') {
+						shortReleaseEvent();
+					}
+				} else if (longPress) {
+					console.log('long press');
+					if (typeof longReleaseEvent === 'function') {
+						longReleaseEvent();
+					}
+				}
+			} else {
+				if (typeof dragReleaseEvent === 'function') {
+					dragReleaseEvent();
+				}
+				console.log('dragged');
+			}
+			clickTimeout = undefined;
+			startTime = undefined;
+			longPress = false;
+
+			if (typeof releaseEvent === 'function') {
+				releaseEvent();
+			}
+
 			node.removeAttribute('style');
 			initialX = 0;
 			initialY = 0;
@@ -84,11 +135,20 @@ export function draggable(node: HTMLElement, options: draggableOptions = {}) {
 		};
 	}
 	function dragStartHandler(e: MouseEvent | TouchEvent) {
-    if (typeof active === 'function') {
-      if (!active()) return;
-    } else if (active === false) return;
+		if (typeof active === 'function') {
+			if (!active()) return;
+		} else if (active === false) return;
 		if (e.target === null) return;
-    
+
+		if (typeof startEvent === 'function') {
+			startEvent();
+		}
+
+		startTime = Date.now();
+		clickTimeout = setTimeout(() => {
+			longPress = true;
+		}, timeThreshold);
+
 		const target = e.target as HTMLElement;
 		if (e instanceof TouchEvent) {
 			initialX = e.touches[0].clientX;
