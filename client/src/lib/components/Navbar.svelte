@@ -7,7 +7,7 @@
 
 <nav class="navbar">
 	<div class="nav-inner">
-		<a class="brand" href="/">Gungi</a>
+		<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo"></a>
 		<ul class="nav-list">
 			{#if session}
 				<a href="/overview">overview</a>
@@ -33,12 +33,17 @@
 <style>
 	nav {
 		user-select: none;
+		font-size: 0.85rem;
+		@media (min-width: 767px) {
+      font-size: 1rem;
+    }
 	}
 	a {
 		padding: 0 0.5rem;
 	}
 	.brand {
-		font-weight: 600;
+		/* font-weight: 600; */
+		width: 45px;
 	}
 	.name {
 		color: rgb(var(--primary));
@@ -48,22 +53,29 @@
 	}
 
 	.navbar {
-		padding: 0.75rem 1rem;
+		padding: 0.375rem 0.5rem;
 		max-width: 120rem;
 		margin: auto;
+		@media (min-width: 767px) {
+			padding: 0.75rem 1rem;
+		}
 	}
 	.nav-inner {
 		display: flex;
 		max-width: 96rem;
 		margin: auto;
+		align-items: center;
 	}
 	.nav-list {
 		display: none;
 	}
 	.nav-account {
-		display: flex;
+		display: none;
 		gap: 1rem;
 		margin-left: auto;
+		@media (min-width: 767px) {
+			display: flex;
+		}
 	}
 
 	@media only screen and (min-width: 800px) {
