@@ -1,19 +1,29 @@
 <script lang="ts">
 	import { Droppable, draggable } from '$lib/store/dragAndDrop.svelte.ts';
 	import { getGameStore } from '$lib/store/gameState.svelte';
-	import { GetImage } from '$lib/utils/utils';
+	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor } from '$lib/utils/utils';
 
 	const boardStore = getGameStore();
 
-	let fileCoords = [9, 8, 7, 6, 5, 4, 3, 2, 1];
-	let rankCoords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+	let fileCoords = $derived(boardStore.isViewReversed ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [9, 8, 7, 6, 5, 4, 3, 2, 1]);
+	let rankCoords = $derived(
+		boardStore.isViewReversed
+			? ['i', 'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
+			: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+	);
 
-	$effect(() => {
-		if (boardStore.isViewReversed) {
-			fileCoords = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-			rankCoords = ['i', 'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'];
-		}
-	});
+	function GetImage2(tier: number, piece: number): string {
+		const encodedPiece = DecodePiece(piece).toLowerCase();
+		const color = GetPieceColor(piece);
+		return `/pieces/${color}${tier}${encodedPiece}.svg`;
+	}
+
+	function isActive(stack: number[]): boolean {
+		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
+		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
+
+		return isPlayerPiece && !isDraftingPhase;
+	}
 
 	type dropItem = {
 		destinationIndex: number;
@@ -29,7 +39,22 @@
 			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: square } }}
 		>
 			{#if square.length > 0}
-				<img draggable="false" use:draggable class="piece" src={GetImage(square)} alt="" />
+				<img
+					draggable="false"
+					use:draggable={{ active: isActive(square) }}
+					class={`piece ${isActive(square) ? 'pointer' : ''}`}
+					src={GetImage(square)}
+					alt=""
+				/>
+			{/if}
+
+			{#if square.length > 1}
+				<img
+					draggable="false"
+					class="piece-under"
+					src={GetImage2(square.length - 1, square[square.length - 2])}
+					alt=""
+				/>
 			{/if}
 		</div>
 	{/each}

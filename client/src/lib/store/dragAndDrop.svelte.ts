@@ -8,11 +8,13 @@ type dropOptions<T> = {
 
 export class Droppable<T> {
 	hoverItem = $state<T | null>(null);
+  isDragging = $state(false);
 	constructor() {
   }
 
 	addDroppable( node: HTMLElement, options?: dropOptions<T>) {
 		function mouseLeave(this: Droppable<T>) {
+      if (!this.isDragging) return;
       if (options?.mouseLeaveEvent){
         options.mouseLeaveEvent();
       }
@@ -21,6 +23,7 @@ export class Droppable<T> {
       }
     }
 		function mouseEnter(this: Droppable<T>) {
+      if (!this.isDragging) return;
       if (options?.mouseEnterEvent){
         options.mouseEnterEvent();
       }
@@ -40,7 +43,17 @@ let offsetY = 0;
 let unsubMoveHandler: () => void;
 let unsubReleaseHandler: () => void;
 
-export function draggable(node: HTMLElement) {
+type draggableOptions = {
+  startEvent?: () => void;
+  dragEvent?: () => void;
+  releaseEvent?: () => void;
+  setDragItem?: unknown;
+  active?: boolean | (() => boolean);
+};
+
+export function draggable(node: HTMLElement, options: draggableOptions = {}) {
+  const { startEvent, dragEvent, releaseEvent, setDragItem, active = true } = options;
+
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent | TouchEvent) {
 			let dx = 0;
@@ -55,7 +68,6 @@ export function draggable(node: HTMLElement) {
 			}
 			node.style.left = `${dx}px`;
 			node.style.top = `${dy}px`;
-      node.style.pointerEvents = 'none';
 			node.style.zIndex = '3';
 		};
 	}
@@ -72,7 +84,11 @@ export function draggable(node: HTMLElement) {
 		};
 	}
 	function dragStartHandler(e: MouseEvent | TouchEvent) {
+    if (typeof active === 'function') {
+      if (!active()) return;
+    } else if (active === false) return;
 		if (e.target === null) return;
+    
 		const target = e.target as HTMLElement;
 		if (e instanceof TouchEvent) {
 			initialX = e.touches[0].clientX;
