@@ -5,7 +5,7 @@
 	export let showModal: boolean;
 
 	let type = 'correspondence';
-	let ruleset = 'default';
+	let ruleset = 'revised';
 	let color = 'random';
 	let description: string;
 
@@ -30,10 +30,10 @@
 		<h3>Create Game</h3>
 		<fieldset class="type">
 			<legend>Type:</legend>
-			<label>
+			<!-- <label>
 				<input bind:group={type} type="radio" name="type" value="live" />
 				Live
-			</label>
+			</label> -->
 			<label>
 				<input bind:group={type} type="radio" name="type" value="correspondence" />
 				Correspondence
@@ -66,8 +66,8 @@
 			<label class="ruleset">
 				Ruleset:
 				<select name="ruleset" bind:value={ruleset}>
-					<option value="default">Default</option>
-					<option value="universal-music">Universal Music</option>
+					<!-- <option value="default">Default</option>
+					<option value="universal-music">Universal Music</option> -->
 					<option value="revised">Revised</option>
 				</select>
 			</label>
@@ -75,7 +75,7 @@
 		<fieldset>
 			<label class="description">
 				Description:
-				<textarea bind:value={description} name="description" cols="30" rows="2" maxlength="50" />
+				<textarea bind:value={description} name="description" cols="30" rows="2" maxlength="50" ></textarea>
 			</label>
 		</fieldset>
 		<button class="button-primary">Create Challenge</button>
