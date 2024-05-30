@@ -1,6 +1,6 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
-	import { completedContext } from '../game/[id]/+page.svelte';
+	// import { completedContext } from '../game/[id]/+page.svelte';
 	import type { Game } from './+page.server';
 
 	export let data;

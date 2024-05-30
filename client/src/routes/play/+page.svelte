@@ -23,7 +23,7 @@
 	$: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
 	let showLive = true;
 	let showCorrespondence = true;
-	$: liveRoomList = sortedList.filter((room) => room.type === 'live');
+	// $: liveRoomList = sortedList.filter((room) => room.type === 'live');
 	$: correspondenceRoomList = sortedList.filter((room) => room.type === 'correspondence');
 
 	let showCreateGameDialogue = false;
@@ -105,14 +105,14 @@
 	{:else if $ws === 'connected'}
 		<section class="options">
 			<div class="filter">
-				<label>
+				<!-- <label>
 					<input bind:checked={showLive} type="checkbox" />
 					Live
 				</label>
 				<label>
 					<input bind:checked={showCorrespondence} type="checkbox" />
 					Correspondence
-				</label>
+				</label> -->
 				<button
 					on:click={() => {
 						showCreateGameDialogue = true;
@@ -122,7 +122,7 @@
 				>
 			</div>
 		</section>
-		{#if showLive}
+		<!-- {#if showLive}
 			<RoomList
 				bind:showRoomDialogue
 				bind:roomDialogueInfo
@@ -131,7 +131,7 @@
 				{username}
 				{accept}
 			/>
-		{/if}
+		{/if} -->
 		{#if showCorrespondence}
 			<RoomList
 				bind:showRoomDialogue
