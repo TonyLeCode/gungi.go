@@ -46,7 +46,7 @@ a,
 
 .button-primary {
 	background-color: rgb(var(--primary));
-	color: rgb(var(--bg));
+	color: rgb(242, 242, 242);
 	padding: 0.25rem 0.75rem;
 	border-radius: 4px;
 	// box-shadow: 0px 5px 10px rgba(255, 77, 7, 0.308);
@@ -57,11 +57,11 @@ a,
 	transition-property: background-color;
 	&:hover:not([disabled]) {
 		background-color: rgb(var(--primary-2));
-		color: rgb(var(--bg));
+		color: rgb(242, 242, 242);
 	}
 	&:active:not([disabled]) {
 		background-color: rgb(var(--primary-3));
-		color: rgb(var(--bg));
+		color: rgb(242, 242, 242);
 		box-shadow: none;
 	}
 	&:focus {

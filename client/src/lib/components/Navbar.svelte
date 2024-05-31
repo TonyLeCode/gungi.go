@@ -29,7 +29,7 @@
 			<!-- <a href="/rules">rules</a> -->
 		</ul>
 		<ul class="nav-account">
-			// TODO theme switch button
+			<!--  TODO theme switch button -->
 			<button class="button-primary" on:click={switchTheme}>Theme</button>
 			{#if session}
 				<!-- TODO settings, friends, notifications  -->
