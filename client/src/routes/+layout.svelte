@@ -13,7 +13,7 @@
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
 	$: $ws === 'connected' && session && ws?.authenticate(session.access_token);
-	$: notifStore = topNotification?.store
+	$: notifStore = topNotification?.store;
 
 	onMount(() => {
 		const {

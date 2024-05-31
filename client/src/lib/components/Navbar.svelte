@@ -3,6 +3,17 @@
 
 	export let session: Session | null;
 	$: session = session;
+
+	function switchTheme() {
+		const theme = localStorage.getItem('theme');
+		if (theme === 'dark') {
+			localStorage.setItem('theme', 'light');
+			document.documentElement.classList.remove('dark');
+		} else {
+			localStorage.setItem('theme', 'dark');
+			document.documentElement.classList.add('dark');
+		}
+	}
 </script>
 
 <nav class="navbar">
@@ -18,6 +29,8 @@
 			<!-- <a href="/rules">rules</a> -->
 		</ul>
 		<ul class="nav-account">
+			// TODO theme switch button
+			<button class="button-primary" on:click={switchTheme}>Theme</button>
 			{#if session}
 				<!-- TODO settings, friends, notifications  -->
 				<span class="name">{session.user.user_metadata.username}</span>
