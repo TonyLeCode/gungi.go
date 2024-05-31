@@ -27,8 +27,10 @@
 					Draw
 				{/if}
 			{:else}
-				{boardStore.isPlayer1Ready && boardStore.isPlayer2Ready ? '' : 'Drafting -'}
-				{boardStore.turnColor === 'w' ? 'White' : 'Black'} To Play
+				<span class:turn-indicator={boardStore.isUserTurn}
+					>{boardStore.isPlayer1Ready && boardStore.isPlayer2Ready ? '' : 'Drafting -'}
+					{boardStore.turnColor === 'w' ? 'White' : 'Black'} To Play</span
+				>
 			{/if}
 		</div>
 		<PlayerInfo isOpposite={true} />
@@ -41,7 +43,7 @@
 	</section>
 	<aside class="side-menu">
 		<div class="tabs">s</div>
-    <button onclick={() => boardStore.manualFlip = !boardStore.manualFlip}>reverse</button>
+		<button onclick={() => (boardStore.manualFlip = !boardStore.manualFlip)}>reverse</button>
 	</aside>
 </main>
 
@@ -72,6 +74,11 @@
 		font-size: 1.2rem;
 		font-weight: 600;
 	}
+
+	.turn-indicator {
+		color: rgb(var(--primary));
+		font-weight: 600;
+	}
 	.tabs {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -100,7 +107,7 @@
 
 	.game-state {
 		text-align: center;
-    margin: 0.25rem 0;
+		margin: 0.25rem 0;
 	}
 
 	.side-menu {

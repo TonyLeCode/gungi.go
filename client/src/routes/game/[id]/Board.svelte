@@ -1,21 +1,23 @@
 <script lang="ts">
-	import { Droppable, draggable } from '$lib/store/dragAndDrop.svelte.ts';
-	import type { DraggableOptions } from '$lib/store/dragAndDrop.svelte.ts';
+	import { browser } from '$app/environment';
+	import { Droppable, draggable } from '$lib/store/dragAndDrop.svelte';
+	import type { DraggableOptions } from '$lib/store/dragAndDrop.svelte';
 	import { getGameStore } from '$lib/store/gameState.svelte';
 	import { getSquareCoords } from '$lib/utils/historyParser';
 	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
 
 	const boardStore = getGameStore();
 
+	let startSelectIndex = $state(-1);
 	let selectedSquareIndex = $state(-1);
 	let selectedMoveIndices = $derived.by(() => {
 		if (selectedSquareIndex === -1) return [];
-		return boardStore.moveListUI[selectedSquareIndex]
+		return boardStore.moveListUI[selectedSquareIndex];
 	});
 	let lastMoveHighlightIndex = $derived.by(() => {
-		const lastMove = getSquareCoords(boardStore.moveHistory[boardStore.moveHistory.length - 1])
-		return boardStore.isViewReversed ? ReverseIndices(lastMove) : lastMove
-	})
+		const lastMove = getSquareCoords(boardStore.moveHistory[boardStore.moveHistory.length - 1]);
+		return boardStore.isViewReversed ? ReverseIndices(lastMove) : lastMove;
+	});
 
 	let fileCoords = $derived(boardStore.isViewReversed ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [9, 8, 7, 6, 5, 4, 3, 2, 1]);
 	let rankCoords = $derived(
@@ -24,6 +26,26 @@
 			: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 	);
 
+	let deselectTimeout = $state<number | undefined>(undefined);
+	let blockDeselect = $state(false);
+	if (browser) {
+		window.addEventListener('mousedown', (e) => {
+			if (deselectTimeout === undefined) {
+				deselectTimeout = window.setTimeout(() => {
+					if (!blockDeselect) {
+						selectedSquareIndex = -1;
+					}
+					deselectTimeout = undefined;
+					blockDeselect = false;
+				}, 50);
+			}
+		});
+	}
+
+	function blockDeselection() {
+		blockDeselect = true;
+	}
+
 	function GetImage2(tier: number, piece: number): string {
 		const encodedPiece = DecodePiece(piece).toLowerCase();
 		const color = GetPieceColor(piece);
@@ -31,6 +53,7 @@
 	}
 
 	function isActive(stack: number[]): boolean {
+		if (!boardStore.isUserTurn) return false;
 		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
 
@@ -45,14 +68,48 @@
 		}
 	}
 
-	function draggableOptions(index: number, stack: number[]): DraggableOptions {
+	// TODO fix events
+	// when selected, should attempt to make move on short and long press
+	// only drag should reselect
+	function draggableOptions(index: number, stack: number[]): DraggableOptions<dropItem | null> {
 		return {
 			startEvent: () => {
-				selectSquareIndex(index);
+				startSelectIndex = selectedSquareIndex
+				if (selectedSquareIndex === -1 || !selectedMoveIndices.includes(index) && selectedSquareIndex !== index) {
+					selectSquareIndex(index);
+				}
+				blockDeselection();
+			},
+			dragStartEvent: () => {
+				if (selectedSquareIndex !== index) {
+					selectSquareIndex(index);
+				}
 			},
 			dragReleaseEvent: () => {
 				selectSquareIndex(-1);
 			},
+			shortReleaseEvent: () => {
+				if (startSelectIndex === index){
+					selectSquareIndex(-1)
+				}
+				// make move
+				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)){
+					console.log("make move")
+				}
+			},
+			longReleaseEvent: () => {
+				if (startSelectIndex === index){
+					selectSquareIndex(-1)
+				}
+				// make move
+				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)){
+					console.log("make move")
+				}
+			},
+			releaseEvent: (hoverItem) => {
+				startSelectIndex = -1;
+			},
+			droppable : droppable,
 			active: () => {
 				return isActive(stack);
 			},
@@ -66,12 +123,25 @@
 	const droppable = new Droppable<dropItem>();
 </script>
 
+<p>droppable: {droppable.hoverItem?.destinationIndex} {droppable.hoverItem?.destinationStack}</p>
 <div class="board">
 	{#each boardStore.boardUI as stack, index (String(index) + JSON.stringify(stack))}
 		<div
+			role="button"
+			tabindex="0"
 			class="square"
 			class:highlight={selectedSquareIndex === index || lastMoveHighlightIndex.includes(index)}
-			class:move-highlight={selectedMoveIndices.includes(index) && boardStore.isPlayer1Ready && boardStore.isPlayer2Ready}
+			class:move-highlight={selectedMoveIndices.includes(index) &&
+				boardStore.isPlayer1Ready &&
+				boardStore.isPlayer2Ready}
+			onmousedown={() => {
+				if (stack.length > 0) return;
+				console.log("empty square")
+				if (selectedMoveIndices.includes(index)) {
+					// make move
+					console.log("make move")
+				}
+			}}
 			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: stack } }}
 		>
 			{#if stack.length > 0}
@@ -85,12 +155,7 @@
 			{/if}
 
 			{#if stack.length > 1}
-				<img
-					draggable="false"
-					class="piece-under"
-					src={GetImage2(stack.length - 1, stack[stack.length - 2])}
-					alt=""
-				/>
+				<img draggable="false" class="piece-under" src={GetImage2(stack.length - 1, stack[stack.length - 2])} alt="" />
 			{/if}
 		</div>
 	{/each}
@@ -184,9 +249,11 @@
 		position: absolute;
 		height: 100%;
 		margin-left: 0.25rem;
+		color: black;
 		@media (min-width: 768px) {
 			align-items: center;
 			margin-left: -1rem;
+			color: inherit;
 		}
 	}
 
@@ -198,9 +265,11 @@
 		bottom: 0;
 		text-align: right;
 		right: 0.375rem;
+		color: black;
 		@media (min-width: 768px) {
 			bottom: -1.5rem;
 			text-align: center;
+			color: inherit;
 		}
 	}
 

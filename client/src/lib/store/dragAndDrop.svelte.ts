@@ -22,6 +22,7 @@ export class Droppable<T> {
 			}
 		}
 		function mouseEnter(this: Droppable<T>) {
+      console.log("enter")
 			if (!this.isDragging) return;
 			if (options?.mouseEnterEvent) {
 				options.mouseEnterEvent();
@@ -33,6 +34,14 @@ export class Droppable<T> {
 		node.addEventListener('mouseleave', mouseLeave.bind(this));
 		node.addEventListener('mouseenter', mouseEnter.bind(this));
 	}
+	startDragging(){
+		this.isDragging = true;
+	}
+
+	stopDragging(){
+		this.isDragging = false;
+		this.hoverItem = null;
+	}
 }
 
 const timeThreshold = 200;
@@ -40,37 +49,54 @@ let initialX = 0;
 let initialY = 0;
 let offsetX = 0;
 let offsetY = 0;
+let dragStart = true;
 let clickTimeout: number | undefined;
 let longPress = false;
 let startTime: number | undefined;
 let unsubMoveHandler: () => void;
 let unsubReleaseHandler: () => void;
 
-export type DraggableOptions = {
-	startEvent?: () => void;
-	dragEvent?: () => void;
-	releaseEvent?: () => void;
-	longReleaseEvent?: () => void;
-	shortReleaseEvent?: () => void;
-	dragReleaseEvent?: () => void;
-	setDragItem?: unknown;
-	active?: boolean | (() => boolean);
+export type DraggableOptions<T> = {
+	startEvent?: (hoverItem?: T) => void;
+	dragEvent?: (hoverItem?: T) => void;
+	dragStartEvent?: (hoverItem?: T) => void;
+	releaseEvent?: (hoverItem?: T) => void;
+	longReleaseEvent?: (hoverItem?: T) => void;
+	shortReleaseEvent?: (hoverItem?: T) => void;
+	dragReleaseEvent?: (hoverItem?: T) => void;
+	// setDragItem?: T;
+	droppable?: Droppable<T>;
+	active?: boolean | ((hoverItem?: T) => boolean);
 };
 
-export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
+export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {}) {
 	const {
 		startEvent,
 		dragEvent,
+		dragStartEvent,
 		releaseEvent,
 		longReleaseEvent,
 		shortReleaseEvent,
 		dragReleaseEvent,
-		setDragItem,
+		// setDragItem,
+		droppable,
 		active = true,
 	} = options;
 
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent | TouchEvent) {
+			if (dragStart) {
+				dragStart = false;
+				if (droppable) {
+					droppable.startDragging();
+				}
+				if (typeof dragStartEvent === 'function') {
+					dragStartEvent();
+				}
+			}
+			if (typeof dragEvent === 'function') {
+				dragEvent();
+			}
 			let dx = 0;
 			let dy = 0;
 
@@ -82,7 +108,7 @@ export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
 			}
 
 			if (e instanceof TouchEvent) {
-				e.preventDefault();
+				e.preventDefault(); // prevent scrolling
 				dx = e.touches[0].clientX + offsetX - initialX;
 				dy = e.touches[0].clientY + offsetY - initialY;
 			} else if (e instanceof MouseEvent) {
@@ -101,28 +127,35 @@ export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
 				const endTime = Date.now();
 				const duration = endTime - startTime;
 				if (duration < timeThreshold) {
-					console.log('short press');
+          // short press
 					if (typeof shortReleaseEvent === 'function') {
 						shortReleaseEvent();
 					}
 				} else if (longPress) {
-					console.log('long press');
+          // long press
 					if (typeof longReleaseEvent === 'function') {
 						longReleaseEvent();
 					}
 				}
 			} else {
+        // dragged
 				if (typeof dragReleaseEvent === 'function') {
 					dragReleaseEvent();
 				}
-				console.log('dragged');
 			}
+
+			dragStart = true;
 			clickTimeout = undefined;
 			startTime = undefined;
 			longPress = false;
 
 			if (typeof releaseEvent === 'function') {
-				releaseEvent();
+				console.log("release", droppable?.hoverItem)
+				releaseEvent(droppable?.hoverItem ?? undefined);
+			}
+
+			if (droppable) {
+				droppable.stopDragging();
 			}
 
 			node.removeAttribute('style');
@@ -145,7 +178,7 @@ export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
 		}
 
 		startTime = Date.now();
-		clickTimeout = setTimeout(() => {
+		clickTimeout = window.setTimeout(() => {
 			longPress = true;
 		}, timeThreshold);
 
@@ -165,22 +198,32 @@ export function draggable(node: HTMLElement, options: DraggableOptions = {}) {
 		}
 		const onDrag = dragMoveHandler(target);
 		const onRelease = dragReleaseHandler(target);
-		target.addEventListener('mousemove', onDrag);
-		target.addEventListener('mouseup', onRelease);
-		target.addEventListener('touchmove', onDrag);
-		target.addEventListener('touchend', onRelease);
+    node.style.pointerEvents = 'none';
+		document.addEventListener('mousemove', onDrag);
+		document.addEventListener('mouseup', onRelease);
+		document.addEventListener('touchmove', onDrag);
+		document.addEventListener('touchend', onRelease);
 		unsubMoveHandler = () => {
-			target.removeEventListener('mousemove', onDrag);
-			target.removeEventListener('touchmove', onDrag);
+			document.removeEventListener('mousemove', onDrag);
+			document.removeEventListener('touchmove', onDrag);
 		};
 		unsubReleaseHandler = () => {
-			target.removeEventListener('mouseup', onRelease);
-			target.removeEventListener('touchend', onRelease);
+			document.removeEventListener('mouseup', onRelease);
+			document.removeEventListener('touchend', onRelease);
 		};
 	}
 
 	node.addEventListener('mousedown', dragStartHandler);
 	node.addEventListener('touchstart', dragStartHandler);
+  return {
+    destroy() {
+      node.removeEventListener('mousedown', dragStartHandler);
+      node.removeEventListener('touchstart', dragStartHandler);
+      // Note that destruction can happen while another drag is in progress
+      if (unsubMoveHandler) unsubMoveHandler();
+			if (unsubReleaseHandler) unsubReleaseHandler();
+    },
+  }
 }
 
 // export function createDrag() {
