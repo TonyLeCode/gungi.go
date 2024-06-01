@@ -5,9 +5,7 @@
 	let { isOpposite }: { isOpposite: boolean } = $props();
 
   let displayName = $derived.by(() => {
-    const turnPlayerName = boardStore.username;
-    const oppositePlayerName = turnPlayerName === boardStore.player1 ? boardStore.player2 : boardStore.player1;
-    return boardStore.isViewReversed === isOpposite ? oppositePlayerName : turnPlayerName
+    return isOpposite === boardStore.isViewReversed ?  boardStore.player1 : boardStore.player2
   })
 
   let isPlayerTurn = $derived.by(() => {
