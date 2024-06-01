@@ -22,7 +22,6 @@ export class Droppable<T> {
 			}
 		}
 		function mouseEnter(this: Droppable<T>) {
-      console.log("enter")
 			if (!this.isDragging) return;
 			if (options?.mouseEnterEvent) {
 				options.mouseEnterEvent();
@@ -83,6 +82,10 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		active = true,
 	} = options;
 
+	if (typeof active === 'function') {
+		if (!active()) return;
+	} else if (active === false) return;
+
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent | TouchEvent) {
 			if (dragStart) {
@@ -91,11 +94,11 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 					droppable.startDragging();
 				}
 				if (typeof dragStartEvent === 'function') {
-					dragStartEvent();
+					dragStartEvent(droppable?.hoverItem ?? undefined);
 				}
 			}
 			if (typeof dragEvent === 'function') {
-				dragEvent();
+				dragEvent(droppable?.hoverItem ?? undefined);
 			}
 			let dx = 0;
 			let dy = 0;
@@ -122,25 +125,24 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 	}
 	function dragReleaseHandler(node: HTMLElement) {
 		return function () {
-			console.log('release');
 			if (startTime !== undefined) {
 				const endTime = Date.now();
 				const duration = endTime - startTime;
 				if (duration < timeThreshold) {
           // short press
 					if (typeof shortReleaseEvent === 'function') {
-						shortReleaseEvent();
+						shortReleaseEvent(droppable?.hoverItem ?? undefined);
 					}
 				} else if (longPress) {
           // long press
 					if (typeof longReleaseEvent === 'function') {
-						longReleaseEvent();
+						longReleaseEvent(droppable?.hoverItem ?? undefined);
 					}
 				}
 			} else {
         // dragged
 				if (typeof dragReleaseEvent === 'function') {
-					dragReleaseEvent();
+					dragReleaseEvent(droppable?.hoverItem ?? undefined);
 				}
 			}
 
@@ -150,7 +152,6 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 			longPress = false;
 
 			if (typeof releaseEvent === 'function') {
-				console.log("release", droppable?.hoverItem)
 				releaseEvent(droppable?.hoverItem ?? undefined);
 			}
 
@@ -168,13 +169,11 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		};
 	}
 	function dragStartHandler(e: MouseEvent | TouchEvent) {
-		if (typeof active === 'function') {
-			if (!active()) return;
-		} else if (active === false) return;
 		if (e.target === null) return;
+		e.preventDefault(); // Touch events trigger mouse events, must prevent default to trigger only touch event
 
 		if (typeof startEvent === 'function') {
-			startEvent();
+			startEvent(droppable?.hoverItem ?? undefined);
 		}
 
 		startTime = Date.now();
@@ -213,8 +212,8 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		};
 	}
 
-	node.addEventListener('mousedown', dragStartHandler);
 	node.addEventListener('touchstart', dragStartHandler);
+	node.addEventListener('mousedown', dragStartHandler);
   return {
     destroy() {
       node.removeEventListener('mousedown', dragStartHandler);

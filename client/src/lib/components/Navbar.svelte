@@ -52,11 +52,19 @@
     }
 	}
 	a {
-		padding: 0 0.5rem;
+		margin: 0;
+		padding: 0;
+		@media (min-width: 767px) {
+			padding: 0 0.25rem;
+			margin: 0 0.25rem;
+		}
 	}
 	.brand {
 		/* font-weight: 600; */
-		width: 45px;
+		width: 30px;
+		@media (min-width: 767px) {
+			width: 45px;
+		}
 	}
 	.name {
 		color: rgb(var(--primary));
@@ -66,7 +74,7 @@
 	}
 
 	.navbar {
-		padding: 0.375rem 0.5rem;
+		padding: 0.25rem 0.25rem;
 		max-width: 120rem;
 		margin: auto;
 		@media (min-width: 767px) {

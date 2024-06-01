@@ -60,8 +60,8 @@ class BoardStore {
 	turnColor = $derived(this.currentStateFields[2]);
 	isPlayer1Ready = $derived(this.currentStateFields[3][0] === '1');
 	isPlayer2Ready = $derived(this.currentStateFields[3][1] === '1');
-	player1ArmyCount = $derived(this.pieces.match(/[A-Z]/g)?.length);
-	player2ArmyCount = $derived(this.pieces.match(/[a-z]/g)?.length);
+	player1ArmyCount = $derived(this.pieces.match(/[A-Z]/g)?.length || 0);
+	player2ArmyCount = $derived(this.pieces.match(/[a-z]/g)?.length || 0);
 	player1HandCount = $derived(this.player1HandList.reduce((a, b) => a + b));
 	player2HandCount = $derived(this.player2HandList.reduce((a, b) => a + b));
 

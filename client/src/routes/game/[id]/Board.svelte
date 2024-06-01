@@ -6,17 +6,28 @@
 	import { getSquareCoords } from '$lib/utils/historyParser';
 	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
 
+	let { changeSelectedStack }: { changeSelectedStack: (stack: number[]) => void } = $props();
+
 	const boardStore = getGameStore();
 
 	let startSelectIndex = $state(-1);
 	let selectedSquareIndex = $state(-1);
 	let selectedMoveIndices = $derived.by(() => {
 		if (selectedSquareIndex === -1) return [];
+		if (boardStore.moveListUI[selectedSquareIndex] === undefined) return [];
 		return boardStore.moveListUI[selectedSquareIndex];
 	});
 	let lastMoveHighlightIndex = $derived.by(() => {
 		const lastMove = getSquareCoords(boardStore.moveHistory[boardStore.moveHistory.length - 1]);
 		return boardStore.isViewReversed ? ReverseIndices(lastMove) : lastMove;
+	});
+
+	$effect(() => {
+		if (selectedSquareIndex !== -1) {
+			changeSelectedStack(boardStore.boardUI[selectedSquareIndex]);
+		} else {
+			changeSelectedStack([]);
+		}
 	});
 
 	let fileCoords = $derived(boardStore.isViewReversed ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [9, 8, 7, 6, 5, 4, 3, 2, 1]);
@@ -30,7 +41,7 @@
 	let blockDeselect = $state(false);
 	if (browser) {
 		window.addEventListener('mousedown', (e) => {
-			if (deselectTimeout === undefined) {
+			if (deselectTimeout === undefined && startSelectIndex !== -1) {
 				deselectTimeout = window.setTimeout(() => {
 					if (!blockDeselect) {
 						selectedSquareIndex = -1;
@@ -74,8 +85,8 @@
 	function draggableOptions(index: number, stack: number[]): DraggableOptions<dropItem | null> {
 		return {
 			startEvent: () => {
-				startSelectIndex = selectedSquareIndex
-				if (selectedSquareIndex === -1 || !selectedMoveIndices.includes(index) && selectedSquareIndex !== index) {
+				startSelectIndex = selectedSquareIndex;
+				if (selectedSquareIndex === -1 || (!selectedMoveIndices.includes(index) && selectedSquareIndex !== index)) {
 					selectSquareIndex(index);
 				}
 				blockDeselection();
@@ -85,31 +96,42 @@
 					selectSquareIndex(index);
 				}
 			},
-			dragReleaseEvent: () => {
+			dragReleaseEvent: (hoverItem) => {
+				if (hoverItem === null || hoverItem === undefined) {
+					selectSquareIndex(-1);
+					return;
+				}
+				if (selectedMoveIndices.includes(hoverItem.destinationIndex)) {
+					// make move
+					console.log('make move');
+				}
 				selectSquareIndex(-1);
 			},
 			shortReleaseEvent: () => {
-				if (startSelectIndex === index){
-					selectSquareIndex(-1)
+				console.log(startSelectIndex);
+				if (startSelectIndex === index) {
+					selectSquareIndex(-1);
 				}
 				// make move
-				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)){
-					console.log("make move")
+				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)) {
+					console.log('make move');
+					selectSquareIndex(-1);
 				}
 			},
 			longReleaseEvent: () => {
-				if (startSelectIndex === index){
-					selectSquareIndex(-1)
+				if (startSelectIndex === index) {
+					selectSquareIndex(-1);
 				}
 				// make move
-				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)){
-					console.log("make move")
+				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)) {
+					console.log('make move');
+					selectSquareIndex(-1);
 				}
 			},
 			releaseEvent: (hoverItem) => {
 				startSelectIndex = -1;
 			},
-			droppable : droppable,
+			droppable: droppable,
 			active: () => {
 				return isActive(stack);
 			},
@@ -135,11 +157,19 @@
 				boardStore.isPlayer1Ready &&
 				boardStore.isPlayer2Ready}
 			onmousedown={() => {
-				if (stack.length > 0) return;
-				console.log("empty square")
+				const pieceIsPlayerColor = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
+				const stackLength = stack.length;
+				if (stackLength > 0 && pieceIsPlayerColor) return;
 				if (selectedMoveIndices.includes(index)) {
 					// make move
-					console.log("make move")
+					console.log('make move');
+					selectedSquareIndex = -1;
+				} else if (stackLength > 0) {
+					console.log('enemy stack');
+					selectedSquareIndex = index;
+				} else {
+					console.log('empty square');
+					selectedSquareIndex = -1;
 				}
 			}}
 			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: stack } }}
@@ -175,18 +205,17 @@
 <style>
 	.pointer {
 		cursor: pointer;
+		touch-action: none;
+		-ms-touch-action: none;
 	}
 
 	.board {
-		box-shadow:
-			0px 7px 50px 5px rgba(230, 106, 5, 0.25),
-			0px 5px 10px rgba(230, 106, 5, 0.25);
 		display: grid;
 		grid-template-columns: repeat(9, minmax(20px, 1fr));
 		grid-template-rows: repeat(9, minmax(20px, 1fr));
 		gap: 2px;
 		padding: 2px;
-		max-width: 40rem;
+		max-width: 30rem;
 		margin-left: auto;
 		margin-right: auto;
 		aspect-ratio: 1/1;
@@ -195,6 +224,12 @@
 		@media (min-width: 767px) {
 			margin-bottom: 1.75rem;
 			margin-top: 0.75rem;
+			box-shadow:
+				0px 7px 50px 5px rgba(230, 106, 5, 0.25),
+				0px 5px 10px rgba(230, 106, 5, 0.25);
+		}
+		@media (min-width: 1200px) {
+			max-width: 40rem;
 		}
 	}
 

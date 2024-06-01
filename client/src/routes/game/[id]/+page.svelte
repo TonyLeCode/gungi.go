@@ -2,9 +2,16 @@
 	import Board from './Board.svelte';
 	import { setGameStore } from '$lib/store/gameState.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
+	import Menu from './Menu.svelte';
 	let { data } = $props();
 
 	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
+
+	let selectedStack = $state<number[]>([]);
+
+	function changeSelectedStack(stack: number[]) {
+		selectedStack = stack;
+	}
 </script>
 
 <svelte:head>
@@ -34,22 +41,19 @@
 			{/if}
 		</div>
 		<PlayerInfo isOpposite={true} />
-		<Board />
+		<Board changeSelectedStack={changeSelectedStack} />
 		<PlayerInfo isOpposite={false} />
 		<!-- <div class="player same">
 			<div class={`${boardStore.turnColor === 'w' ? 'w' : 'b'}`}></div>
 			{boardStore.isViewReversed && boardStore.userColor === 'w' ? boardStore.player1 : boardStore.player2}
 		</div> -->
 	</section>
-	<aside class="side-menu">
-		<div class="tabs">s</div>
-		<button onclick={() => (boardStore.manualFlip = !boardStore.manualFlip)}>reverse</button>
-	</aside>
+	<Menu selectedStack={selectedStack} />
 </main>
 
 <style lang="scss">
 	main {
-		max-width: 90rem;
+		max-width: 30rem;
 		margin: 0 auto;
 		font-size: 0.75rem;
 		@media (min-width: 608px) {
@@ -57,6 +61,12 @@
 		}
 		@media (min-width: 767px) {
 			font-size: 1rem;
+		}
+		@media (min-width: 1200px) {
+			display: flex;
+			max-width: 90rem;
+			gap: 2rem;
+			padding: 0 2rem;
 		}
 	}
 
@@ -107,24 +117,9 @@
 
 	.game-state {
 		text-align: center;
-		margin: 0.25rem 0;
-	}
-
-	.side-menu {
-		margin: 0 auto;
-		max-width: 44rem;
-		width: 100%;
-		padding: 0 2rem;
-	}
-
-	@media only screen and (min-width: 1200px) {
-		main {
-			display: flex;
-		}
-		.side-menu {
-			margin-left: auto;
-			max-width: 36rem;
-			padding: 0;
+		margin-bottom: 0.25rem;
+		@media (min-width: 767px) {
+			margin: 0.25rem 0;
 		}
 	}
 </style>

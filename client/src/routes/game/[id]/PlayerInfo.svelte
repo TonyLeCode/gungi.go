@@ -19,7 +19,7 @@
 <div class={`player ${oppositeClass}`}>
 	<div class={`indicator ${isPlayerTurn ? 'player-turn' : ''}`}></div>
 	<span class:is-user={displayName === boardStore.username}>{displayName}</span>
-  <div class="count">{`Board: ${boardStore.player1ArmyCount}  Hand: ${boardStore.player1HandCount}`}</div>
+  <!-- <div class="count">{`Board: ${boardStore.player1ArmyCount}  Hand: ${boardStore.player1HandCount}`}</div> -->
 </div>
 
 <style lang="scss">
