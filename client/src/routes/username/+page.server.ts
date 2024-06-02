@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals: { getSession }, url }) => {
 
 	const session = await getSession();
 	if (!session) {
-		throw redirect(308, '/');
+		redirect(308, '/');
 	}
 
 	if (onboard) {
@@ -44,7 +44,7 @@ export const actions: Actions = {
 
 		const session = await locals.getSession();
 		if (!session) {
-			throw redirect(308, '/');
+			redirect(308, '/');
 		}
 
 		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/changename`: `https://${import.meta.env.VITE_API_URL}/user/changename` ;
@@ -59,7 +59,7 @@ export const actions: Actions = {
 		};
 		const res = await fetch(fetchUrl, options);
 		if (!res.ok) {
-			throw error(500)
+			error(500);
 		}
 		await locals.supabase.auth.refreshSession(session)
 

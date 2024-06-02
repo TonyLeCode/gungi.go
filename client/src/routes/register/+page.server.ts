@@ -13,7 +13,7 @@ const schema = z.object({
 export const load: PageServerLoad = async ({ locals: { getSession } }) => {
 	const session = await getSession();
 	if (session) {
-		throw redirect(308, '/overview');
+		redirect(308, '/overview');
 	}
 	const form = await superValidate(schema);
 	return { form };

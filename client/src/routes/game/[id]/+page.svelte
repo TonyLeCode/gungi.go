@@ -76,9 +76,6 @@
 		margin: auto;
 		max-width: 50rem;
 	}
-	aside {
-		user-select: none;
-	}
 
 	.completed-text {
 		font-size: 1.2rem;
@@ -89,30 +86,9 @@
 		color: rgb(var(--primary));
 		font-weight: 600;
 	}
-	.tabs {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		justify-content: center;
-		margin: 1rem 0;
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
-		border-radius: 4px;
-		overflow: hidden;
-	}
 
-	.tab {
-		background-color: rgb(var(--bg-2));
-		padding: 0.5rem 1rem;
-		&:hover {
-			background-color: rgb(var(--primary));
-			color: white;
-		}
-	}
 	.divider {
 		border-left: 1px rgba(99, 99, 99, 0.2) solid;
-	}
-	.active {
-		background-color: rgb(var(--primary));
-		color: white;
 	}
 
 	.game-state {

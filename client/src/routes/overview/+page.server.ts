@@ -32,9 +32,9 @@ export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) =>
 
 	const res = await fetch(url, options);
 	if (!res.ok) {
-		throw error(500, {
-			message: 'Internal Server Error',
-		});
+		error(500, {
+        			message: 'Internal Server Error',
+        		});
 	}
 	const data: Game[] = await res.json();
 

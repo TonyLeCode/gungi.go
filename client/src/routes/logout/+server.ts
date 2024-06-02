@@ -6,9 +6,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	if (err) {
 		console.log(err);
-		throw error(500, 'something went wrong');
+		error(500, 'something went wrong');
 	}
 
 	console.log('success');
-	throw redirect(303, '/');
+	redirect(303, '/');
 };

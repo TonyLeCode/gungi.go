@@ -14,7 +14,7 @@ const schema = z.object({
 export const load: PageServerLoad = async ({ locals: { getSession } }) => {
 	const session = await getSession();
 	if (session) {
-		throw redirect(308, '/overview');
+		redirect(308, '/overview');
 	}
 	const form = await superValidate(schema);
 	return { form };
@@ -40,9 +40,9 @@ export const actions: Actions = {
 				}
 				return message(form, 'Invalid login info');
 			}
-			throw error(500, {
-				message: 'Server error. Try again later.',
-			});
+			error(500, {
+            				message: 'Server error. Try again later.',
+            			});
 		}
 		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/onboarding` : `https://${import.meta.env.VITE_API_URL}/user/onboarding`;
 		const token = supabaseResponse.data.session.access_token
@@ -54,9 +54,9 @@ export const actions: Actions = {
 		const res = await fetch(fetchUrl, options);
 		if (res.ok) {
 			const hasOnboarded = await res.json();
-			if (!hasOnboarded) throw redirect(308, '/username?onboard=true')
+			if (!hasOnboarded) redirect(308, '/username?onboard=true');
 		}
 
-		throw redirect(303, '/overview');
+		redirect(303, '/overview');
 	},
 } satisfies Actions;

@@ -1,5 +1,5 @@
 import adapter from '@sveltejs/adapter-vercel';
-import { vitePreprocess } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import preprocess from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -8,11 +8,12 @@ const config = {
 	// for more information about preprocessors
 	preprocess: [
 		vitePreprocess(),
-		preprocess({
-			scss: {
-				includePaths: ['src'],
-			},
-		}),
+		preprocess(),
+		// preprocess({
+		// 	scss: {
+		// 		includePaths: ['src'],
+		// 	},
+		// }),
 	],
 
 	kit: {
