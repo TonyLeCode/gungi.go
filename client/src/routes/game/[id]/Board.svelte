@@ -155,11 +155,16 @@
 			class:highlight={selectedSquareIndex === index || lastMoveHighlightIndex.includes(index)}
 			class:move-highlight={selectedMoveIndices.includes(index) &&
 				boardStore.isPlayer1Ready &&
-				boardStore.isPlayer2Ready}
+				boardStore.isPlayer2Ready &&
+				boardStore.userColor !== 'spectator'}
 			onmousedown={() => {
 				const pieceIsPlayerColor = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 				const stackLength = stack.length;
 				if (stackLength > 0 && pieceIsPlayerColor) return;
+				if (boardStore.userColor === 'spectator') {
+					selectedSquareIndex = index;
+					return;
+				};
 				if (selectedMoveIndices.includes(index)) {
 					// make move
 					console.log('make move');
