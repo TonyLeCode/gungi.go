@@ -181,11 +181,13 @@
 		transition-property: background-color;
 		&:hover:not([disabled]) {
 			background-color: rgb(var(--primary));
-			color: rgb(var(--bg-2));
+			color: rgb(242, 242, 242);
+			// color: rgb(var(--bg-2));
 		}
 		&:active:not([disabled]) {
 			background-color: rgb(var(--primary-3));
-			color: rgb(var(--bg-2));
+			color: rgb(242, 242, 242);
+			// color: rgb(var(--bg-2));
 		}
 		&:focus {
 			outline: 2px solid rgba(var(--primary), 0.5);

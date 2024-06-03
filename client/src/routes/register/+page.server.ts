@@ -1,27 +1,31 @@
 import { AuthApiError } from '@supabase/supabase-js';
 import type { PageServerLoad } from './$types';
-import { redirect, type Actions, fail } from '@sveltejs/kit';
+import { type Actions, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { message, superValidate } from 'sveltekit-superforms/server';
-import { uniqueNamesGenerator, animals, colors, adjectives, NumberDictionary, type Config } from 'unique-names-generator';
+import {
+	uniqueNamesGenerator,
+	animals,
+	colors,
+	adjectives,
+	NumberDictionary,
+	type Config,
+} from 'unique-names-generator';
+import { zod } from 'sveltekit-superforms/adapters';
 
 const schema = z.object({
 	email: z.string().email(),
 	password: z.string().min(6).max(64),
 });
 
-export const load: PageServerLoad = async ({ locals: { getSession } }) => {
-	const session = await getSession();
-	if (session) {
-		redirect(308, '/overview');
-	}
-	const form = await superValidate(schema);
+export const load: PageServerLoad = async () => {
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
 export const actions: Actions = {
-	default: async ({ locals, request }) => {
-		const form = await superValidate(request, schema);
+	default: async ({ locals: { supabase }, request }) => {
+		const form = await superValidate(request, zod(schema));
 		if (!form.valid) {
 			return fail(400, { form });
 		}
@@ -32,13 +36,13 @@ export const actions: Actions = {
 			separator: '',
 			length: 4,
 			style: 'capital',
-		}
-		const randomName = uniqueNamesGenerator(nameGenConfig)
+		};
+		const randomName = uniqueNamesGenerator(nameGenConfig);
 
 		//TODO unique username validation on backend
 		// return setError(form, 'username', 'Username already exists')
 
-		const { data, error } = await locals.supabase.auth.signUp({
+		const { data, error } = await supabase.auth.signUp({
 			email: form.data.email,
 			password: form.data.password,
 			options: {
@@ -62,7 +66,7 @@ export const actions: Actions = {
 			});
 		} else {
 			console.log('registered: ', data);
-			return message(form, "success")
+			return message(form, 'success');
 		}
 	},
 };

@@ -18,8 +18,10 @@ export interface Game {
 	moveList: string;
 }
 
-export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) => {
-	const session = await getSession();
+export const load: PageServerLoad = async ({ locals: { supabase }, fetch }) => {
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
 	const token = session?.access_token;
 	const url = dev
 		? `http://${import.meta.env.VITE_API_URL}/overview`
@@ -33,8 +35,8 @@ export const load: PageServerLoad = async ({ locals: { getSession }, fetch }) =>
 	const res = await fetch(url, options);
 	if (!res.ok) {
 		error(500, {
-        			message: 'Internal Server Error',
-        		});
+			message: 'Internal Server Error',
+		});
 	}
 	const data: Game[] = await res.json();
 

@@ -1,11 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals }) => {
-	const { error: err } = await locals.supabase.auth.signOut();
+export const GET: RequestHandler = async ({ locals: { supabase } }) => {
+	const { error: err } = await supabase.auth.signOut();
 
 	if (err) {
-		console.log(err);
+		console.error(err);
 		error(500, 'something went wrong');
 	}
 

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { Session } from '@supabase/supabase-js';
 
-	export let session: Session | null;
-	$: session = session;
+	let { session }: { session: Session | null } = $props();
 
 	function switchTheme() {
 		const theme = localStorage.getItem('theme');
@@ -18,7 +17,7 @@
 
 <nav class="navbar">
 	<div class="nav-inner">
-		<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo"></a>
+		<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo" /></a>
 		<ul class="nav-list">
 			{#if session}
 				<a href="/overview">overview</a>
@@ -30,7 +29,7 @@
 		</ul>
 		<ul class="nav-account">
 			<!--  TODO theme switch button -->
-			<button class="button-primary" on:click={switchTheme}>Theme</button>
+			<button class="button-primary" onclick={switchTheme}>Theme</button>
 			{#if session}
 				<!-- TODO settings, friends, notifications  -->
 				<span class="name">{session.user.user_metadata.username}</span>
@@ -48,8 +47,8 @@
 		user-select: none;
 		font-size: 0.85rem;
 		@media (min-width: 767px) {
-      font-size: 1rem;
-    }
+			font-size: 1rem;
+		}
 	}
 	a {
 		margin: 0;

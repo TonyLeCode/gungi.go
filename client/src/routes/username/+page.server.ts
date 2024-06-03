@@ -4,6 +4,7 @@ import { redirect, type Actions, fail, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { message, superValidate } from 'sveltekit-superforms/server';
 import { dev } from '$app/environment';
+import { zod } from 'sveltekit-superforms/adapters';
 
 const schema = z.object({
 	username: z.string().min(3).max(28),
@@ -11,16 +12,20 @@ const schema = z.object({
 
 //TODO custom error message
 //TODO should say "Username must contain at least 3 character(s)" instead of "String must contain at least 3 character(s)"
-export const load: PageServerLoad = async ({ locals: { getSession }, url }) => {
+export const load: PageServerLoad = async ({ locals: { supabase }, url }) => {
 	const onboard = url.searchParams.get('onboard');
 
-	const session = await getSession();
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
 	if (!session) {
 		redirect(308, '/');
 	}
 
 	if (onboard) {
-		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/onboarding` : `https://${import.meta.env.VITE_API_URL}/user/onboarding`;
+		const fetchUrl = dev
+			? `http://${import.meta.env.VITE_API_URL}/user/onboarding`
+			: `https://${import.meta.env.VITE_API_URL}/user/onboarding`;
 		const token = session.access_token;
 		const options = {
 			method: 'PUT',
@@ -31,23 +36,27 @@ export const load: PageServerLoad = async ({ locals: { getSession }, url }) => {
 		fetch(fetchUrl, options);
 	}
 
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
 export const actions: Actions = {
-	default: async ({ locals, request }) => {
-		const form = await superValidate(request, schema);
+	default: async ({ locals: { supabase }, request }) => {
+		const form = await superValidate(request, zod(schema));
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		const session = await locals.getSession();
+		const {
+			data: { session },
+		} = await supabase.auth.getSession();
 		if (!session) {
 			redirect(308, '/');
 		}
 
-		const fetchUrl = dev ? `http://${import.meta.env.VITE_API_URL}/user/changename`: `https://${import.meta.env.VITE_API_URL}/user/changename` ;
+		const fetchUrl = dev
+			? `http://${import.meta.env.VITE_API_URL}/user/changename`
+			: `https://${import.meta.env.VITE_API_URL}/user/changename`;
 		const token = session.access_token;
 		const options = {
 			method: 'PUT',
@@ -61,7 +70,7 @@ export const actions: Actions = {
 		if (!res.ok) {
 			error(500);
 		}
-		await locals.supabase.auth.refreshSession(session)
+		await supabase.auth.refreshSession(session);
 
 		//TODO unique username validation on backend
 		// return setError(form, 'username', 'Username already exists')
