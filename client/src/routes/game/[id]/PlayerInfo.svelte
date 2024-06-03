@@ -91,5 +91,6 @@
   .tooltip{
     background-color: rgb(var(--bg-2));
     padding: 0.25rem 0.5rem;
+		z-index: 6;
   }
 </style>

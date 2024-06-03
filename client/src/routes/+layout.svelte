@@ -14,6 +14,7 @@
 	// 3 - name
 	// 4 - navbar
 	// 5 - top notification
+	// 6 - tooltip
 	// 10 - notifications
 
 	// export let data: LayoutData;

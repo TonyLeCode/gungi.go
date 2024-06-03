@@ -5,15 +5,12 @@
 	import RoomList from './RoomList.svelte';
 	import { getNotificationStore, type notificationType } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
-	// import { ws } from '$lib/store/websocket';
 	import { getWebsocketStore } from '$lib/store/websocket.svelte';
 
 	let { data } = $props();
 	let notificationStore = getNotificationStore();
 	let websocketStore = getWebsocketStore();
 
-	// export let data;
-	// $: username = data.session?.user.user_metadata.username;
 	let username = $derived(data.session?.user.user_metadata.username);
 
 	type Info = {
@@ -27,20 +24,12 @@
 
 	let roomList = $state<Info[]>([]);
 	let sortedList = $derived(roomList.sort((a, _) => (a.host === username ? -1 : 1)));
-	// let roomList: Info[] = [];
-	// $: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
-	// let showLive = $state(true);
 	let showCorrespondence = $state(true);
-	// $: liveRoomList = sortedList.filter((room) => room.type === 'live');
-	// $: correspondenceRoomList = sortedList.filter((room) => room.type === 'correspondence');
 	let correspondenceRoomList = $derived(sortedList.filter((room) => room.type === 'correspondence'));
 
 	let showCreateGameDialogue = $state(false);
 	let showRoomDialogue = $state(false);
 	let roomDialogueInfo = $state<Info>({ id: '', host: '', description: '', type: '', color: '', rules: '' });
-
-	// $inspect(showCorrespondence);
-	// $inspect(correspondenceRoomList);
 
 	function handleRoomListMsg(event?: MessageEvent) {
 		try {
@@ -75,13 +64,6 @@
 	onMount(() => {
 		let unsub = websocketStore.addMsgListener(handleRoomListMsg);
 
-		// let unsubPlayMsg2: (() => void) | undefined;
-		// let unsubPlayMsg = web.subscribe((val) => {
-		// 	if (val) {
-		// 		unsubPlayMsg2 = web.addMsgListener(handleRoomListMsg);
-		// 	}
-		// });
-
 		$effect(() => {
 			if (websocketStore.state === 'connected') {
 				const msg = {
@@ -91,23 +73,8 @@
 				websocketStore.send(msg);
 			}
 		});
-		// const unsub = ws.subscribe((val) => {
-		// 	if (val === 'connected') {
-		// 		// const msg = {
-		// 		// 	type: 'route',
-		// 		// 	payload: 'roomList',
-		// 		// };
-		// 		// ws?.send(msg);
-		// 		const msg = {
-		// 			type: 'joinPlay',
-		// 		};
-		// 		ws?.send(msg);
-		// 	}
-		// });
 		return () => {
-			if (unsub) unsub();
-			// if (unsubPlayMsg) unsubPlayMsg();
-			// if (unsubPlayMsg2) unsubPlayMsg2();
+			unsub?.();
 			const msg = {
 				type: 'leavePlay',
 			};
