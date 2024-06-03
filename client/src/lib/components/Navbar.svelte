@@ -7,13 +7,16 @@
 
 	let isMenuOpen = $state(false);
 
+	let theme = $state("light");
+
 	function switchTheme() {
-		const theme = localStorage.getItem('theme');
 		if (theme === 'dark') {
 			localStorage.setItem('theme', 'light');
+			theme = 'light';
 			document.documentElement.classList.remove('dark');
 		} else {
 			localStorage.setItem('theme', 'dark');
+			theme = 'dark';
 			document.documentElement.classList.add('dark');
 		}
 	}
@@ -26,6 +29,7 @@
 	}
 
 	onMount(() => {
+		theme = localStorage.getItem('theme') ?? 'light';
 		window.addEventListener('resize', resizeHandler);
 		return () => {
 			window.removeEventListener('resize', resizeHandler);
@@ -40,17 +44,17 @@
 			{#if session}
 				<a href="/overview">overview</a>
 				<a href="/play">play</a>
-				<!-- <a href="/games">games</a> -->
+				<!-- <a href="/rules">rules</a> -->
 				<!-- TODO learning, puzzles, resources, library -->
 			{/if}
 			<!-- <a href="/rules">rules</a> -->
 		</ul>
 		<ul class="nav-options" class:open={isMenuOpen}>
 			<!--  TODO theme switch button -->
-			<button class="theme-switcher" onclick={switchTheme}><SunMoon /></button>
+			<button class={`theme-switcher ${theme}`} class:open={isMenuOpen} onclick={switchTheme}><SunMoon /></button>
 			{#if session}
 				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->
-				<span class="name">{session.user.user_metadata.username}</span>
+				<div class="name">{session.user.user_metadata.username}</div>
 				<a href="/logout">logout</a>
 			{:else}
 				<a class="a" href="/login">login</a>
@@ -136,7 +140,7 @@
 		bottom: 0;
 		background-color: rgba(var(--bg), 0.96);
 		z-index: 4;
-		gap: 1rem;
+		gap: 2rem;
 		padding: 1rem;
 		font-size: 1.2rem;
 		padding: 1rem;
@@ -151,7 +155,7 @@
 			align-items: center;
 		}
 	}
-	.nav-list.open{
+	.nav-list.open {
 		display: flex;
 		flex-direction: column;
 	}
@@ -172,7 +176,23 @@
 
 	.theme-switcher {
 		size: 20px;
-		padding: 0 0.25rem;
+		display: flex;
+		gap: 1rem;
+		@media (min-width: 767px) {
+			padding: 0 0.25rem;
+		}
+		&:hover {
+			color: rgb(var(--primary));
+		}
+	}
+
+	.theme-switcher.open.dark::before {
+		content: 'light theme';
+		display: block;
+	}
+	.theme-switcher.open.light::before {
+		content: 'dark theme';
+		display: block;
 	}
 
 	/* .nav-list.nav-open {

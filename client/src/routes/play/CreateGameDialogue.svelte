@@ -1,13 +1,15 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
-	import { ws } from '$lib/store/websocket';
+	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+	
+	let {showModal = $bindable()}: {showModal: boolean} = $props();
 
-	export let showModal: boolean;
+	let websocketStore = getWebsocketStore();
 
-	let type = 'correspondence';
-	let ruleset = 'revised';
-	let color = 'random';
-	let description: string;
+	let type = $state('correspondence');
+	let ruleset = $state('revised');
+	let color = $state('random');
+	let description = $state('');
 
 	function handleCreateGame(e: Event) {
 		e.preventDefault();
@@ -20,13 +22,13 @@
 				rules: ruleset,
 			},
 		};
-		ws?.send(payload);
+		websocketStore.send(payload);
 		showModal = false;
 	}
 </script>
 
 <Modal bind:showModal>
-	<form class="options" on:submit={handleCreateGame}>
+	<form class="options" onsubmit={handleCreateGame}>
 		<h3>Create Game</h3>
 		<fieldset class="type">
 			<legend>Type:</legend>

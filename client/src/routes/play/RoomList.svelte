@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { ws } from '$lib/store/websocket';
+	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+
+	// import { ws } from '$lib/store/websocket';
 	type Info = {
 		id: string;
 		host: string;
@@ -8,22 +10,40 @@
 		color: string;
 		rules: string;
 	};
-	export let username: string;
 
-	export let roomList: Info[];
-	export let heading: string;
+	let websocketStore = getWebsocketStore();
+	let {
+		username,
+		roomList,
+		heading,
+		showRoomDialogue = $bindable(),
+		roomDialogueInfo = $bindable(),
+		accept,
+	}: {
+		username: string;
+		roomList: Info[];
+		heading: string;
+		showRoomDialogue: boolean;
+		roomDialogueInfo: Info;
+		accept: (roomid: string) => void;
+	} = $props();
+	// export let username: string;
 
-	export let showRoomDialogue: boolean;
-	export let roomDialogueInfo: Info;
-	export let accept: (roomid: string) => void;
-	$: spectator = username == null;
+	// export let roomList: Info[];
+	// export let heading: string;
+
+	// export let showRoomDialogue: boolean;
+	// export let roomDialogueInfo: Info;
+	// export let accept: (roomid: string) => void;
+	// $: spectator = username == null;
+	let spectator = $derived(username == null);
 
 	function handleCancel(roomid: string) {
 		const payload = {
 			type: 'cancelPlayRoom',
 			payload: roomid,
 		};
-		ws?.send(payload);
+		websocketStore.send(payload);
 	}
 </script>
 
@@ -34,7 +54,7 @@
 			<li class="room-item fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 				<button
 					disabled={room.host === username || spectator ? true : false}
-					on:click={() => {
+					onclick={() => {
 						roomDialogueInfo = room;
 						showRoomDialogue = true;
 					}}
@@ -47,7 +67,7 @@
 				{#if room.host === username}
 					<button
 						disabled={spectator}
-						on:click={() => {
+						onclick={() => {
 							handleCancel(room.id);
 						}}
 						class="cancel button-ghost">Cancel</button
@@ -56,7 +76,7 @@
 					<button
 						class="accept button-primary"
 						disabled={spectator}
-						on:click={() => {
+						onclick={() => {
 							accept(room.id);
 						}}>Accept</button
 					>
@@ -105,18 +125,21 @@
 		transition-property: background-color;
 		&:hover:not([disabled]) {
 			background-color: rgb(var(--primary));
-			color: rgb(var(--bg-2));
+			color: white;
 		}
 		&:active:not([disabled]) {
 			background-color: rgb(var(--primary-3));
-			color: rgb(var(--bg-2));
+			color: white;
 		}
 		&:focus {
 			outline: 2px solid rgba(var(--primary), 0.5);
 			outline-offset: 2px;
 		}
 		&:disabled {
-			background-color: rgb(225, 225, 225);
+			// background-color: rgba(36, 36, 36, 0.5);
+			// background-color: rgb(225, 225, 225);
+			background-color: rgb(var(--bg-4));
+			color: rgba(var(--font), 0.8);
 			font-weight: 300;
 			box-shadow: none;
 		}

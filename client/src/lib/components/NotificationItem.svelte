@@ -1,22 +1,26 @@
 <script lang="ts">
-	import { notifications, type notificationType } from '$lib/store/notification';
+	import { type notificationType } from '$lib/store/notificationStore.svelte';
 	import { tweened } from 'svelte/motion';
 	import { linear } from 'svelte/easing';
 
-	export let notification: notificationType;
+	// export let notification: notificationType;
+	let { notification, removeItem }: { notification: notificationType; removeItem: () => void } = $props();
+
 	let duration = tweened(100, {
 		duration: 5000,
 		easing: linear,
 	});
 	duration.set(0);
 
-	$: if ($duration === 0) {
-		notifications?.remove(notification.id);
-	}
+	$effect(() => {
+		if ($duration === 0) {
+			removeItem();
+		}
+	});
 </script>
 
 <div class="notification">
-	<div style="width: {$duration}%" class="bar" />
+	<div style="width: {$duration}%" class="bar"></div>
 	<div class="container">
 		<div class="title">
 			{notification.title}
@@ -29,11 +33,8 @@
 			</div>
 		{/if}
 	</div>
-	<button
-		class="close"
-		on:click={() => {
-			notifications?.remove(notification.id);
-		}}><img draggable="false" src="/closeCircle.svg" alt="exit dialog" width="35px" height="35px" /></button
+	<button class="close" onclick={removeItem}
+		><img draggable="false" src="/closeCircle.svg" alt="exit dialog" width="35px" height="35px" /></button
 	>
 </div>
 

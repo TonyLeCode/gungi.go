@@ -33,7 +33,7 @@
 	<!-- TODO add badge and hide if 0 -->
 	<div class="hand-info">
 		<div class="label">
-			<h3>{label}</h3>
+			<h3 class:is-user={label === "Your Hand:"}>{label}</h3>
 			<div class="count">{`Board: ${armyCount}  Hand: ${handCount}`}</div>
 		</div>
 		<div class="stack-container hand">
@@ -150,5 +150,10 @@
 		@media (min-width: 767px) {
 			gap: 1rem;
 		}
+	}
+
+	.is-user {
+		color: rgb(var(--primary));
+		font-weight: 600;
 	}
 </style>

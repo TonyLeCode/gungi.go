@@ -43,7 +43,7 @@
 	import type { Readable, Writable } from 'svelte/store';
 	import { get } from 'svelte/store';
 	import { createGameStore } from '$lib/store/gameState';
-	import { notifications } from '$lib/store/notification';
+	import { notifications } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
 	import UndoDialogue from './UndoDialogue.svelte';
 	import Modal from '$lib/components/Modal.svelte';

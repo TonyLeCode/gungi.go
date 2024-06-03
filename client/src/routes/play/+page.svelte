@@ -3,12 +3,18 @@
 	import CreateGameDialogue from './CreateGameDialogue.svelte';
 	import RoomDialogue from './RoomDialogue.svelte';
 	import RoomList from './RoomList.svelte';
-	import { notifications, type notificationType } from '$lib/store/notification';
+	import { getNotificationStore, type notificationType } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
-	import { ws } from '$lib/store/websocket';
+	// import { ws } from '$lib/store/websocket';
+	import { getWebsocketStore } from '$lib/store/websocket.svelte';
 
-	export let data;
-	$: username = data.session?.user.user_metadata.username;
+	let { data } = $props();
+	let notificationStore = getNotificationStore();
+	let websocketStore = getWebsocketStore();
+
+	// export let data;
+	// $: username = data.session?.user.user_metadata.username;
+	let username = $derived(data.session?.user.user_metadata.username);
 
 	type Info = {
 		id: string;
@@ -19,16 +25,22 @@
 		rules: string;
 	};
 
-	let roomList: Info[] = [];
-	$: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
-	let showLive = true;
-	let showCorrespondence = true;
+	let roomList = $state<Info[]>([]);
+	let sortedList = $derived(roomList.sort((a, _) => (a.host === username ? -1 : 1)));
+	// let roomList: Info[] = [];
+	// $: sortedList = roomList.sort((a, _) => (a.host === username ? -1 : 1));
+	// let showLive = $state(true);
+	let showCorrespondence = $state(true);
 	// $: liveRoomList = sortedList.filter((room) => room.type === 'live');
-	$: correspondenceRoomList = sortedList.filter((room) => room.type === 'correspondence');
+	// $: correspondenceRoomList = sortedList.filter((room) => room.type === 'correspondence');
+	let correspondenceRoomList = $derived(sortedList.filter((room) => room.type === 'correspondence'));
 
-	let showCreateGameDialogue = false;
-	let showRoomDialogue = false;
-	let roomDialogueInfo: Info;
+	let showCreateGameDialogue = $state(false);
+	let showRoomDialogue = $state(false);
+	let roomDialogueInfo = $state<Info>({ id: '', host: '', description: '', type: '', color: '', rules: '' });
+
+	// $inspect(showCorrespondence);
+	// $inspect(correspondenceRoomList);
 
 	function handleRoomListMsg(event?: MessageEvent) {
 		try {
@@ -38,7 +50,7 @@
 					roomList = data.payload ?? [];
 					break;
 				case 'roomAccepted':
-					notifications?.add({
+					notificationStore.add({
 						id: nanoid(),
 						title: 'Game Accepted',
 						type: 'default',
@@ -57,42 +69,51 @@
 			type: 'acceptPlayRoom',
 			payload: roomid,
 		};
-		ws?.send(msg);
+		websocketStore.send(msg);
 	}
 
 	onMount(() => {
-		let unsubPlayMsg2: (() => void) | undefined;
-		let unsubPlayMsg = ws?.subscribe((val) => {
-			if (val) {
-				unsubPlayMsg2 = ws?.addMsgListener(handleRoomListMsg);
-			}
-		});
+		let unsub = websocketStore.addMsgListener(handleRoomListMsg);
 
-		const unsub = ws?.subscribe((val) => {
-			if (val === 'connected') {
-				// const msg = {
-				// 	type: 'route',
-				// 	payload: 'roomList',
-				// };
-				// ws?.send(msg);
+		// let unsubPlayMsg2: (() => void) | undefined;
+		// let unsubPlayMsg = web.subscribe((val) => {
+		// 	if (val) {
+		// 		unsubPlayMsg2 = web.addMsgListener(handleRoomListMsg);
+		// 	}
+		// });
+
+		$effect(() => {
+			if (websocketStore.state === 'connected') {
 				const msg = {
 					type: 'joinPlay',
 				};
-				ws?.send(msg);
+
+				websocketStore.send(msg);
 			}
 		});
+		// const unsub = ws.subscribe((val) => {
+		// 	if (val === 'connected') {
+		// 		// const msg = {
+		// 		// 	type: 'route',
+		// 		// 	payload: 'roomList',
+		// 		// };
+		// 		// ws?.send(msg);
+		// 		const msg = {
+		// 			type: 'joinPlay',
+		// 		};
+		// 		ws?.send(msg);
+		// 	}
+		// });
 		return () => {
 			if (unsub) unsub();
-			if (unsubPlayMsg) unsubPlayMsg();
-			if (unsubPlayMsg2) unsubPlayMsg2();
+			// if (unsubPlayMsg) unsubPlayMsg();
+			// if (unsubPlayMsg2) unsubPlayMsg2();
 			const msg = {
 				type: 'leavePlay',
 			};
-			ws?.send(msg);
-			// $ws.removeEventListener('message', handleRoomListMsg);
+			websocketStore.send(msg);
 		};
 	});
-	$: console.log($ws);
 </script>
 
 <svelte:head>
@@ -100,9 +121,9 @@
 </svelte:head>
 
 <main>
-	{#if $ws === 'connecting'}
+	{#if websocketStore.state === 'connecting'}
 		<p class="status-msg fly-up-fade">Loading...</p>
-	{:else if $ws === 'connected'}
+	{:else if websocketStore.state === 'connected'}
 		<section class="options">
 			<div class="filter">
 				<!-- <label>
@@ -114,7 +135,7 @@
 					Correspondence
 				</label> -->
 				<button
-					on:click={() => {
+					onclick={() => {
 						showCreateGameDialogue = true;
 					}}
 					disabled={username == null}
@@ -144,9 +165,9 @@
 		{/if}
 		<CreateGameDialogue bind:showModal={showCreateGameDialogue} />
 		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
-	{:else if $ws === 'error'}
+	{:else if websocketStore.state === 'error'}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
-	{:else if $ws === 'closed'}
+	{:else if websocketStore.state === 'closed'}
 		<p class="status-msg fly-up-fade">Not connected, please refresh or try again later</p>
 	{/if}
 </main>

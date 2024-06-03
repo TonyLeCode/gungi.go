@@ -20,6 +20,26 @@ class WebSocketStore {
 		this.websocket.addEventListener('open', () => {
 			this.state = 'connected';
 		});
+
+		this.websocket.addEventListener('error', () => {
+			this.state = 'error';
+		});
+
+		this.websocket.addEventListener('close', () => {
+			this.state = 'closed';
+			// const topNotificationStore = getTopNotificationStore();
+			// topNotificationStore.SetNotification('You are disconnected! Please refresh or try again later.');
+			console.error("disconnected from websocket");
+		});
+
+		this.websocket.addEventListener('message', (event) => {
+			const data = JSON.parse(event.data);
+			if (data?.type == 'auth') {
+				if (data?.payload == 'success') {
+					this.isAuthenticated = true;
+				}
+			}
+		});
 	}
 
 	send(msg: msgType<unknown>) {
@@ -39,6 +59,14 @@ class WebSocketStore {
 			if (this.websocket === undefined) return;
 			this.websocket.removeEventListener('message', fn);
 		};
+	}
+
+	authenticate(token: string) {
+		const msg = {
+			type: 'auth',
+			payload: `Bearer ${token}`,
+		};
+		this.send(msg);
 	}
 }
 

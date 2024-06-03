@@ -454,6 +454,7 @@ func (ss *SessionHandlers) handleLeavePlay(s *melody.Session) {
 }
 func (ss *SessionHandlers) handleCreatePlayRoom(s *melody.Session) {
 	if (*ss.Sessions)[s].ID == uuid.Nil {
+		log.Println("Error: no user")
 		return
 	}
 	var roomPayload CreateGameRoomRequest

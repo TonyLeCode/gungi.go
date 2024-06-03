@@ -1,12 +1,20 @@
 <script lang="ts">
-	import { goto, invalidate } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import type { LayoutData } from './$types';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
-	import { ws } from '$lib/store/websocket';
 	import TopNotification from '$lib/components/TopNotification.svelte';
-	import { topNotification } from '$lib/store/notification';
+	import { setTopNotificationStore, setNotificationStore } from '$lib/store/notificationStore.svelte';
+	import { setWebsocketStore } from '$lib/store/websocket.svelte';
+
+	// z-index order:
+	// 0 - base
+	// 1 - piece under
+	// 2 - piece
+	// 3 - name
+	// 4 - navbar
+	// 5 - top notification
+	// 10 - notifications
 
 	// export let data: LayoutData;
 	let { data, children } = $props();
@@ -15,6 +23,15 @@
 	// $: ({ supabase, session } = data);
 	// $: $ws === 'connected' && session && ws?.authenticate(session.access_token);
 	// $: notifStore = topNotification?.store;
+	let notificationStore = setNotificationStore();
+	let topNotificationStore = setTopNotificationStore();
+	let websocketStore = setWebsocketStore();
+
+	$effect(() => {
+		if (websocketStore.state === 'connected' && data.session && websocketStore.isAuthenticated === false) {
+			websocketStore.authenticate(data.session.access_token);
+		}
+	});
 
 	onMount(() => {
 		const {
@@ -57,12 +74,9 @@
 <svelte:head>
 	<title>White Monarch Server</title>
 </svelte:head>
-<!-- {#if $notifStore !== '' && $notifStore !== undefined}
-	<TopNotification text={$notifStore} />
-{/if} -->
 <Notifications />
+<TopNotification />
 <Navbar session={data.session} />
-<!-- <slot /> -->
 {@render children()}
 
 <style lang="scss" global>
