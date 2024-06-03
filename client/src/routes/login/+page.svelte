@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms/client';
-	import type { PageData } from './$types.js';
 
-	export let data: PageData;
+	let { data } = $props();
 	const { form, errors, constraints, enhance, message } = superForm(data.form, { taintedMessage: null });
 </script>
 
@@ -62,7 +61,7 @@
 			outline: 2px solid rgb(var(--primary));
 		}
 	}
-	h2{
+	h2 {
 		text-align: center;
 		font-size: 1.25rem;
 		font-weight: 600;

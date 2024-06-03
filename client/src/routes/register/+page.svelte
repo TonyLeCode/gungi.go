@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms/client';
-	import type { PageData } from './$types.js';
 	import { default as confetti } from 'canvas-confetti';
 	import { browser } from '$app/environment';
 	import { onDestroy } from 'svelte';
 
-	export let data: PageData;
+	let { data } = $props();
 	const { form, errors, constraints, enhance, message } = superForm(data.form, { taintedMessage: null });
 	const unsub = message.subscribe((msg) => {
 		if (msg === 'success' && browser) {
