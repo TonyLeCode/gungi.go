@@ -201,6 +201,7 @@
 		height: 25rem;
 		overflow: auto;
     margin: 0.5rem 0;
+		border-radius: 4px;
 		@media (min-width: 767px) {
 			height: 25rem;
 		}
@@ -276,5 +277,9 @@
 		display: flex;
 		gap: 1rem;
 		justify-content: center;
+	}
+
+	input {
+		background-color: rgb(var(--bg-3));
 	}
 </style>

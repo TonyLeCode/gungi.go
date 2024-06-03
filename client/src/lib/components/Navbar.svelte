@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { Session } from '@supabase/supabase-js';
+	import { Menu, SunMoon, X } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 
 	let { session }: { session: Session | null } = $props();
+
+	let isMenuOpen = $state(false);
 
 	function switchTheme() {
 		const theme = localStorage.getItem('theme');
@@ -13,12 +17,26 @@
 			document.documentElement.classList.add('dark');
 		}
 	}
+
+	function resizeHandler() {
+		const mediaQuerySize = 767;
+		if (window.innerWidth >= mediaQuerySize) {
+			isMenuOpen = false;
+		}
+	}
+
+	onMount(() => {
+		window.addEventListener('resize', resizeHandler);
+		return () => {
+			window.removeEventListener('resize', resizeHandler);
+		};
+	});
 </script>
 
 <nav class="navbar">
-	<div class="nav-inner">
-		<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo" /></a>
-		<ul class="nav-list">
+	<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo" /></a>
+	<div class="nav-inner" class:open={isMenuOpen}>
+		<ul class="nav-list" class:open={isMenuOpen}>
 			{#if session}
 				<a href="/overview">overview</a>
 				<a href="/play">play</a>
@@ -27,11 +45,11 @@
 			{/if}
 			<!-- <a href="/rules">rules</a> -->
 		</ul>
-		<ul class="nav-account">
+		<ul class="nav-options" class:open={isMenuOpen}>
 			<!--  TODO theme switch button -->
-			<button class="button-primary" onclick={switchTheme}>Theme</button>
+			<button class="theme-switcher" onclick={switchTheme}><SunMoon /></button>
 			{#if session}
-				<!-- TODO settings, friends, notifications  -->
+				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->
 				<span class="name">{session.user.user_metadata.username}</span>
 				<a href="/logout">logout</a>
 			{:else}
@@ -40,6 +58,13 @@
 			{/if}
 		</ul>
 	</div>
+	<button class="nav-menu" onclick={() => (isMenuOpen = !isMenuOpen)}>
+		{#if isMenuOpen}
+			<X color="rgb(var(--primary))" size="30px" />
+		{:else}
+			<Menu color="rgb(var(--primary))" size="30px" />
+		{/if}
+	</button>
 </nav>
 
 <style>
@@ -50,6 +75,24 @@
 			font-size: 1rem;
 		}
 	}
+
+	.navbar {
+		position: sticky;
+		top: 0;
+		display: flex;
+		max-width: 96rem;
+		margin: auto;
+		align-items: center;
+		padding: 0.25rem 0.25rem;
+		background-color: rgb(var(--bg));
+		z-index: 4;
+		/* max-width: 120rem; */
+		/* margin: auto; */
+		@media (min-width: 767px) {
+			padding: 0.75rem 1rem;
+		}
+	}
+
 	a {
 		margin: 0;
 		padding: 0;
@@ -60,48 +103,99 @@
 	}
 	.brand {
 		/* font-weight: 600; */
-		width: 30px;
+		/* width: 30px; */
+		max-width: 30px;
+		max-height: 30px;
+		width: 100%;
 		@media (min-width: 767px) {
-			width: 45px;
+			max-width: 45px;
+			max-height: 45px;
 		}
 	}
 	.name {
+		display: none;
 		color: rgb(var(--primary));
 		margin-right: 1rem;
 		position: relative;
 		font-weight: 600;
-	}
-
-	.navbar {
-		padding: 0.25rem 0.25rem;
-		max-width: 120rem;
-		margin: auto;
 		@media (min-width: 767px) {
-			padding: 0.75rem 1rem;
+			display: block;
 		}
 	}
+
 	.nav-inner {
 		display: flex;
-		max-width: 96rem;
-		margin: auto;
-		align-items: center;
+		width: 100%;
+	}
+
+	.nav-inner.open {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(var(--bg), 0.96);
+		z-index: 4;
+		gap: 1rem;
+		padding: 1rem;
+		font-size: 1.2rem;
+		padding: 1rem;
+		margin-top: 38px;
+		flex-direction: column;
 	}
 	.nav-list {
 		display: none;
-	}
-	.nav-account {
-		display: none;
-		gap: 1rem;
-		margin-left: auto;
+		gap: 0.5rem;
 		@media (min-width: 767px) {
 			display: flex;
+			align-items: center;
+		}
+	}
+	.nav-list.open{
+		display: flex;
+		flex-direction: column;
+	}
+	.nav-options {
+		display: none;
+		gap: 1rem;
+		@media (min-width: 767px) {
+			display: flex;
+			align-items: center;
+			margin-left: auto;
 		}
 	}
 
-	@media only screen and (min-width: 800px) {
-		.nav-list {
-			display: flex;
-			gap: 0.5rem;
+	.nav-options.open {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.theme-switcher {
+		size: 20px;
+		padding: 0 0.25rem;
+	}
+
+	/* .nav-list.nav-open {
+		display: flex;
+		flex-direction: column;
+		position: fixed;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		right: 0;
+		background-color: rgba(var(--bg), 0.96);
+		color: rgb(var(--font));
+		z-index: 4;
+		gap: 1rem;
+		font-size: 1.2rem;
+		padding: 1rem;
+		margin-top: 38px;
+	} */
+
+	.nav-menu {
+		margin-left: auto;
+		@media (min-width: 767px) {
+			display: none;
 		}
 	}
 </style>

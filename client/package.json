@@ -41,6 +41,7 @@
 		"@sveltejs/adapter-vercel": "^5.3.1",
 		"canvas-confetti": "^1.9.3",
 		"dotenv": "^16.4.5",
+		"lucide-svelte": "^0.383.0",
 		"nanoid": "^5.0.7",
 		"unique-names-generator": "^4.7.1"
 	}

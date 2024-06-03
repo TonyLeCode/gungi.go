@@ -141,7 +141,7 @@
 		top: -1.5rem;
 		left: 0;
 		/* background-color: red; */
-		z-index: 10;
+		z-index: 3;
 	}
 	.name-2 {
 		right: 0;
