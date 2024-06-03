@@ -1,25 +1,31 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
-	// import { completedContext } from '../game/[id]/+page.svelte';
 	import type { Game } from './+page.server';
 
-	export let data;
-	$: username = data.session?.user.user_metadata.username ?? '';
-	$: ongoingGames = data.data.filter((game) => {
-		return !game.completed;
-	});
-	$: sortedOngoingGames = ongoingGames.sort((game1, game2) => {
-		if (turnPlayer(game1) === turnPlayer(game2)) return 0;
-		if (isUserTurn(game1)) {
-			return -1;
-		} else if (isUserTurn(game2)) {
-			return 1;
-		}
-		return 0;
-	});
-	$: completedGames = data.data.filter((game) => {
-		return game.completed;
-	});
+	let { data } = $props();
+
+	let username = $derived(data.session?.user.user_metadata.username);
+	let ongoingGames = $derived(
+		data.data.filter((game) => {
+			return !game.completed;
+		})
+	);
+	let sortedOngoingGames = $derived(
+		ongoingGames.sort((game1, game2) => {
+			if (turnPlayer(game1) === turnPlayer(game2)) return 0;
+			if (isUserTurn(game1)) {
+				return -1;
+			} else if (isUserTurn(game2)) {
+				return 1;
+			}
+			return 0;
+		})
+	);
+	let completedGames = $derived(
+		data.data.filter((game) => {
+			return game.completed;
+		})
+	);
 
 	function isUser(playername: string) {
 		return username === playername;
@@ -42,11 +48,6 @@
 
 	function isUserTurn(game: Game) {
 		return turnPlayer(game) === username;
-		// if(data.session){
-		// 	return data.session.user.user_metadata.username === user
-		// } else {
-		// 	return false
-		// }
 	}
 </script>
 
@@ -164,7 +165,7 @@
 	}
 	.historyItem a {
 		cursor: pointer;
-		text-align:left;
+		text-align: left;
 		display: grid;
 		grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
 		width: 100%;

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { getWebsocketStore } from '$lib/store/websocket.svelte';
 
-	// import { ws } from '$lib/store/websocket';
 	type Info = {
 		id: string;
 		host: string;
@@ -27,15 +26,7 @@
 		roomDialogueInfo: Info;
 		accept: (roomid: string) => void;
 	} = $props();
-	// export let username: string;
 
-	// export let roomList: Info[];
-	// export let heading: string;
-
-	// export let showRoomDialogue: boolean;
-	// export let roomDialogueInfo: Info;
-	// export let accept: (roomid: string) => void;
-	// $: spectator = username == null;
 	let spectator = $derived(username == null);
 
 	function handleCancel(roomid: string) {
