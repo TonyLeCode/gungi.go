@@ -1,21 +1,27 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms/client';
-	import type { PageData } from './$types.js';
-  import { page } from '$app/stores';
+	import { page } from '$app/stores';
+	import { zodClient } from 'sveltekit-superforms/adapters';
+	import { z } from 'zod';
 
-	export let data: PageData;
-  const onboard = $page.url.searchParams.get("onboard")
-  $: onboardBool = onboard === 'true'
-  $: username = data?.session?.user.user_metadata?.username
-	const { form, errors, constraints, enhance } = superForm(data.form, { taintedMessage: null });
+	const schema = z.object({
+		username: z.string().min(3).max(28),
+	});
+
+	let { data } = $props();
+	let onboard = $page.url.searchParams.get('onboard');
+	let onboardBool = $derived(onboard === 'true');
+	let username = $derived(data.session?.user.user_metadata.username);
+	const { form, errors, constraints, enhance } = superForm(data.form, {
+		taintedMessage: null,
+		validators: zodClient(schema),
+	});
 </script>
 
 <main>
-  {#if onboardBool}
-    <h2 class="onboard">
-      You have been given a randomly generated username, you can change it here now or later.
-    </h2>
-  {/if}
+	{#if onboardBool}
+		<h2 class="onboard">You have been given a randomly generated username, you can change it here now or later.</h2>
+	{/if}
 	<form class="register" method="POST" use:enhance>
 		<h2>Change Username</h2>
 		<fieldset>
@@ -46,14 +52,14 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-    flex-direction: column;
+		flex-direction: column;
 	}
-  .current-username{
-    background-color: rgb(var(--bg-3));
-    color: rgba(var(--font), .6);
-    border-radius: 4px;
+	.current-username {
+		background-color: rgb(var(--bg-3));
+		color: rgba(var(--font), 0.6);
+		border-radius: 4px;
 		padding: 0.25rem 0.75rem;
-  }
+	}
 	input {
 		display: block;
 		width: 100%;
@@ -72,10 +78,10 @@
 		font-weight: 300;
 		margin-top: 4px;
 	}
-  .onboard{
-    margin-top: 2rem;
-    max-width: 50ch;
-  }
+	.onboard {
+		margin-top: 2rem;
+		max-width: 50ch;
+	}
 	h2 {
 		text-align: center;
 		font-size: 1.25rem;
@@ -101,6 +107,6 @@
 			0px 2px 5px rgba(0, 0, 0, 0.05);
 		box-sizing: content-box;
 		min-height: 25rem;
-    margin-bottom: 10rem;
+		margin-bottom: 10rem;
 	}
 </style>

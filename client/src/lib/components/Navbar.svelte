@@ -50,7 +50,6 @@
 			<!-- <a href="/rules">rules</a> -->
 		</ul>
 		<ul class="nav-options" class:open={isMenuOpen}>
-			<!--  TODO theme switch button -->
 			<button class={`theme-switcher ${theme}`} class:open={isMenuOpen} onclick={switchTheme}><SunMoon /></button>
 			{#if session}
 				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->

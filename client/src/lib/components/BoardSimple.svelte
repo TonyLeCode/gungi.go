@@ -3,11 +3,11 @@
 	import { FenToBoard, GetImage } from '$lib/utils/utils';
 	import type { Game } from '../../routes/overview/+page.server';
 
-	export let gameData: Game;
-	export let userColor: 'w' | 'b' | 'spectator';
-	$: isUserWhite = userColor === 'w';
-	$: boardState = FenToBoard(gameData.current_state);
-	$: correctedBoardState = isUserWhite ? boardState : reverseList(boardState);
+	let { gameData, userColor }: { gameData: Game; userColor: 'w' | 'b' | 'spectator' } = $props();
+
+	let isUserWhite = $derived(userColor === 'w');
+	let boardState = $derived(FenToBoard(gameData.current_state));
+	let correctedBoardState = $derived(isUserWhite ? boardState : reverseList(boardState));
 </script>
 
 <div class="board">

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
 	import type { Game } from './+page.server';
+	//TODO make responsive
 
 	let { data } = $props();
 

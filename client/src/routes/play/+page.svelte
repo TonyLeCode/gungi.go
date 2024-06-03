@@ -7,6 +7,7 @@
 	import { nanoid } from 'nanoid';
 	import { getWebsocketStore } from '$lib/store/websocket.svelte';
 
+	// TODO make page responsive
 	let { data } = $props();
 	let notificationStore = getNotificationStore();
 	let websocketStore = getWebsocketStore();

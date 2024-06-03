@@ -2,7 +2,7 @@
 import type { PageServerLoad } from './$types';
 import { redirect, type Actions, fail, error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { message, superValidate } from 'sveltekit-superforms/server';
+import { message, superValidate } from 'sveltekit-superforms';
 import { dev } from '$app/environment';
 import { zod } from 'sveltekit-superforms/adapters';
 
