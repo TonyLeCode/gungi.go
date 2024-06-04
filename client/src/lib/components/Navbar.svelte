@@ -28,6 +28,10 @@
 		}
 	}
 
+	function onClick(){
+		isMenuOpen = false
+	}
+
 	onMount(() => {
 		theme = localStorage.getItem('theme') ?? 'light';
 		window.addEventListener('resize', resizeHandler);
@@ -38,12 +42,12 @@
 </script>
 
 <nav class="navbar">
-	<a class="brand" href="/"><img src="/gungi-logo.svg" alt="logo" /></a>
+	<a onclick={onClick} class="brand" href="/"><img src="/gungi-logo.svg" alt="logo" /></a>
 	<div class="nav-inner" class:open={isMenuOpen}>
 		<ul class="nav-list" class:open={isMenuOpen}>
 			{#if session}
-				<a href="/overview">overview</a>
-				<a href="/play">play</a>
+				<a onclick={onClick} href="/overview">overview</a>
+				<a onclick={onClick} href="/play">play</a>
 				<!-- <a href="/rules">rules</a> -->
 				<!-- TODO learning, puzzles, resources, library -->
 			{/if}
@@ -54,10 +58,10 @@
 			{#if session}
 				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->
 				<div class="name">{session.user.user_metadata.username}</div>
-				<a href="/logout">logout</a>
+				<a onclick={onClick} href="/logout">logout</a>
 			{:else}
-				<a class="a" href="/login">login</a>
-				<a class="a" href="/register">register</a>
+				<a onclick={onClick} class="a" href="/login">login</a>
+				<a onclick={onClick} class="a" href="/register">register</a>
 			{/if}
 		</ul>
 	</div>
