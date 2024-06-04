@@ -5,7 +5,7 @@
 	import RoomList from './RoomList.svelte';
 	import { getNotificationStore, type notificationType } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
-	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 
 	// TODO make page responsive
 	let { data } = $props();
@@ -146,6 +146,9 @@
 		margin: auto;
 		padding: 0.5rem;
 		margin-top: 2rem;
+		@media (min-width: 767px) {
+			
+		}
 	}
 	.options {
 		display: flex;

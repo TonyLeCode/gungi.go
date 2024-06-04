@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 
 	type Info = {
 		id: string;
@@ -97,6 +97,9 @@
 		word-break: break-all;
 		gap: 0.5rem;
 		margin-bottom: 1.5rem;
+		@media (min-width: 767px) {
+			
+		}
 	}
 	.room {
 		text-align: left;

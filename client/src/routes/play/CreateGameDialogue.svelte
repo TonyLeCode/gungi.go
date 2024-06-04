@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
-	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 	
 	let {showModal = $bindable()}: {showModal: boolean} = $props();
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getTopNotificationStore } from '$lib/store/notificationStore.svelte';
-	import { getWebsocketStore } from '$lib/store/websocket.svelte';
+	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 	import { CircleAlert } from 'lucide-svelte';
 	import NotificationItem from './NotificationItem.svelte';
 	import { onDestroy } from 'svelte';

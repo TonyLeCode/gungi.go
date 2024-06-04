@@ -5,7 +5,7 @@
 	import Notifications from '$lib/components/Notifications.svelte';
 	import TopNotification from '$lib/components/TopNotification.svelte';
 	import { setTopNotificationStore, setNotificationStore } from '$lib/store/notificationStore.svelte';
-	import { setWebsocketStore } from '$lib/store/websocket.svelte';
+	import { setWebsocketStore } from '$lib/store/websocketStore.svelte.js';
 
 	// z-index order:
 	// 0 - base

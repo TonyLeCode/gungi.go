@@ -8,6 +8,8 @@ type msgType<T> = {
 	payload?: T;
 };
 
+//TODO gracefully try to reconnect
+
 class WebSocketStore {
 	state = $state<wsState>('connecting');
 	websocket = $state<WebSocket>();
