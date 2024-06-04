@@ -37,7 +37,7 @@ class BoardStore {
 	private currentStateFields = $derived(this.current_state.split(' '));
 	private pieces = $derived(this.currentStateFields[0]);
 	private hands = $derived(this.currentStateFields[1].split('/'));
-  username = $state("")
+	username = $state('');
 
 	player1HandList = $derived.by(() => {
 		const hand = this.hands[0].split('/')[0];
@@ -66,31 +66,31 @@ class BoardStore {
 	player2HandCount = $derived(this.player2HandList.reduce((a, b) => a + b));
 
 	userColor = $derived.by(() => {
-    if (this.username === this.player1) return 'w';
-    if (this.username === this.player2) return 'b';
-    return 'spectator';
-  });
+		if (this.username === this.player1) return 'w';
+		if (this.username === this.player2) return 'b';
+		return 'spectator';
+	});
 	moveHistory = $derived(this.history.split(' '));
 	manualFlip = $state(false);
 	isViewReversed = $derived.by(() => {
-    if (this.username !== this.player1 && this.username !== this.player2) return this.manualFlip;
-    const isUserWhite = this.username === this.player1;
-    return this.manualFlip === isUserWhite;
-  });
+		if (this.username !== this.player1 && this.username !== this.player2) return this.manualFlip;
+		const isUserWhite = this.username === this.player1;
+		return this.manualFlip === isUserWhite;
+	});
 	isUserTurn = $derived(this.userColor === this.turnColor);
 	moveListUI = $derived.by(() => {
-    const transformedMoveList: { [key: string]: number[] } = {};
-    if (this.isViewReversed) {
-      for (const key in this.moveList) {
-        const transformedKey = 80 - parseInt(key, 10);
-        const transformedValue = this.moveList[key].map((value) => 80 - value);
-        transformedMoveList[transformedKey] = transformedValue;
-      }
-      return transformedMoveList;
-    } else {
-      return this.moveList;
-    }
-  });
+		const transformedMoveList: { [key: string]: number[] } = {};
+		if (this.isViewReversed) {
+			for (const key in this.moveList) {
+				const transformedKey = 80 - parseInt(key, 10);
+				const transformedValue = this.moveList[key].map((value) => 80 - value);
+				transformedMoveList[transformedKey] = transformedValue;
+			}
+			return transformedMoveList;
+		} else {
+			return this.moveList;
+		}
+	});
 	boardState = $derived(FenToBoard(this.current_state));
 	boardUI = $derived(this.isViewReversed ? reverseList(this.boardState) : this.boardState);
 
@@ -109,16 +109,32 @@ class BoardStore {
 		this.ruleset = initState.ruleset;
 		this.type = initState.type;
 
-    this.username = username || "";
+		this.username = username || '';
+	}
+
+	updateBoard(newState: BoardState) {
+		this.completed = newState.completed;
+		this.current_state = newState.current_state;
+		this.date_finished = newState.date_finished;
+		this.date_started = newState.date_started;
+		this.fen = newState.fen;
+		this.result = newState.result;
+		this.history = newState.history;
+		this.id = newState.id;
+		this.moveList = newState.moveList;
+		this.player1 = newState.player1;
+		this.player2 = newState.player2;
+		this.ruleset = newState.ruleset;
+		this.type = newState.type;
 	}
 }
 
 export function setGameStore(initState: BoardState, username: string | null) {
-  const store = new BoardStore(initState, username);
-  setContext('gameState', store);
-  return store;
+	const store = new BoardStore(initState, username);
+	setContext('gameState', store);
+	return store;
 }
 
 export function getGameStore() {
-  return getContext<BoardStore>('gameState');
+	return getContext<BoardStore>('gameState');
 }

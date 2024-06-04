@@ -83,12 +83,9 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		active = true,
 	} = options;
 
-	if (typeof active === 'function') {
-		if (!active()) return;
-	} else if (active === false) return;
-
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent) {
+			console.log("start4")
 			if (dragStart) {
 				dragStart = false;
 				if (droppable) {
@@ -166,7 +163,10 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 	}
 	function dragStartHandler(e: MouseEvent) {
 		if (e.target === null) return;
-
+		if (typeof active === 'function') {
+			if (!active()) return;
+		} else if (active === false) return;
+		
 		if (typeof startEvent === 'function') {
 			startEvent(droppable?.hoverItem ?? undefined);
 		}
@@ -175,14 +175,14 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		clickTimeout = window.setTimeout(() => {
 			longPress = true;
 		}, timeThreshold);
-
+		
 		const target = e.target as HTMLElement;
 		if (e.button !== 0) return;
 		initialX = e.clientX;
 		initialY = e.clientY;
 		offsetX = e.offsetX - target?.offsetWidth / 2;
 		offsetY = e.offsetY - target?.offsetHeight / 2;
-
+		
 		const onDrag = dragMoveHandler(target);
 		const onRelease = dragReleaseHandler(target);
 		node.style.pointerEvents = 'none';
@@ -199,6 +199,7 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 	node.addEventListener('mousedown', dragStartHandler);
 	return {
 		destroy() {
+			console.log('destroy');
 			node.removeEventListener('mousedown', dragStartHandler);
 			// Note that destruction can happen while another drag is in progress
 			if (unsubMoveHandler) unsubMoveHandler();

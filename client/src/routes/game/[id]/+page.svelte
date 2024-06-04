@@ -3,15 +3,188 @@
 	import { setGameStore } from '$lib/store/gameState.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
 	import Menu from './Menu.svelte';
+	import { Crown } from 'lucide-svelte';
+	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
+	import { onMount } from 'svelte';
+	import { getNotificationStore } from '$lib/store/notificationStore.svelte';
+	import { nanoid } from 'nanoid';
+	import Modal from '$lib/components/Modal.svelte';
+	import MoveDialogue from './MoveDialogue.svelte';
+	import UndoDialogue from './UndoDialogue.svelte';
+	import { DecodePieceFull, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
 	let { data } = $props();
 
-	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
+	// 0 - move
+	// 1 - stack
+	// 2 - attack
+	// 3 - place
+	// 4 - ready
 
+	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
+	const websocketStore = getWebsocketStore();
+	const notificationStore = getNotificationStore();
+
+	interface MoveType {
+		fromPiece: number;
+		fromCoord: number;
+		moveType: number;
+		toCoord: number;
+	}
+	let showMoveDialogue = $state(false);
+	let moveDialogueText = $state('');
+	let attackFn = $state<(() => void) | null>(null);
+	let stackFn = $state<(() => void) | null>(null);
+
+	let undoDialogBool = $state(false);
 	let selectedStack = $state<number[]>([]);
+	let completedBool = $state(false);
+	let completedText = $state('');
 
 	function changeSelectedStack(stack: number[]) {
+		const x = getWebsocketStore();
 		selectedStack = stack;
 	}
+
+	function sendMoveMsg(fromPiece: number, fromCoord: number, toCoord: number, moveType: number) {
+		const msg = {
+			type: 'makeGameMove',
+			payload: {
+				gameID: boardStore.id,
+				fromPiece,
+				fromCoord,
+				moveType,
+				toCoord,
+			},
+		};
+
+		console.log('send', msg);
+
+		websocketStore.send(msg);
+	}
+
+	// Attacking and Stacking from onboard piece
+	function promptMoveDialogue(fromCoord: number, toCoord: number) {
+		showMoveDialogue = true;
+		const trueFromCoord = boardStore.isViewReversed ? 80 - fromCoord : fromCoord;
+		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
+		const [fromFile, fromRank] = IndexToCoords(trueFromCoord);
+		const [toFile, toRank] = IndexToCoords(trueToCoord);
+		const fromSquare = boardStore.boardState[trueFromCoord];
+		const toSquare = boardStore.boardState[trueToCoord];
+		const fromPiece = fromSquare[fromSquare.length - 1];
+		const toPiece = toSquare[toSquare.length - 1];
+
+		moveDialogueText = `${DecodePieceFull(fromPiece)} ${fromFile.toUpperCase()}${fromRank} to ${DecodePieceFull(toPiece)} ${toFile.toUpperCase()}${toRank}`;
+
+		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
+			attackFn = () => {
+				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 2);
+				showMoveDialogue = false;
+			};
+		} else {
+			attackFn = null;
+		}
+
+		if (toSquare.length !== 3) {
+			stackFn = () => {
+				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
+				showMoveDialogue = false;
+			};
+		} else {
+			stackFn = null;
+		}
+	}
+
+	// Placing from hand
+	function placeHandMove(fromPiece: number, toCoord: number) {
+		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
+		sendMoveMsg(fromPiece, -1, trueToCoord, 3);
+	}
+
+	function movePiece(fromPiece: number, fromCoord: number, toCoord: number) {
+		const trueFromCoord = boardStore.isViewReversed ? 80 - fromCoord : fromCoord;
+		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
+		sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 0);
+	}
+
+	function ready() {
+		sendMoveMsg(-1, 0, 0, 4);
+	}
+
+	function handleGameMsg(event?: MessageEvent) {
+		try {
+			const data = JSON.parse(event?.data);
+			switch (data.type) {
+				case 'game':
+					boardStore.updateBoard(data.payload);
+					break;
+				case 'undoRequest':
+					undoDialogBool = true;
+					break;
+				case 'undoResponse':
+					if (data.payload === 'accept') {
+						notificationStore.add({
+							id: nanoid(),
+							title: 'Accepted',
+							type: 'success',
+							msg: 'Your undo request has been accepted',
+						});
+					} else {
+						notificationStore.add({
+							id: nanoid(),
+							title: 'Rejected',
+							type: 'warning',
+							msg: 'Your undo request has been rejected',
+						});
+					}
+					const msg = {
+						type: 'completeGameUndo',
+						payload: '',
+					};
+					websocketStore.send(msg);
+					break;
+				case 'gameEnd':
+					completedText = data.payload;
+					completedBool = true;
+					break;
+				case 'gameResign':
+					if (data.payload === 'w/r') {
+						completedText = 'Black Resigns';
+						completedBool = true;
+					} else if (data.payload === 'b/r') {
+						completedText = 'White Resigns';
+						completedBool = true;
+					}
+					break;
+			}
+		} catch (err) {
+			console.log(event?.data);
+			console.error('Error: ', err);
+		}
+	}
+
+	onMount(() => {
+		let unsub = websocketStore.addMsgListener(handleGameMsg);
+
+		$effect(() => {
+			if (websocketStore.state === 'connected') {
+				const msg = {
+					type: 'joinGame',
+					payload: boardStore.id,
+				};
+				websocketStore.send(msg);
+			}
+		});
+
+		return () => {
+			unsub?.();
+			const msg = {
+				type: 'leaveGame',
+				payload: boardStore.id,
+			};
+			websocketStore.send(msg);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -22,17 +195,20 @@
 	<section>
 		<div class="game-state">
 			{#if boardStore.completed}
-				{#if boardStore.result === 'b'}
-					Black Wins By Checkmate
-				{:else if boardStore.result === 'w'}
-					White Wins By Checkmate
-				{:else if boardStore.result === 'b/r'}
-					Black Wins By Resignation
-				{:else if boardStore.result === 'w/r'}
-					White Wins By Resignation
-				{:else if boardStore.result === 'draw'}
-					Draw
-				{/if}
+				<Crown />
+				<span class="completed-text">
+					{#if boardStore.result === 'b'}
+						Black Wins By Checkmate
+					{:else if boardStore.result === 'w'}
+						White Wins By Checkmate
+					{:else if boardStore.result === 'b/r'}
+						Black Wins By Resignation
+					{:else if boardStore.result === 'w/r'}
+						White Wins By Resignation
+					{:else if boardStore.result === 'draw'}
+						Draw
+					{/if}
+				</span>
 			{:else}
 				<span class:turn-indicator={boardStore.isUserTurn}
 					>{boardStore.isPlayer1Ready && boardStore.isPlayer2Ready ? '' : 'Drafting -'}
@@ -41,14 +217,19 @@
 			{/if}
 		</div>
 		<PlayerInfo isOpposite={true} />
-		<Board changeSelectedStack={changeSelectedStack} />
+		<Board {changeSelectedStack} {promptMoveDialogue} {movePiece} />
 		<PlayerInfo isOpposite={false} />
-		<!-- <div class="player same">
-			<div class={`${boardStore.turnColor === 'w' ? 'w' : 'b'}`}></div>
-			{boardStore.isViewReversed && boardStore.userColor === 'w' ? boardStore.player1 : boardStore.player2}
-		</div> -->
 	</section>
-	<Menu selectedStack={selectedStack} />
+	<Menu {selectedStack} {ready} {placeHandMove} />
+
+	<!-- TODO modal and dialogues -->
+	{#if completedBool}
+		<Modal bind:showModal={completedBool}>
+			<h2 class="completed-text">{completedText}</h2>
+		</Modal>
+	{/if}
+	<MoveDialogue bind:showModal={showMoveDialogue} text={moveDialogueText} {attackFn} {stackFn} />
+	<UndoDialogue />
 </main>
 
 <style lang="scss">
@@ -78,8 +259,10 @@
 	}
 
 	.completed-text {
-		font-size: 1.2rem;
 		font-weight: 600;
+		@media (min-width: 767px) {
+			font-size: 1.2rem;
+		}
 	}
 
 	.turn-indicator {
@@ -87,11 +270,11 @@
 		font-weight: 600;
 	}
 
-	.divider {
-		border-left: 1px rgba(99, 99, 99, 0.2) solid;
-	}
-
 	.game-state {
+		display: flex;
+		gap: 0.5rem;
+		justify-content: center;
+		align-items: center;
 		text-align: center;
 		margin-bottom: 0.25rem;
 		@media (min-width: 767px) {

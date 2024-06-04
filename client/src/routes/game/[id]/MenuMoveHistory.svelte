@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { getGameStore } from '$lib/store/gameState.svelte';
 	import { onMount } from 'svelte';
 
@@ -18,23 +17,6 @@
 	let url = $state('');
 	let fileText = $state('');
 	let fileName = $state('');
-	// let fileText = $derived.by(() => {
-	//   const headings = `[game_id : ${boardStore.id}]\n[ruleset : ${boardStore.ruleset}]\n[type : ${boardStore.type}]\n[date_started : ${boardStore.date_started}]\n[white : ${boardStore.player1}]\n[black : ${boardStore.player2}]\n\n`;
-	//   const textHistory = headings + boardStore.moveHistory.join(' ')
-	//   return textHistory
-	// })
-	// let url = $derived.by(() => {
-	//   const blob = new Blob([fileText], { type: 'text/plain' });
-	//   return URL.createObjectURL(blob);
-	// })
-	// let fileName = $derived.by(() => {
-	//   const date = new Date(boardStore.date_started)
-	//   const year = date.getFullYear();
-	//   const month = String(date.getMonth() + 1).padStart(2, '0');
-	//   const day = String(date.getDate()).padStart(2, '0');
-	//   const formattedDate = `${year}-${month}-${day}`
-	//   return `${boardStore.player1}_vs_${boardStore.player2}_${formattedDate}`
-	// })
 
 	let pliedHistory = $derived.by(() => {
 		const newList = [];
@@ -97,22 +79,6 @@
 			}, autoplayInterval);
 		}
 	}
-
-	// $effect(() => {
-	// 	if (intervalId) {
-	// 		clearInterval(intervalId);
-	// 		intervalId = window.setInterval(() => {
-	// 			if (currentMoveHistoryIndex === boardStore.moveHistory.length - 1) {
-	// 				if (intervalId) {
-	// 					clearInterval(intervalId);
-	// 					autoplay = false;
-	// 					return;
-	// 				}
-	// 			}
-	// 			currentMoveHistoryIndex++;
-	// 		}, autoplayInterval);
-	// 	}
-	// });
 
 	onMount(() => {
 		$effect(() => {
@@ -234,10 +200,6 @@
 		background-color: rgb(var(--primary));
 		color: white;
 	}
-
-  .controls-header {
-    order: -1;
-  }
 
 	.controls {
     display: flex;

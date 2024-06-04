@@ -6,7 +6,15 @@
 	import { getSquareCoords } from '$lib/utils/historyParser';
 	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
 
-	let { changeSelectedStack }: { changeSelectedStack: (stack: number[]) => void } = $props();
+	let {
+		changeSelectedStack,
+		promptMoveDialogue,
+		movePiece,
+	}: {
+		changeSelectedStack: (stack: number[]) => void;
+		promptMoveDialogue: (fromCoord: number, toCoord: number) => void;
+		movePiece: (fromPiece: number, fromCoord: number, toCoord: number) => void;
+	} = $props();
 
 	const boardStore = getGameStore();
 
@@ -67,7 +75,7 @@
 		if (!boardStore.isUserTurn) return false;
 		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
-
+		
 		return isPlayerPiece && !isDraftingPhase;
 	}
 
@@ -79,9 +87,19 @@
 		}
 	}
 
-	// TODO fix events
-	// when selected, should attempt to make move on short and long press
-	// only drag should reselect
+	function moveHandler(fromCoord: number, toCoord: number) {
+		const toSquare = boardStore.boardUI[toCoord];
+		if (toSquare.length === 0) {
+			// is empty
+			console.log('empty');
+			const fromSquare = boardStore.boardUI[fromCoord];
+			const fromPiece = fromSquare[fromSquare.length - 1];
+			movePiece(fromPiece, fromCoord, toCoord);
+		} else {
+			promptMoveDialogue(fromCoord, toCoord);
+		}
+	}
+
 	function draggableOptions(index: number, stack: number[]): DraggableOptions<dropItem | null> {
 		return {
 			startEvent: () => {
@@ -104,10 +122,11 @@
 				if (selectedMoveIndices.includes(hoverItem.destinationIndex)) {
 					// make move
 					console.log('make move');
+					moveHandler(index, hoverItem.destinationIndex);
 				}
 				selectSquareIndex(-1);
 			},
-			shortReleaseEvent: () => {
+			shortReleaseEvent: (hoverItem) => {
 				console.log(startSelectIndex);
 				if (startSelectIndex === index) {
 					selectSquareIndex(-1);
@@ -115,15 +134,21 @@
 				// make move
 				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)) {
 					console.log('make move');
+					if (hoverItem !== null && hoverItem !== undefined) {
+						moveHandler(selectedSquareIndex, hoverItem.destinationIndex);
+					}
 					selectSquareIndex(-1);
 				}
 			},
-			longReleaseEvent: () => {
+			longReleaseEvent: (hoverItem) => {
 				if (startSelectIndex === index) {
 					selectSquareIndex(-1);
 				}
 				// make move
 				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)) {
+					if (hoverItem !== null && hoverItem !== undefined) {
+						moveHandler(selectedSquareIndex, hoverItem.destinationIndex);
+					}
 					console.log('make move');
 					selectSquareIndex(-1);
 				}
@@ -164,7 +189,7 @@
 				if (boardStore.userColor === 'spectator') {
 					selectedSquareIndex = index;
 					return;
-				};
+				}
 				if (selectedMoveIndices.includes(index)) {
 					// make move
 					console.log('make move');
@@ -208,6 +233,9 @@
 </div>
 
 <style>
+	* {
+		touch-action: none;
+	}
 	.pointer {
 		cursor: pointer;
 		touch-action: none;
