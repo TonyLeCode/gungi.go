@@ -504,28 +504,29 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 		}
 	}
 
-	if checkStatus == "checked" || checkStatus == "double-checked" {
-		if len(filteredMoves) == 0 {
-			checkStatus = "checkmated"
+	isEmpty := true
+	if r.TurnColor == 0 {
+		for i := 0; i < 13; i++ {
+			if r.Hand[i] > 0 {
+				isEmpty = false
+			}
 		}
 	} else {
-		isEmpty := true
-		if r.TurnColor == 0 {
-			for i := 0; i < 13; i++ {
-				if r.Hand[i] > 0 {
-					isEmpty = false
-				}
-			}
-		} else {
-			for i := 13; i < 26; i++ {
-				if r.Hand[i] > 0 {
-					isEmpty = false
-				}
+		for i := 13; i < 26; i++ {
+			if r.Hand[i] > 0 {
+				isEmpty = false
 			}
 		}
-		if len(filteredMoves) == 0 && isEmpty {
-			checkStatus = "stalemate"
+	}
+
+	if checkStatus == "checked" || checkStatus == "double-checked" {
+		if isEmpty && len(filteredMoves) == 1 && len(filteredMoves[-1]) != 0 {
+			checkStatus = "checkmated"
+		} else if len(filteredMoves) == 0 {
+			checkStatus = "checkmated"
 		}
+	} else if len(filteredMoves) == 0 && isEmpty {
+		checkStatus = "stalemate"
 	}
 
 	return checkStatus, filteredMoves
