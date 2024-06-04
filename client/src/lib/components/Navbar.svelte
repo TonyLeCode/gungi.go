@@ -7,7 +7,7 @@
 
 	let isMenuOpen = $state(false);
 
-	let theme = $state("light");
+	let theme = $state('light');
 
 	function switchTheme() {
 		if (theme === 'dark') {
@@ -28,8 +28,8 @@
 		}
 	}
 
-	function onClick(){
-		isMenuOpen = false
+	function onClick() {
+		isMenuOpen = false;
 	}
 
 	onMount(() => {
@@ -57,7 +57,7 @@
 			<button class={`theme-switcher ${theme}`} class:open={isMenuOpen} onclick={switchTheme}><SunMoon /></button>
 			{#if session}
 				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->
-				<div class="name">{session.user.user_metadata.username}</div>
+				<a href="/username" class="name">{session.user.user_metadata.username}</a>
 				<a onclick={onClick} href="/logout">logout</a>
 			{:else}
 				<a onclick={onClick} class="a" href="/login">login</a>
@@ -125,6 +125,9 @@
 		margin-right: 1rem;
 		position: relative;
 		font-weight: 600;
+		&:hover {
+			color: rgb(var(--primary-3));
+		}
 		@media (min-width: 767px) {
 			display: block;
 		}

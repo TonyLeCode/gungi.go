@@ -11,6 +11,9 @@
 	let containerRef: HTMLOListElement;
 
 	$effect(() => {
+		currentMoveHistoryIndex = boardStore.moveHistory.length - 1;
+	})
+	$effect(() => {
 		containerRef.scrollTop = Math.floor(currentMoveHistoryIndex / 2) * 36;
 	});
 

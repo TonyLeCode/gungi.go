@@ -85,7 +85,6 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 
 	function dragMoveHandler(node: HTMLElement) {
 		return function (e: MouseEvent) {
-			console.log("start4")
 			if (dragStart) {
 				dragStart = false;
 				if (droppable) {
@@ -199,7 +198,6 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 	node.addEventListener('mousedown', dragStartHandler);
 	return {
 		destroy() {
-			console.log('destroy');
 			node.removeEventListener('mousedown', dragStartHandler);
 			// Note that destruction can happen while another drag is in progress
 			if (unsubMoveHandler) unsubMoveHandler();

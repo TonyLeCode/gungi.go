@@ -91,7 +91,6 @@
 		const toSquare = boardStore.boardUI[toCoord];
 		if (toSquare.length === 0) {
 			// is empty
-			console.log('empty');
 			const fromSquare = boardStore.boardUI[fromCoord];
 			const fromPiece = fromSquare[fromSquare.length - 1];
 			movePiece(fromPiece, fromCoord, toCoord);
@@ -121,7 +120,6 @@
 				}
 				if (selectedMoveIndices.includes(hoverItem.destinationIndex)) {
 					// make move
-					console.log('make move');
 					moveHandler(index, hoverItem.destinationIndex);
 				}
 				selectSquareIndex(-1);
@@ -133,7 +131,6 @@
 				}
 				// make move
 				if (selectedSquareIndex !== -1 && selectedMoveIndices.includes(index)) {
-					console.log('make move');
 					if (hoverItem !== null && hoverItem !== undefined) {
 						moveHandler(selectedSquareIndex, hoverItem.destinationIndex);
 					}
@@ -149,7 +146,6 @@
 					if (hoverItem !== null && hoverItem !== undefined) {
 						moveHandler(selectedSquareIndex, hoverItem.destinationIndex);
 					}
-					console.log('make move');
 					selectSquareIndex(-1);
 				}
 			},

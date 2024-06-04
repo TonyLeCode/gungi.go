@@ -12,7 +12,7 @@
 		placeHandMove: (fromPiece: number, fromCoord: number, toCoord: number) => void;
 	} = $props();
 
-	let menuState = $state('move history');
+	let menuState = $state('hand');
 </script>
 
 <aside class="side-menu">

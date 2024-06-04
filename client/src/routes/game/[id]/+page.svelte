@@ -57,8 +57,6 @@
 			},
 		};
 
-		console.log('send', msg);
-
 		websocketStore.send(msg);
 	}
 
@@ -198,13 +196,13 @@
 				<Crown />
 				<span class="completed-text">
 					{#if boardStore.result === 'b'}
-						Black Wins By Checkmate
+						Black Won By Checkmate
 					{:else if boardStore.result === 'w'}
-						White Wins By Checkmate
+						White Won By Checkmate
 					{:else if boardStore.result === 'b/r'}
-						Black Wins By Resignation
+						Black Won By Resignation
 					{:else if boardStore.result === 'w/r'}
-						White Wins By Resignation
+						White Won By Resignation
 					{:else if boardStore.result === 'draw'}
 						Draw
 					{/if}
@@ -258,8 +256,22 @@
 		max-width: 50rem;
 	}
 
+	.game-state :global(svg) {
+		width: 1.25rem;
+		height: 1.25rem;
+		@media (min-width: 608px) {
+			width: 1.5rem;
+			height: 1.5rem;
+		}
+		@media (min-width: 767px) {
+			width: 2rem;
+			height: 2rem;
+		}
+	}
+
 	.completed-text {
 		font-weight: 600;
+		margin-top: 6px;
 		@media (min-width: 767px) {
 			font-size: 1.2rem;
 		}
