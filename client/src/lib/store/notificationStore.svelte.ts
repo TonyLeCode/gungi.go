@@ -1,9 +1,11 @@
 import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
 
+type notificationEnum = 'default' | 'success' | 'warning' | 'error';
+
 export type notificationType = {
 	id: string;
-	type: string;
+	type: notificationEnum;
 	title: string;
 	msg: string | null;
 	component?: ConstructorOfATypedSvelteComponent;

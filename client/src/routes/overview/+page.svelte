@@ -100,8 +100,12 @@
 		max-width: 70rem;
 		margin: 0 auto;
 		margin-top: 2rem;
-		padding: 0 2rem;
+		padding: 0 0.5rem;
 		text-align: center;
+		overflow: auto;
+		@media (min-width: 767px) {
+			padding: 0 2rem;
+		}
 	}
 
 	h2 {

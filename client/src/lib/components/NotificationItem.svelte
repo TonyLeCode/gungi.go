@@ -2,12 +2,13 @@
 	import { type notificationType } from '$lib/store/notificationStore.svelte';
 	import { tweened } from 'svelte/motion';
 	import { linear } from 'svelte/easing';
+	import { CircleAlert, CircleCheck, CircleSlash, CircleX } from 'lucide-svelte';
 
-	// export let notification: notificationType;
+	//TODO merge as snippet with notification
 	let { notification, removeItem }: { notification: notificationType; removeItem: () => void } = $props();
 
 	let duration = tweened(100, {
-		duration: 5000,
+		duration: 10000,
 		easing: linear,
 	});
 	duration.set(0);
@@ -21,6 +22,19 @@
 
 <div class="notification">
 	<div style="width: {$duration}%" class="bar"></div>
+	{#if notification.type === 'success'}
+		<div class={notification.type}>
+			<CircleCheck size="30px" strokeWidth="2.5px" />
+		</div>
+	{:else if notification.type === 'error'}
+		<div class={notification.type}>
+			<CircleSlash size="30px" strokeWidth="2.5px" />
+		</div>
+	{:else if notification.type === 'warning'}
+		<div class={notification.type}>
+			<CircleAlert size="30px" strokeWidth="2.5px" />
+		</div>
+	{/if}
 	<div class="container">
 		<div class="title">
 			{notification.title}
@@ -33,12 +47,20 @@
 			</div>
 		{/if}
 	</div>
-	<button class="close" onclick={removeItem}
-		><img draggable="false" src="/closeCircle.svg" alt="exit dialog" width="35px" height="35px" /></button
-	>
+	<button class="close" onclick={removeItem}><CircleX size="35px" /></button>
 </div>
 
 <style lang="scss">
+	.success {
+		color: rgb(var(--success));
+	}
+	.error {
+		color: rgb(var(--error));
+	}
+	.warning {
+		color: rgb(var(--warning));
+	}
+
 	.bar {
 		width: 100%;
 		height: 5px;
@@ -50,21 +72,27 @@
 	.notification {
 		position: relative;
 		padding: 1rem 2rem;
-		min-width: 21rem;
+		// min-width: 21rem;
+		width: 100%;
 		min-height: 4rem;
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.05);
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.25);
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		background-color: rgb(var(--bg-2));
-		border-radius: 8px;
+		border-radius: 6px;
+		gap: 1rem;
 	}
 	.close {
 		margin-left: auto;
 		border-radius: 50%;
+		color: rgb(var(--primary));
 		&:focus {
 			outline: 2px solid rgba(var(--primary), 0.5);
-			outline-offset: -1px;
+			outline-offset: 1px;
+		}
+		&:hover {
+			color: rgb(var(--primary-3));
 		}
 	}
 	.container {

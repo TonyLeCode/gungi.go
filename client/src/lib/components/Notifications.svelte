@@ -12,8 +12,20 @@
 		notificationsStore.add({
 			id: nanoid(),
 			title: 'Game Accepted',
-			type: 'default',
+			type: 'success',
 			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
+		} as notificationType);
+		notificationsStore.add({
+			id: nanoid(),
+			title: 'Undo Request Rejected',
+			type: 'warning',
+			msg: 'Your undo request has been denied',
+		} as notificationType);
+		notificationsStore.add({
+			id: nanoid(),
+			title: 'Something went wrong',
+			type: 'error',
+			msg: 'Sorry',
 		} as notificationType);
 	});
 </script>
@@ -30,10 +42,19 @@
 	ul {
 		position: fixed;
 		bottom: 2rem;
-		right: 2rem;
+		max-width: 24rem;
+		margin-left: auto;
 		z-index: 10;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		right: 1rem;
+		left: 1rem;
+		font-size: 0.875rem;
+		@media (min-width: 767px) {
+			right: 2rem;
+			left: 2rem;
+			font-size: 1rem;
+		}
 	}
 </style>
