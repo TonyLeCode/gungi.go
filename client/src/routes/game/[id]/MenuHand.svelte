@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { draggable } from '$lib/store/dragAndDrop.svelte';
+	import TooltipWrapper from '$lib/components/TooltipWrapper.svelte';
 	import { getGameStore } from '$lib/store/gameState.svelte';
-	import { DecodePiece, GetPieceColor } from '$lib/utils/utils';
+	import { DecodePiece, DecodePieceFull, GetPieceColor } from '$lib/utils/utils';
+	import MenuHandPiece from './MenuHandPiece.svelte';
 
 	let {
 		selectedStack,
@@ -15,35 +16,20 @@
 
 	const boardStore = getGameStore();
 
-	let imgStack = $derived.by(() => {
-		return selectedStack.map((piece, i) => {
-			const decodedPiece = DecodePiece(piece).toLowerCase();
-			const color = GetPieceColor(piece);
-			return `/pieces/${color}${i + 1}${decodedPiece}.svg`;
-		});
-	});
-
-	// let whiteHandImgs = $derived.by(() => {
-	// 	return boardStore.player1HandList.map((amount, piece) => {
-	// 		const decodedPiece = DecodePiece(piece).toLowerCase();
-	// 		return `/pieces/w1${decodedPiece}.svg`;
-	// 	});
-	// });
-
-	// let blackHandImgs = $derived.by(() => {
-	// 	return boardStore.player2HandList.map((amount, piece) => {
-	// 		const decodedPiece = DecodePiece(piece).toLowerCase();
-	// 		return `/pieces/b1${decodedPiece}.svg`;
-	// 	});
-	// });
-	function getPieceImg(piece: number, color: string) {
+	function getImgSrc(piece: number, i: number){
 		const decodedPiece = DecodePiece(piece).toLowerCase();
-		return `/pieces/${color}1${decodedPiece}.svg`;
+		const color = GetPieceColor(piece);
+		return `/pieces/${color}${i + 1}${decodedPiece}.svg`;
+	}
+
+	function getText(piece: number, i: number){
+		const decodedPiece = DecodePieceFull(piece);
+		const color = GetPieceColor(piece);
+		return `Tier ${i + 1}: ${color === 'w' ? 'White' : 'Black'} ${decodedPiece} `
 	}
 </script>
 
 {#snippet hand(label: string, handList: number[], armyCount: number, handCount: number, color: string)}
-	<!-- TODO add badge and hide if 0 -->
 	<div class="hand-info">
 		<div class="label">
 			<h3 class:is-user={label === 'Your Hand:'}>{label}</h3>
@@ -52,13 +38,7 @@
 		<div class="stack-container">
 			{#each handList as amount, index}
 				{#if amount != 0}
-					<div class="hand">
-						<img class="piece" draggable="false" use:draggable src={getPieceImg(index, color)} alt="" />
-						{#if amount > 1}
-							<img class="piece-under" draggable="false" src={getPieceImg(index, color)} alt="" />
-						{/if}
-						<div class="badge" title={String(amount)}>{amount}</div>
-					</div>
+					<MenuHandPiece {index} {color} {amount} />
 				{/if}
 			{/each}
 		</div>
@@ -68,11 +48,15 @@
 <div class="stack-details">
 	<h3>Stack Details:</h3>
 	<div class="stack-container details">
-		{#if imgStack.length === 0}
+		{#if selectedStack.length === 0}
 			<span class="not-selected"> Stack not currently selected </span>
 		{/if}
-		{#each imgStack as stackImgString}
-			<img class="piece" draggable="false" src={stackImgString} alt="" />
+		{#each selectedStack as piece, i}
+			<TooltipWrapper text={getText(piece, i)}>
+				{#snippet children(createRef, interactionProps)}
+					<img use:createRef {...interactionProps.getReferenceProps()} class="piece" draggable="false" src={getImgSrc(piece, i)} alt="" />
+				{/snippet}
+			</TooltipWrapper>
 		{/each}
 	</div>
 </div>
@@ -147,31 +131,8 @@
 		margin-left: auto;
 	}
 
-	.hand {
-		position: relative;
-	}
-
 	.details {
 		justify-content: center;
-	}
-
-	.piece {
-		position: relative;
-		z-index: 2;
-		width: 2rem;
-		border-radius: 50%;
-		@media (min-width: 767px) {
-			width: 3rem;
-		}
-	}
-
-	.piece-under {
-		position: absolute;
-		left: 0;
-		top: 0;
-		right: 0;
-		z-index: 1;
-		user-select: none;
 	}
 
 	.hand-info {
@@ -199,21 +160,13 @@
 		font-weight: 600;
 	}
 
-	.badge {
-		user-select: none;
-		text-align: center;
-		font-size: 0.7rem;
-		background-color: rgb(var(--primary));
-		color: white;
-		border-radius: 50%;
-		width: 22px;
-		height: 22px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		position: absolute;
-		right: -4px;
-		top: -4px;
+	.piece {
+		position: relative;
 		z-index: 2;
+		width: 2rem;
+		border-radius: 50%;
+		@media (min-width: 767px) {
+			width: 3rem;
+		}
 	}
 </style>
