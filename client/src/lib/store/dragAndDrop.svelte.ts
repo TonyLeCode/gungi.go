@@ -1,4 +1,5 @@
-// import { getContext, setContext } from 'svelte';
+// I attempted to make drag and drop for mobile but there
+// was no suitable support for dropping on touch devices
 
 type dropOptions<T> = {
 	mouseEnterEvent?: () => void;
@@ -33,11 +34,11 @@ export class Droppable<T> {
 		node.addEventListener('mouseleave', mouseLeave.bind(this));
 		node.addEventListener('mouseenter', mouseEnter.bind(this));
 	}
-	startDragging(){
+	startDragging() {
 		this.isDragging = true;
 	}
 
-	stopDragging(){
+	stopDragging() {
 		this.isDragging = false;
 		this.hoverItem = null;
 	}
@@ -87,7 +88,7 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 	} else if (active === false) return;
 
 	function dragMoveHandler(node: HTMLElement) {
-		return function (e: MouseEvent | TouchEvent) {
+		return function (e: MouseEvent) {
 			if (dragStart) {
 				dragStart = false;
 				if (droppable) {
@@ -110,14 +111,9 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 				longPress = false;
 			}
 
-			if (e instanceof TouchEvent) {
-				e.preventDefault(); // prevent scrolling
-				dx = e.touches[0].clientX + offsetX - initialX;
-				dy = e.touches[0].clientY + offsetY - initialY;
-			} else if (e instanceof MouseEvent) {
-				dx = e.clientX + offsetX - initialX;
-				dy = e.clientY + offsetY - initialY;
-			}
+			dx = e.clientX + offsetX - initialX;
+			dy = e.clientY + offsetY - initialY;
+
 			node.style.left = `${dx}px`;
 			node.style.top = `${dy}px`;
 			node.style.zIndex = '3';
@@ -129,18 +125,18 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 				const endTime = Date.now();
 				const duration = endTime - startTime;
 				if (duration < timeThreshold) {
-          // short press
+					// short press
 					if (typeof shortReleaseEvent === 'function') {
 						shortReleaseEvent(droppable?.hoverItem ?? undefined);
 					}
 				} else if (longPress) {
-          // long press
+					// long press
 					if (typeof longReleaseEvent === 'function') {
 						longReleaseEvent(droppable?.hoverItem ?? undefined);
 					}
 				}
 			} else {
-        // dragged
+				// dragged
 				if (typeof dragReleaseEvent === 'function') {
 					dragReleaseEvent(droppable?.hoverItem ?? undefined);
 				}
@@ -168,9 +164,8 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 			unsubReleaseHandler();
 		};
 	}
-	function dragStartHandler(e: MouseEvent | TouchEvent) {
+	function dragStartHandler(e: MouseEvent) {
 		if (e.target === null) return;
-		e.preventDefault(); // Touch events trigger mouse events, must prevent default to trigger only touch event
 
 		if (typeof startEvent === 'function') {
 			startEvent(droppable?.hoverItem ?? undefined);
@@ -182,55 +177,32 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		}, timeThreshold);
 
 		const target = e.target as HTMLElement;
-		if (e instanceof TouchEvent) {
-			initialX = e.touches[0].clientX;
-			initialY = e.touches[0].clientY;
-			const rect = target.getBoundingClientRect();
-			offsetX = e.targetTouches[0].clientX - rect.x - target?.offsetWidth / 2;
-			offsetY = e.targetTouches[0].clientY - rect.y - target?.offsetHeight / 2;
-		} else if (e instanceof MouseEvent) {
-			if (e.button !== 0) return;
-			initialX = e.clientX;
-			initialY = e.clientY;
-			offsetX = e.offsetX - target?.offsetWidth / 2;
-			offsetY = e.offsetY - target?.offsetHeight / 2;
-		}
+		if (e.button !== 0) return;
+		initialX = e.clientX;
+		initialY = e.clientY;
+		offsetX = e.offsetX - target?.offsetWidth / 2;
+		offsetY = e.offsetY - target?.offsetHeight / 2;
+
 		const onDrag = dragMoveHandler(target);
 		const onRelease = dragReleaseHandler(target);
-    node.style.pointerEvents = 'none';
+		node.style.pointerEvents = 'none';
 		document.addEventListener('mousemove', onDrag);
 		document.addEventListener('mouseup', onRelease);
-		document.addEventListener('touchmove', onDrag);
-		document.addEventListener('touchend', onRelease);
 		unsubMoveHandler = () => {
 			document.removeEventListener('mousemove', onDrag);
-			document.removeEventListener('touchmove', onDrag);
 		};
 		unsubReleaseHandler = () => {
 			document.removeEventListener('mouseup', onRelease);
-			document.removeEventListener('touchend', onRelease);
 		};
 	}
 
-	node.addEventListener('touchstart', dragStartHandler);
 	node.addEventListener('mousedown', dragStartHandler);
-  return {
-    destroy() {
-      node.removeEventListener('mousedown', dragStartHandler);
-      node.removeEventListener('touchstart', dragStartHandler);
-      // Note that destruction can happen while another drag is in progress
-      if (unsubMoveHandler) unsubMoveHandler();
+	return {
+		destroy() {
+			node.removeEventListener('mousedown', dragStartHandler);
+			// Note that destruction can happen while another drag is in progress
+			if (unsubMoveHandler) unsubMoveHandler();
 			if (unsubReleaseHandler) unsubReleaseHandler();
-    },
-  }
+		},
+	};
 }
-
-// export function createDrag() {
-// 	const store = new Drag();
-// 	setContext('drag', store);
-// 	return store;
-// }
-
-// export function getDrag() {
-// 	return getContext('drag');
-// }
