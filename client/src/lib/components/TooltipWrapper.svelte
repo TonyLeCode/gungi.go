@@ -29,7 +29,7 @@
 		onOpenChange: (v) => (open = v),
 		placement: 'top',
 		get middleware() {
-			return [offset(10), flip(), shift(), arrowRef && arrow({ element: arrowRef })];
+			return [offset(15), flip(), shift(), arrowRef && arrow({ element: arrowRef })];
 		},
 	});
 	const role = useRole(floating.context, { role: 'tooltip' });
@@ -49,7 +49,7 @@
 		class="tooltip"
 		bind:this={floating.elements.floating}
 		style={floating.floatingStyles}
-		{...interactions.getFloatingProps}
+		{...interactions.getFloatingProps }
 	>
 		{text}
 		<FloatingArrow bind:ref={arrowRef} context={floating.context} fill="rgb(var(--primary))" />

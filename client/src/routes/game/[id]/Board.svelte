@@ -6,21 +6,30 @@
 	import { getSquareCoords } from '$lib/utils/historyParser';
 	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
 
+	type DropItem = {
+		destinationIndex: number;
+		destinationStack: number[];
+	};
+
 	let {
 		changeSelectedStack,
 		promptMoveDialogue,
 		movePiece,
+		droppable = $bindable(),
 	}: {
 		changeSelectedStack: (stack: number[]) => void;
 		promptMoveDialogue: (fromCoord: number, toCoord: number) => void;
 		movePiece: (fromPiece: number, fromCoord: number, toCoord: number) => void;
+		droppable: Droppable<DropItem>;
 	} = $props();
 
 	const boardStore = getGameStore();
 
+	//TODO, deslect on new board state
 	let startSelectIndex = $state(-1);
 	let selectedSquareIndex = $state(-1);
 	let selectedMoveIndices = $derived.by(() => {
+		if (!boardStore.isUserTurn) return [];
 		if (selectedSquareIndex === -1) return [];
 		if (boardStore.moveListUI[selectedSquareIndex] === undefined) return [];
 		return boardStore.moveListUI[selectedSquareIndex];
@@ -48,11 +57,14 @@
 	let deselectTimeout = $state<number | undefined>(undefined);
 	let blockDeselect = $state(false);
 	if (browser) {
+		// Prevent deselection when clicking on the board
 		window.addEventListener('mousedown', (e) => {
-			if (deselectTimeout === undefined && startSelectIndex !== -1) {
+			if (deselectTimeout === undefined && selectedSquareIndex !== -1) {
 				deselectTimeout = window.setTimeout(() => {
 					if (!blockDeselect) {
 						selectedSquareIndex = -1;
+						deselectTimeout = undefined;
+						blockDeselect = false;
 					}
 					deselectTimeout = undefined;
 					blockDeselect = false;
@@ -75,7 +87,7 @@
 		if (!boardStore.isUserTurn) return false;
 		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
-		
+
 		return isPlayerPiece && !isDraftingPhase;
 	}
 
@@ -99,7 +111,7 @@
 		}
 	}
 
-	function draggableOptions(index: number, stack: number[]): DraggableOptions<dropItem | null> {
+	function draggableOptions(index: number, stack: number[]): DraggableOptions<DropItem | null> {
 		return {
 			startEvent: () => {
 				startSelectIndex = selectedSquareIndex;
@@ -125,7 +137,6 @@
 				selectSquareIndex(-1);
 			},
 			shortReleaseEvent: (hoverItem) => {
-				console.log(startSelectIndex);
 				if (startSelectIndex === index) {
 					selectSquareIndex(-1);
 				}
@@ -158,15 +169,8 @@
 			},
 		};
 	}
-
-	type dropItem = {
-		destinationIndex: number;
-		destinationStack: number[];
-	};
-	const droppable = new Droppable<dropItem>();
 </script>
 
-<p>droppable: {droppable.hoverItem?.destinationIndex} {droppable.hoverItem?.destinationStack}</p>
 <div class="board">
 	{#each boardStore.boardUI as stack, index (String(index) + JSON.stringify(stack))}
 		<div
@@ -179,23 +183,26 @@
 				boardStore.isPlayer2Ready &&
 				boardStore.userColor !== 'spectator'}
 			onmousedown={() => {
-				const pieceIsPlayerColor = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 				const stackLength = stack.length;
-				if (stackLength > 0 && pieceIsPlayerColor) return;
+				const pieceIsPlayerColor = PieceIsPlayerColor(stack[stackLength - 1], boardStore.userColor);
+				if (stackLength === 3 && pieceIsPlayerColor) return;
 				if (boardStore.userColor === 'spectator') {
+					blockDeselection();
 					selectedSquareIndex = index;
 					return;
 				}
 				if (selectedMoveIndices.includes(index)) {
 					// make move
-					console.log('make move');
-					selectedSquareIndex = -1;
+					// console.log('make move');
+					moveHandler(selectedSquareIndex, index);
+					selectSquareIndex(-1);
 				} else if (stackLength > 0) {
-					console.log('enemy stack');
+					// console.log('cannot stack or attack on');
+					blockDeselection();
 					selectedSquareIndex = index;
 				} else {
-					console.log('empty square');
-					selectedSquareIndex = -1;
+					// console.log('empty square');
+					selectSquareIndex(-1);
 				}
 			}}
 			use:droppable.addDroppable={{ mouseEnterItem: { destinationIndex: index, destinationStack: stack } }}

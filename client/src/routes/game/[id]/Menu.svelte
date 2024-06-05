@@ -1,15 +1,25 @@
 <script lang="ts">
+	import type { Droppable } from '$lib/store/dragAndDrop.svelte';
 	import MenuHand from './MenuHand.svelte';
 	import MenuMoveHistory from './MenuMoveHistory.svelte';
+
+	type DropItem = {
+		destinationIndex: number;
+		destinationStack: number[];
+	};
 
 	let {
 		selectedStack,
 		ready,
 		placeHandMove,
+		droppable,
+		selectHandPiece,
 	}: {
 		selectedStack: number[];
 		ready: () => void;
-		placeHandMove: (fromPiece: number, fromCoord: number, toCoord: number) => void;
+		placeHandMove: (fromPiece: number, toCoord: number) => void;
+		droppable: Droppable<DropItem>;
+		selectHandPiece: (piece: number) => void;
 	} = $props();
 
 	let menuState = $state('hand');
@@ -24,7 +34,7 @@
 		<!-- <button class="tab" class:active-tab={menuState === "chat"} onclick={() => menuState = "chat"}>Chat</button> -->
 	</div>
 	{#if menuState === 'hand'}
-		<MenuHand {selectedStack} {ready} {placeHandMove} />
+		<MenuHand {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
 	{:else if menuState === 'move history'}
 		<MenuMoveHistory />
 	{/if}

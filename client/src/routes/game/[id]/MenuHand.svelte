@@ -1,31 +1,41 @@
 <script lang="ts">
 	import TooltipWrapper from '$lib/components/TooltipWrapper.svelte';
+	import type { DraggableOptions, Droppable } from '$lib/store/dragAndDrop.svelte';
 	import { getGameStore } from '$lib/store/gameState.svelte';
 	import { DecodePiece, DecodePieceFull, GetPieceColor } from '$lib/utils/utils';
 	import MenuHandPiece from './MenuHandPiece.svelte';
+
+	type DropItem = {
+		destinationIndex: number;
+		destinationStack: number[];
+	};
 
 	let {
 		selectedStack,
 		ready,
 		placeHandMove,
+		droppable,
+		selectHandPiece
 	}: {
 		selectedStack: number[];
 		ready: () => void;
-		placeHandMove: (fromPiece: number, fromCoord: number, toCoord: number) => void;
+		placeHandMove: (fromPiece: number, toCoord: number) => void;
+		droppable: Droppable<DropItem>;
+		selectHandPiece: (piece: number) => void;
 	} = $props();
 
 	const boardStore = getGameStore();
 
-	function getImgSrc(piece: number, i: number){
+	function getImgSrc(piece: number, i: number) {
 		const decodedPiece = DecodePiece(piece).toLowerCase();
 		const color = GetPieceColor(piece);
 		return `/pieces/${color}${i + 1}${decodedPiece}.svg`;
 	}
 
-	function getText(piece: number, i: number){
+	function getText(piece: number, i: number) {
 		const decodedPiece = DecodePieceFull(piece);
 		const color = GetPieceColor(piece);
-		return `Tier ${i + 1}: ${color === 'w' ? 'White' : 'Black'} ${decodedPiece} `
+		return `Tier ${i + 1}: ${color === 'w' ? 'White' : 'Black'} ${decodedPiece} `;
 	}
 </script>
 
@@ -38,7 +48,7 @@
 		<div class="stack-container">
 			{#each handList as amount, index}
 				{#if amount != 0}
-					<MenuHandPiece {index} {color} {amount} />
+					<MenuHandPiece {placeHandMove} {selectHandPiece} {index} {color} {amount} {droppable} />
 				{/if}
 			{/each}
 		</div>
@@ -54,7 +64,14 @@
 		{#each selectedStack as piece, i}
 			<TooltipWrapper text={getText(piece, i)}>
 				{#snippet children(createRef, interactionProps)}
-					<img use:createRef {...interactionProps.getReferenceProps()} class="piece" draggable="false" src={getImgSrc(piece, i)} alt="" />
+					<img
+						use:createRef
+						{...interactionProps.getReferenceProps()}
+						class="piece"
+						draggable="false"
+						src={getImgSrc(piece, i)}
+						alt=""
+					/>
 				{/snippet}
 			</TooltipWrapper>
 		{/each}
@@ -62,18 +79,26 @@
 </div>
 <div class="hand-container" class:reversed-hand-container={boardStore.manualFlip}>
 	{@render hand(
-		boardStore.userColor === 'spectator' ? "White's Hand:" : 'Your Hand:',
+		boardStore.userColor === 'b'
+			? "Your Hand:"
+			: boardStore.userColor === 'spectator'
+				? "White's Hand:"
+				: 'Your Hand:',
 		boardStore.userColor === 'b' ? boardStore.player2HandList : boardStore.player1HandList,
 		boardStore.userColor === 'b' ? boardStore.player2ArmyCount : boardStore.player1ArmyCount,
 		boardStore.userColor === 'b' ? boardStore.player2HandCount : boardStore.player1HandCount,
-		'w'
+		boardStore.userColor === 'b' ? 'b' : 'w'
 	)}
 	{@render hand(
-		boardStore.userColor === 'spectator' ? "Black's Hand:" : "Opponent's Hand:",
+		boardStore.userColor === 'b'
+			? "Opponent's Hand:"
+			: boardStore.userColor === 'spectator'
+				? "Black's Hand:"
+				: "Oponnent's Hand:",
 		boardStore.userColor === 'b' ? boardStore.player1HandList : boardStore.player2HandList,
 		boardStore.userColor === 'b' ? boardStore.player1ArmyCount : boardStore.player2ArmyCount,
 		boardStore.userColor === 'b' ? boardStore.player1HandCount : boardStore.player2HandCount,
-		'b'
+		boardStore.userColor === 'b' ? 'w' : 'b'
 	)}
 </div>
 <div class="buttons">

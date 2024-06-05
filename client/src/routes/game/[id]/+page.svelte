@@ -12,6 +12,7 @@
 	import MoveDialogue from './MoveDialogue.svelte';
 	import UndoDialogue from './UndoDialogue.svelte';
 	import { DecodePieceFull, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
+	import { Droppable } from '$lib/store/dragAndDrop.svelte';
 	let { data } = $props();
 
 	// 0 - move
@@ -23,6 +24,14 @@
 	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
 	const websocketStore = getWebsocketStore();
 	const notificationStore = getNotificationStore();
+
+	type DropItem = {
+		destinationIndex: number;
+		destinationStack: number[];
+	};
+	
+	const droppable = new Droppable<DropItem>();
+	let selectedHandPiece = $state(-1);
 
 	interface MoveType {
 		fromPiece: number;
@@ -161,6 +170,10 @@
 		}
 	}
 
+	function selectHandPiece(piece: number) {
+		selectedHandPiece = piece;
+	}
+
 	onMount(() => {
 		let unsub = websocketStore.addMsgListener(handleGameMsg);
 
@@ -215,10 +228,10 @@
 			{/if}
 		</div>
 		<PlayerInfo isOpposite={true} />
-		<Board {changeSelectedStack} {promptMoveDialogue} {movePiece} />
+		<Board {changeSelectedStack} {promptMoveDialogue} {movePiece} {droppable} />
 		<PlayerInfo isOpposite={false} />
 	</section>
-	<Menu {selectedStack} {ready} {placeHandMove} />
+	<Menu {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
 
 	<!-- TODO modal and dialogues -->
 	{#if completedBool}
