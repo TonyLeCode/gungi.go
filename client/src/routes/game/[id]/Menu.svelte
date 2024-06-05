@@ -14,12 +14,16 @@
 		placeHandMove,
 		droppable,
 		selectHandPiece,
+		resign,
+		undo
 	}: {
 		selectedStack: number[];
 		ready: () => void;
 		placeHandMove: (fromPiece: number, toCoord: number) => void;
 		droppable: Droppable<DropItem>;
 		selectHandPiece: (piece: number) => void;
+		resign: () => void;
+		undo: () => void;
 	} = $props();
 
 	let menuState = $state('hand');
@@ -34,7 +38,7 @@
 		<!-- <button class="tab" class:active-tab={menuState === "chat"} onclick={() => menuState = "chat"}>Chat</button> -->
 	</div>
 	{#if menuState === 'hand'}
-		<MenuHand {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
+		<MenuHand {resign} {undo} {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
 	{:else if menuState === 'move history'}
 		<MenuMoveHistory />
 	{/if}

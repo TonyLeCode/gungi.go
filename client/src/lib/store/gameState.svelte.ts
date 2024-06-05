@@ -5,10 +5,10 @@ import { getContext, setContext } from 'svelte';
 export interface BoardState {
 	completed: boolean;
 	current_state: string;
-	date_finished: { Time: string; Valid: boolean };
-	date_started: string;
-	fen: { String: string; Valid: boolean };
-	result: string;
+	date_finished: Date | null;
+	date_started: Date;
+	fen: string | null;
+	result: string | null;
 	history: string;
 	id: string;
 	moveList: { [key: string]: number[] };

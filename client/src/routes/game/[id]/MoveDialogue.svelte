@@ -1,13 +1,6 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
 
-	interface MoveType {
-		fromPiece: number;
-		fromCoord: number;
-		moveType: number;
-		toCoord: number;
-	}
-
 	let {
 		showModal = $bindable(),
 		text,

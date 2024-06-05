@@ -15,13 +15,17 @@
 		ready,
 		placeHandMove,
 		droppable,
-		selectHandPiece
+		selectHandPiece,
+		resign,
+		undo
 	}: {
 		selectedStack: number[];
 		ready: () => void;
 		placeHandMove: (fromPiece: number, toCoord: number) => void;
 		droppable: Droppable<DropItem>;
 		selectHandPiece: (piece: number) => void;
+		resign: () => void;
+		undo: () => void;
 	} = $props();
 
 	const boardStore = getGameStore();
@@ -102,9 +106,8 @@
 	)}
 </div>
 <div class="buttons">
-	<!-- TODO resign and request undo -->
-	<button class="button-primary">resign</button>
-	<button class="button-primary">request undo</button>
+	<button class="button-primary" onclick={resign}>resign</button>
+	<button class="button-primary" onclick={undo}>request undo</button>
 	{#if !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready}
 		<button class="button-primary" onclick={ready}>ready</button>
 	{/if}

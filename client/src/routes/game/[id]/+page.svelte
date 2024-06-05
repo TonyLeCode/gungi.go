@@ -29,7 +29,7 @@
 		destinationIndex: number;
 		destinationStack: number[];
 	};
-	
+
 	const droppable = new Droppable<DropItem>();
 	let selectedHandPiece = $state(-1);
 
@@ -44,7 +44,7 @@
 	let attackFn = $state<(() => void) | null>(null);
 	let stackFn = $state<(() => void) | null>(null);
 
-	let undoDialogBool = $state(false);
+	let showUndoDialogue = $state(false);
 	let selectedStack = $state<number[]>([]);
 	let completedBool = $state(false);
 	let completedText = $state('');
@@ -118,6 +118,29 @@
 		sendMoveMsg(-1, 0, 0, 4);
 	}
 
+	function undo() {
+		const msg = {
+			type: 'requestGameUndo',
+		};
+		websocketStore.send(msg);
+	}
+
+	function resign() {
+		const msg = {
+			type: 'gameResign',
+		};
+		websocketStore.send(msg);
+	}
+
+	function undoReponse(response: 'accept' | 'reject') {
+		const msg = {
+			type: 'responseGameUndo',
+			payload: response,
+		};
+		websocketStore.send(msg);
+		showUndoDialogue = false;
+	}
+
 	function handleGameMsg(event?: MessageEvent) {
 		try {
 			const data = JSON.parse(event?.data);
@@ -126,7 +149,7 @@
 					boardStore.updateBoard(data.payload);
 					break;
 				case 'undoRequest':
-					undoDialogBool = true;
+					showUndoDialogue = true;
 					break;
 				case 'undoResponse':
 					if (data.payload === 'accept') {
@@ -140,7 +163,7 @@
 						notificationStore.add({
 							id: nanoid(),
 							title: 'Rejected',
-							type: 'warning',
+							type: 'error',
 							msg: 'Your undo request has been rejected',
 						});
 					}
@@ -184,6 +207,37 @@
 					payload: boardStore.id,
 				};
 				websocketStore.send(msg);
+
+				const undoRequests = data.gameData.undo_requests;
+				for (let i = 0; i < undoRequests.length; i++) {
+					if (undoRequests[i].receiver_username === boardStore.username && undoRequests[i].status === 'pending') {
+						showUndoDialogue = true;
+					} else if (undoRequests[i].sender_username === boardStore.username && undoRequests[i].status === 'accept') {
+						const msg = {
+							type: 'completeGameUndo',
+							payload: '',
+						};
+						websocketStore.send(msg);
+						notificationStore.add({
+							id: nanoid(),
+							title: 'Accepted',
+							type: 'success',
+							msg: 'Your undo request has been accepted',
+						});
+					} else if (undoRequests[i].sender_username === boardStore.username && undoRequests[i].status === 'reject') {
+						const msg = {
+							type: 'completeGameUndo',
+							payload: '',
+						};
+						websocketStore.send(msg);
+						notificationStore.add({
+							id: nanoid(),
+							title: 'Rejected',
+							type: 'error',
+							msg: 'Your undo request has been rejected',
+						});
+					}
+				}
 			}
 		});
 
@@ -231,7 +285,7 @@
 		<Board {changeSelectedStack} {promptMoveDialogue} {movePiece} {droppable} />
 		<PlayerInfo isOpposite={false} />
 	</section>
-	<Menu {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
+	<Menu {resign} {undo} {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
 
 	<!-- TODO modal and dialogues -->
 	{#if completedBool}
@@ -240,7 +294,7 @@
 		</Modal>
 	{/if}
 	<MoveDialogue bind:showModal={showMoveDialogue} text={moveDialogueText} {attackFn} {stackFn} />
-	<UndoDialogue />
+	<UndoDialogue bind:showModal={showUndoDialogue} {undoReponse} />
 </main>
 
 <style lang="scss">
