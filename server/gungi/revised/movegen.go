@@ -391,8 +391,10 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 		marshalMoves[coord] = true
 	}
 
+	// attackCoord = non-ranging piece
+	// xrayCoord = ranging piece
 	attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus := r.CheckEnemyMoves(&marshalMoves)
-	// log.Println("check enemy moves", attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus)
+	log.Println("check enemy moves", attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus)
 
 	xrayMap := make(map[int]bool)
 	xrayBetweenMap := make(map[int]bool)
@@ -434,17 +436,19 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 			moves := []int{}
 			for _, move := range r.GetPseudoLegalMoves(currSquare.GetTop(), currSquare.coord, len(stack)) {
 				if checkStatus == "double-checked" {
+					// only the marshal can move in double check
 					continue
 				}
 				if checkStatus == "checked" {
+					// piece can move to block the check
+					// or capture attacking piece
 					if len(xraySquares) > 0 && (xrayBetweenMap[move] || move == xrayCoord) {
-						// log.Println(1)
 						moves = append(moves, move)
 					} else if move == attackCoord {
-						// log.Println(2)
 						moves = append(moves, move)
 					}
 				} else if currSquare.coord == pinnedCoord && xrayBetweenMap[move] {
+					// piece is pinned
 					moves = append(moves, move)
 				} else if currSquare.coord != pinnedCoord && move != r.MarshalCoords[r.TurnColor] {
 					moves = append(moves, move)
@@ -655,6 +659,24 @@ func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquare
 
 				if len(piecesBetween) == 1 && getColor(r.BoardSquares[piecesBetween[0]].GetTop()) == r.TurnColor {
 					pinnedCoord = piecesBetween[0]
+					stack := r.BoardSquares[pinnedCoord].stack
+					if len(stack) > 1 {
+						pieceUnder := stack[len(stack)-2]
+						snared := false
+						if getColor(pieceUnder) != r.TurnColor {
+							for _, move := range r.GetPseudoLegalMoves(pieceUnder, pinnedCoord, len(stack)-1) {
+								if r.MarshalCoords[r.TurnColor] == move {
+									snared = true
+								}
+							}
+						}
+						if pieceUnder%13 == FORTRESS && len(r.BoardSquares[r.MarshalCoords[r.TurnColor]].stack) > 1 {
+							pinnedCoord = -1
+						}
+						if !snared {
+							pinnedCoord = -1
+						}
+					}
 				}
 
 				for _, move := range moves {
