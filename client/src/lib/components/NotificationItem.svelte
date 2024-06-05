@@ -23,15 +23,15 @@
 <div class="notification">
 	<div style="width: {$duration}%" class="bar"></div>
 	{#if notification.type === 'success'}
-		<div class={notification.type}>
+		<div class={`${notification.type} animation`}>
 			<CircleCheck size="30px" strokeWidth="2.5px" />
 		</div>
 	{:else if notification.type === 'error'}
-		<div class={notification.type}>
+		<div class={`${notification.type} animation`}>
 			<CircleSlash size="30px" strokeWidth="2.5px" />
 		</div>
 	{:else if notification.type === 'warning'}
-		<div class={notification.type}>
+		<div class={`${notification.type} animation`}>
 			<CircleAlert size="30px" strokeWidth="2.5px" />
 		</div>
 	{/if}
@@ -103,5 +103,27 @@
 	}
 	.title {
 		font-weight: bold;
+	}
+
+	.animation {
+		animation: pulse 1.8s normal;
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+		}
+		10% {
+			transform: scale(1);
+		}
+		30% {
+			transform: scale(1.4);
+		}
+		50% {
+			transform: scale(1);
+		}
+		100% {
+			transform: scale(1);
+		}
 	}
 </style>

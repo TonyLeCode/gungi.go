@@ -22,10 +22,10 @@ export interface BoardState {
 class BoardStore {
 	completed = $state(false);
 	current_state = $state('');
-	date_finished = $state({ Time: '', Valid: false });
-	date_started = $state('');
-	fen = $state({ String: '', Valid: false });
-	result = $state('');
+	date_finished = $state<Date | null>(null);
+	date_started = $state<Date>();
+	fen = $state<string | null>(null);
+	result = $state<string | null>('');
 	history = $state('');
 	id = $state('');
 	moveList = $state({} as { [key: string]: number[] });
