@@ -81,6 +81,8 @@ func (ss *SessionHandlers) handleAuth(s *melody.Session) {
 }
 
 func (ss *SessionHandlers) handleJoinGame(s *melody.Session) {
+	// log.Println("-----------------------------------------")
+	log.Println("handleJoinGame")
 	var gameID string
 	err := json.Unmarshal(ss.ClientMsg.Payload, &gameID)
 	if err != nil {
@@ -91,11 +93,17 @@ func (ss *SessionHandlers) handleJoinGame(s *melody.Session) {
 		unsub := ss.Listeners.AddListenerGame(s, gameUUID)
 		ss.Sessions.ChangeGame(s, gameUUID)
 		ss.Sessions.ChangeUnsub(s, unsub)
-		log.Println("Joined Game: ", gameUUID)
-		log.Println("Conns: ", ss.Listeners.listeners)
+		log.Println("Joined Game")
+		log.Println("Connections for Game", gameUUID, ": ")
+		// for _, v := range ss.Listeners.listeners["game-"+gameUUID.String()] {
+		// 	log.Println("-user: ", (*ss.Sessions)[v])
+		// }
+		// log.Println("-----------------------------------------")
 	}
 }
 func (ss *SessionHandlers) handleLeaveGame(s *melody.Session) {
+	log.Println("-----------------------------------------")
+	log.Println("handleLeaveGame")
 	var gameID string
 	err := json.Unmarshal(ss.ClientMsg.Payload, &gameID)
 	if err != nil {
@@ -105,9 +113,11 @@ func (ss *SessionHandlers) handleLeaveGame(s *melody.Session) {
 	if gameUUID, err := uuid.Parse(gameID); err == nil {
 		ss.Sessions.ChangeGame(s, uuid.Nil)
 		ss.Listeners.RemoveListenerGame(s, gameUUID)
+		ss.Sessions.Unsub(s)
 		log.Println("Left Game: ", gameUUID)
 		log.Println("Conns: ", ss.Listeners.listeners)
 	}
+	log.Println("-----------------------------------------")
 }
 func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 	ctx := context.Background()
@@ -155,7 +165,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 		return
 	}
 	// board.PrintBoard()
-	log.Println("fen: ", board.BoardToFen())
+	log.Println("Made move, new fen: ", board.BoardToFen())
 
 	game.CurrentState = board.BoardToFen()
 	game.History = board.SerializeHistory()
@@ -449,6 +459,7 @@ func (ss *SessionHandlers) handleJoinPlay(s *melody.Session) {
 }
 func (ss *SessionHandlers) handleLeavePlay(s *melody.Session) {
 	ss.Listeners.RemoveListenerRooms(s)
+	ss.Sessions.Unsub(s)
 	log.Println("Left Play")
 	log.Println("Conns: ", ss.Listeners.listeners)
 }

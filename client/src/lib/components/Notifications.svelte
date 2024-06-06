@@ -1,33 +1,9 @@
 <script lang="ts">
-	import { getNotificationStore, type notificationType } from '$lib/store/notificationStore.svelte';
-	import { onMount } from 'svelte';
+	import { getNotificationStore } from '$lib/store/notificationStore.svelte';
 	import NotificationItem from './NotificationItem.svelte';
-	import { nanoid } from 'nanoid';
 	import { fly } from 'svelte/transition';
 
 	let notificationsStore = getNotificationStore();
-	// $: notificationsStore = notifications?.store ?? writable<notificationType[]>([])
-
-	onMount(() => {
-		notificationsStore.add({
-			id: nanoid(),
-			title: 'Game Accepted',
-			type: 'success',
-			msg: 'Go to <a class="a-primary" href="/play/lol">game<a>',
-		} as notificationType);
-		notificationsStore.add({
-			id: nanoid(),
-			title: 'Undo Request Rejected',
-			type: 'warning',
-			msg: 'Your undo request has been denied',
-		} as notificationType);
-		notificationsStore.add({
-			id: nanoid(),
-			title: 'Something went wrong',
-			type: 'error',
-			msg: 'Sorry',
-		} as notificationType);
-	});
 </script>
 
 <ul>

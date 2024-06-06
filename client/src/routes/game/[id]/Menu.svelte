@@ -32,9 +32,9 @@
 <aside class="side-menu">
 	<div class="tabs">
 		<button class="tab" class:active-tab={menuState === 'hand'} onclick={() => (menuState = 'hand')}>Hand</button>
-		<button class="tab" class:active-tab={menuState === 'move history'} onclick={() => (menuState = 'move history')}
+		<!-- <button class="tab" class:active-tab={menuState === 'move history'} onclick={() => (menuState = 'move history')}
 			>Move History</button
-		>
+		> -->
 		<!-- <button class="tab" class:active-tab={menuState === "chat"} onclick={() => menuState = "chat"}>Chat</button> -->
 	</div>
 	{#if menuState === 'hand'}
@@ -66,7 +66,7 @@
 	.tabs {
 		display: grid;
 		// grid-template-columns: repeat(3, 1fr);
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(1, 1fr);
 		justify-content: center;
 		margin: 1.5rem 0;
 		border-radius: 4px;

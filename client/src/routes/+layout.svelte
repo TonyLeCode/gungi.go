@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
@@ -17,13 +17,8 @@
 	// 6 - tooltip
 	// 10 - notifications
 
-	// export let data: LayoutData;
 	let { data, children } = $props();
 
-	// let { supabase, session } = data;
-	// $: ({ supabase, session } = data);
-	// $: $ws === 'connected' && session && ws?.authenticate(session.access_token);
-	// $: notifStore = topNotification?.store;
 	let notificationStore = setNotificationStore();
 	let topNotificationStore = setTopNotificationStore();
 	let websocketStore = setWebsocketStore();
@@ -44,7 +39,7 @@
 				 * triggering function from completing
 				 */
 				setTimeout(() => {
-					// goto('/', { invalidateAll: true });
+					goto('/', { invalidateAll: true });
 				});
 			}
 			if (newSession?.expires_at !== data.session?.expires_at) {
@@ -56,20 +51,6 @@
 			subscription.unsubscribe;
 		};
 	});
-	// onMount(() => {
-	// 	const {
-	// 		data: { subscription },
-	// 	} = supabase.auth.onAuthStateChange((event, _session) => {
-	// 		if (_session?.expires_at !== session?.expires_at) {
-	// 			invalidate('supabase:auth');
-	// 		}
-	// 	});
-
-	// 	return () => {
-	// 		subscription.unsubscribe();
-	// 		ws?.close();
-	// 	};
-	// });
 </script>
 
 <svelte:head>

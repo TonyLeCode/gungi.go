@@ -41,8 +41,18 @@ func (ss *Sessions) ChangeUnsub(s *melody.Session, unsub func()) {
 	(*ss)[s].Unsub = unsub
 }
 
+func (ss *Sessions) Unsub(s *melody.Session) {
+	if _, ok := (*ss)[s]; !ok {
+		return
+	}
+	if (*ss)[s].Unsub != nil {
+		(*ss)[s].Unsub()
+	}
+	(*ss)[s].Unsub = nil
+}
+
 func (ss *Sessions) ChangeGame(s *melody.Session, gameID uuid.UUID) {
-	log.Println("changing gameid: ", gameID)
+	log.Println("changing gameid to: ", gameID)
 	if _, ok := (*ss)[s]; !ok {
 		log.Println("not okay")
 		return
@@ -76,7 +86,9 @@ func (l *Listeners) addListener(eventKey string, s *melody.Session) func() {
 	if _, ok := l.listeners[eventKey]; !ok {
 		l.listeners[eventKey] = make([]*melody.Session, 0)
 	}
+	log.Println("appending", s, l.listeners[eventKey])
 	l.listeners[eventKey] = append(l.listeners[eventKey], s)
+	log.Println("appended", l.listeners[eventKey])
 	return func() {
 		l.removeListener(eventKey, s)
 	}

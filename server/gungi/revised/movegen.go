@@ -394,7 +394,6 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	// attackCoord = non-ranging piece
 	// xrayCoord = ranging piece
 	attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus := r.CheckEnemyMoves(&marshalMoves)
-	log.Println("check enemy moves", attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus)
 
 	xrayMap := make(map[int]bool)
 	xrayBetweenMap := make(map[int]bool)
