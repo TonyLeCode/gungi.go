@@ -71,7 +71,7 @@
 
 	// Attacking and Stacking from onboard piece
 	function promptMoveDialogue(fromCoord: number, toCoord: number) {
-		showMoveDialogue = true;
+		let shouldShowDialogue = true;
 		const trueFromCoord = boardStore.isViewReversed ? 80 - fromCoord : fromCoord;
 		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
 		const [fromFile, fromRank] = IndexToCoords(trueFromCoord);
@@ -86,7 +86,7 @@
 		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
 			attackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 2);
-				showMoveDialogue = false;
+				shouldShowDialogue = false;
 			};
 		} else {
 			attackFn = null;
@@ -95,10 +95,14 @@
 		if (toSquare.length !== 3) {
 			stackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
-				showMoveDialogue = false;
+				shouldShowDialogue = false;
 			};
 		} else {
 			stackFn = null;
+		}
+
+		if (shouldShowDialogue && (attackFn || stackFn)) {
+			showMoveDialogue = true;
 		}
 	}
 

@@ -185,7 +185,11 @@
 			onmousedown={() => {
 				const stackLength = stack.length;
 				const pieceIsPlayerColor = PieceIsPlayerColor(stack[stackLength - 1], boardStore.userColor);
-				if (stackLength === 3 && pieceIsPlayerColor) return;
+				if (stackLength === 3 && pieceIsPlayerColor) {
+					blockDeselection();
+					selectedSquareIndex = index;
+					return
+				}
 				if (boardStore.userColor === 'spectator') {
 					blockDeselection();
 					selectedSquareIndex = index;
