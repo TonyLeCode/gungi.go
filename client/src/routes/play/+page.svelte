@@ -43,7 +43,7 @@
 					notificationStore.add({
 						id: nanoid(),
 						title: 'Game Accepted',
-						type: 'default',
+						type: 'success',
 						msg: `Go to <a class="a-primary" href="/game/${data.payload}">game<a>`,
 					} as notificationType);
 					break;
