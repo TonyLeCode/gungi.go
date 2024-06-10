@@ -14,6 +14,12 @@
 		return boardStore.turnColor === thisColor;
 	});
 
+	let isReadyDisplay = $derived.by(() => {
+		const isReady = isOpposite === boardStore.isViewReversed ? boardStore.isPlayer1Ready : boardStore.isPlayer2Ready;
+		const isBothReady = boardStore.isPlayer1Ready == boardStore.isPlayer2Ready;
+		return isReady && !isBothReady ? '- Ready' : '';
+	});
+
 	let oppositeClass = isOpposite ? 'opposite' : 'same';
 
 	let text = $derived(isPlayerTurn ? "Current Player's turn" : 'Awaiting Turn');
@@ -29,7 +35,7 @@
 			></div>
 		{/snippet}
 	</TooltipWrapper>
-	<span class:is-user={displayName === boardStore.username}>{displayName}</span>
+	<span class:is-user={displayName === boardStore.username}>{displayName} {isReadyDisplay}</span>
 	<!-- <div class="count">{`Board: ${boardStore.player1ArmyCount}  Hand: ${boardStore.player1HandCount}`}</div> -->
 </div>
 
