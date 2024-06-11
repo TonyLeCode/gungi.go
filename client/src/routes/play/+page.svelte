@@ -63,10 +63,9 @@
 	}
 
 	onMount(() => {
-		let unsub = websocketStore.addMsgListener(handleRoomListMsg);
-
 		$effect(() => {
 			if (websocketStore.state === 'connected') {
+				websocketStore.addMsgListener(handleRoomListMsg);
 				const msg = {
 					type: 'joinPlay',
 				};
@@ -75,7 +74,7 @@
 			}
 		});
 		return () => {
-			unsub?.();
+			websocketStore.removeMsgListener(handleRoomListMsg);
 			const msg = {
 				type: 'leavePlay',
 			};

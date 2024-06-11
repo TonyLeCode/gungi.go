@@ -1,46 +1,37 @@
 <script lang="ts">
 	import { getTopNotificationStore } from '$lib/store/notificationStore.svelte';
 	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
-	import { CircleAlert } from 'lucide-svelte';
-	import NotificationItem from './NotificationItem.svelte';
-	import { onDestroy } from 'svelte';
+	import { CircleAlert, LoaderCircle } from 'lucide-svelte';
 
 	let topNotificationStore = getTopNotificationStore();
 	let websocketStore = getWebsocketStore();
 
-	let timer: number | null = $state(null);
 	let isExpanded = $state(true);
 
 	$effect(() => {
 		if (websocketStore.state === 'closed') {
 			topNotificationStore.SetNotification('You are disconnected! Please refresh or try again later.');
-			$effect.root(() => {
-				if (timer) {
-					window.clearTimeout(timer);
-					timer = null;
-				}
-			});
-			timer = window.setTimeout(() => {
-				isExpanded = false;
-				timer = null;
-			}, 5000);
+		} else if (websocketStore.state === 'reconnecting') {
+			topNotificationStore.SetNotification('Attempting to reconnect...');
+		} else {
+			topNotificationStore.SetNotification('');
 		}
-	});
-
-	onDestroy(() => {
-		if (timer) window.clearTimeout(timer);
 	});
 </script>
 
 {#if topNotificationStore.notification !== ''}
-	<div class="fly-up-fade" class:contract={!isExpanded}>
-		<CircleAlert style="flex-shrink: 0" size="30px" />
-		<span class="text">{topNotificationStore.notification}</span>
-	</div>
+	<button class="notification fly-up-fade" class:contract={!isExpanded} onclick={() => (isExpanded = !isExpanded)}>
+		{#if websocketStore.state === 'closed'}
+			<CircleAlert style="flex-shrink: 0" size="30px" />
+		{:else if websocketStore.state === 'reconnecting'}
+			<LoaderCircle strokeWidth={2.5} class="animate-spin" style="flex-shrink: 0" size="30px" />
+		{/if}
+		<span class="fly-up-fade text">{topNotificationStore.notification}</span>
+	</button>
 {/if}
 
 <style lang="scss">
-	div {
+	.notification {
 		position: fixed;
 		top: 1rem;
 		text-align: center;
@@ -52,6 +43,7 @@
 		background-color: rgb(var(--primary));
 		color: rgb(var(--bg));
 		padding: 1rem;
+		padding-right: 3rem;
 		margin: 0 auto;
 		max-width: 60rem;
 		border-radius: 4px;
@@ -69,6 +61,11 @@
 		max-height: 5rem;
 	}
 
+	:global(.minimize){
+		position: absolute;
+		right: 1rem;
+	}
+
 	.contract {
 		max-width: 3rem;
 		margin-top: 0.25rem;
@@ -76,14 +73,14 @@
 		.text {
 			display: none;
 		}
-		&:hover {
-			margin-top: 0;
-			max-width: 60rem;
-			padding: 1rem;
-			.text {
-				display: block;
-			}
-		}
+		// &:hover {
+		// 	margin-top: 0;
+		// 	max-width: 60rem;
+		// 	padding: 1rem;
+		// 	.text {
+		// 		display: block;
+		// 	}
+		// }
 	}
 
 	.text {
@@ -92,6 +89,16 @@
 		// text-wrap: nowrap;
 		@media (min-width: 767px) {
 			text-wrap: nowrap;
+		}
+	}
+
+	:global(svg.animate-spin) {
+		animation: spin 1.5s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
 		}
 	}
 </style>

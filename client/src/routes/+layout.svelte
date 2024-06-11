@@ -24,7 +24,11 @@
 	let websocketStore = setWebsocketStore();
 
 	$effect(() => {
+		console.log(data.session);
+		console.log(websocketStore.state);
+		console.log(websocketStore.isAuthenticated);
 		if (websocketStore.state === 'connected' && data.session && websocketStore.isAuthenticated === false) {
+			console.log('authenticating');
 			websocketStore.authenticate(data.session.access_token);
 		}
 	});

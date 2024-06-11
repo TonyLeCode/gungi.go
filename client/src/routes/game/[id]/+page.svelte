@@ -206,10 +206,9 @@
 	}
 
 	onMount(() => {
-		let unsub = websocketStore.addMsgListener(handleGameMsg);
-
 		$effect(() => {
 			if (websocketStore.state === 'connected') {
+				websocketStore.addMsgListener(handleGameMsg);
 				const msg = {
 					type: 'joinGame',
 					payload: boardStore.id,
@@ -250,7 +249,7 @@
 		});
 
 		return () => {
-			unsub?.();
+			websocketStore.removeMsgListener(handleGameMsg);
 			const msg = {
 				type: 'leaveGame',
 				payload: boardStore.id,
