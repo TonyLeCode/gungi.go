@@ -395,13 +395,13 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	// xrayCoord = ranging piece
 	attackCoord, xraySquares, xrayCoord, pinnedCoord, checkStatus := r.CheckEnemyMoves(&marshalMoves)
 
-	xrayMap := make(map[int]bool)
 	xrayBetweenMap := make(map[int]bool)
 	if len(xraySquares) > 0 {
-		for _, move := range xraySquares {
-			xrayMap[move.Coordinate] = true
-			if move.InBetween {
-				xrayBetweenMap[move.Coordinate] = true
+		for _, square := range xraySquares {
+			for _, move := range square {
+				if move.InBetween {
+					xrayBetweenMap[move.Coordinate] = true
+				}
 			}
 		}
 	}
@@ -459,8 +459,8 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 	}
 
 	filteredMoves := make(map[int][]int)
-	//TODO fix filtered moves when in check
 
+	// checks placement from hand
 	if checkStatus == "checked" {
 		// filteredMoves[-1] means piece placement from hand
 		if attackCoord != -1 {
@@ -468,14 +468,17 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 				filteredMoves[-1] = append(filteredMoves[-1], attackCoord)
 			}
 		} else {
+			// wList is the list of pieces that can be placed on the board by hand when in check
 			wList := []int{}
 			rCheck := false
-			for _, move := range xraySquares {
-				if move.InBetween {
-					wList = append(wList, move.Coordinate)
-				}
-				if move.Attacked && move.Coordinate == r.MarshalCoords[r.TurnColor] {
-					rCheck = true
+			for _, square := range xraySquares {
+				for _, move := range square {
+					if move.InBetween {
+						wList = append(wList, move.Coordinate)
+					}
+					if move.Attacked && move.Coordinate == r.MarshalCoords[r.TurnColor] {
+						rCheck = true
+					}
 				}
 			}
 			if rCheck {
@@ -487,11 +490,16 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 		}
 	}
 
+	// append rest of moves
 	for _, moves := range moveList {
 		if checkStatus == "checked" {
 			for _, move := range moves.MoveList {
 				if move == attackCoord {
 					filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], attackCoord)
+				} else if move == xrayCoord {
+					filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], xrayCoord)
+				} else if xrayBetweenMap[move] {
+					filteredMoves[moves.Coord] = append(filteredMoves[moves.Coord], move)
 				}
 			}
 		} else {
@@ -507,6 +515,7 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 		}
 	}
 
+	// check for stalemate/checkmate
 	isEmpty := true
 	if r.TurnColor == 0 {
 		for i := 0; i < 13; i++ {
@@ -543,7 +552,6 @@ type xraySquares struct {
 }
 
 func (r *Revised) CheckEnemyRanging(piece int, coord int) ([]xraySquares, bool, bool) {
-	// enemyColor := utils.OppositeColor(r.TurnColor)
 	check := false
 	inPath := false
 	squares := []xraySquares{}
@@ -601,21 +609,27 @@ func (r *Revised) CheckEnemyRanging(piece int, coord int) ([]xraySquares, bool, 
 			check = true
 		}
 		if tempInPath {
-			squares = tempSquares
+			// squares = tempSquares
 			inPath = true
 		}
+		if !tempInPath {
+			for i := range tempSquares {
+				tempSquares[i].InBetween = false
+			}
+		}
+		squares = append(squares, tempSquares...)
 	}
 	return squares, check, inPath
 }
 
-func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquares, int, int, string) {
+func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, map[int][]xraySquares, int, int, string) {
 	// log.Println("marshal moves: ", marshalMoves)
 	// log.Println("enemy moves: ")
 	enemyColor := utils.OppositeColor(r.TurnColor)
 	currSquare := r.ListRef.Head[enemyColor]
 	var pinnedCoord int = -1
 	var xrayCoord int = -1
-	var xraySquares []xraySquares
+	var xraySquares map[int][]xraySquares = make(map[int][]xraySquares)
 	var checkStatus string
 	var attackCoord int = -1
 
@@ -635,6 +649,7 @@ func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquare
 
 		if tier == 3 && piece%13 >= 7 && piece%13 <= 10 {
 			moves, check, inPath := r.CheckEnemyRanging(piece, currSquare.coord)
+			xraySquares[currSquare.coord] = moves
 			if check {
 				if checkStatus == "checked" {
 					checkStatus = "double-checked"
@@ -652,7 +667,7 @@ func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquare
 				}
 
 				if len(piecesBetween) <= 1 {
-					xraySquares = moves
+					// xraySquares = moves
 					xrayCoord = currSquare.coord
 				}
 
@@ -677,13 +692,14 @@ func (r *Revised) CheckEnemyMoves(marshalMoves *map[int]bool) (int, []xraySquare
 						}
 					}
 				}
+			}
 
-				for _, move := range moves {
-					if (*marshalMoves)[move.Coordinate] && move.Attacked {
-						delete(*marshalMoves, move.Coordinate)
-					}
+			for _, move := range moves {
+				if (*marshalMoves)[move.Coordinate] && move.Attacked {
+					delete(*marshalMoves, move.Coordinate)
 				}
 			}
+
 		} else {
 			moves := r.GetPseudoLegalMoves(piece, currSquare.coord, len(currSquare.stack))
 			// log.Println(moves)
