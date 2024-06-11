@@ -71,7 +71,6 @@
 
 	// Attacking and Stacking from onboard piece
 	function promptMoveDialogue(fromCoord: number, toCoord: number) {
-		let shouldShowDialogue = true;
 		const trueFromCoord = boardStore.isViewReversed ? 80 - fromCoord : fromCoord;
 		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
 		const [fromFile, fromRank] = IndexToCoords(trueFromCoord);
@@ -86,7 +85,7 @@
 		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
 			attackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 2);
-				shouldShowDialogue = false;
+				showMoveDialogue = false;
 			};
 		} else {
 			attackFn = null;
@@ -95,14 +94,17 @@
 		if (toSquare.length !== 3) {
 			stackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
-				shouldShowDialogue = false;
+				showMoveDialogue = false;
 			};
 		} else {
 			stackFn = null;
 		}
 
-		if (shouldShowDialogue && (attackFn || stackFn)) {
+		if (attackFn || stackFn) {
 			showMoveDialogue = true;
+		} else {
+			attackFn = null;
+			stackFn = null;
 		}
 	}
 
@@ -294,7 +296,7 @@
 	<!-- TODO modal and dialogues -->
 	{#if completedBool}
 		<Modal bind:showModal={completedBool}>
-			<h2 class="completed-text">{completedText}</h2>
+			<h2 class="completed-text completed-dialogue"><Crown />{completedText}</h2>
 		</Modal>
 	{/if}
 	<MoveDialogue bind:showModal={showMoveDialogue} text={moveDialogueText} {attackFn} {stackFn} />
@@ -362,6 +364,23 @@
 		margin-bottom: 0.25rem;
 		@media (min-width: 767px) {
 			margin: 0.25rem 0;
+		}
+	}
+
+	.completed-dialogue {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		text-align: center;
+		:global(svg) {
+			width: 20px;
+			height: 20px;
+		}
+		@media (min-width: 767px) {
+			:global(svg) {
+				width: 30px;
+				height: 30px;
+			}
 		}
 	}
 </style>
