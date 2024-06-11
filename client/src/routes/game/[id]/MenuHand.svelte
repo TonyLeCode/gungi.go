@@ -153,6 +153,10 @@
 
 	.label {
 		display: flex;
+		margin-bottom: 0.25rem;
+		@media (min-width: 1200px) {
+			margin-bottom: 0.5rem;
+		}
 	}
 
 	.count {

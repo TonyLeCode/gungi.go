@@ -2,12 +2,16 @@
 	import { CircleX } from 'lucide-svelte';
 
 	// export let showModal: boolean;
-	let { showModal = $bindable(), children }: { showModal: boolean, children: () => any } = $props();
+	let {
+		showModal = $bindable(),
+		class: classname,
+		children,
+	}: { showModal: boolean; class?: string; children: () => any } = $props();
 
 	let dialog: HTMLDialogElement;
 	$effect(() => {
 		dialog && showModal ? dialog.showModal() : dialog?.close();
-	})
+	});
 </script>
 
 <svelte:window
@@ -24,14 +28,14 @@
 		showModal = false;
 	}}
 >
-	<div>
+	<div class={classname}>
 		<button
 			class="close"
 			onclick={() => {
 				dialog.close();
 			}}
 		>
-			<CircleX size="35px" />
+			<CircleX />
 		</button>
 		{@render children()}
 	</div>
@@ -39,8 +43,11 @@
 
 <style lang="scss">
 	div {
-		padding: 4rem;
+		padding: 3rem;
 		background-color: rgb(var(--bg-2));
+		@media (min-width: 767px) {
+			padding: 4rem;
+		}
 	}
 	.close {
 		position: absolute;
@@ -48,6 +55,10 @@
 		right: 0.75rem;
 		border-radius: 50%;
 		color: rgb(var(--primary));
+		:global(svg) {
+			width: 30px;
+			height: 30px;
+		}
 		&:focus {
 			outline: 2px solid rgba(var(--primary), 0.5);
 			outline-offset: 1px;
@@ -55,10 +66,16 @@
 		&:hover {
 			color: rgb(var(--primary-3));
 		}
+		@media (min-width: 767px) {
+			:global(svg) {
+				width: 35px;
+				height: 35px;
+			}
+		}
 	}
 	dialog {
 		padding: 0;
-		border-radius: 4px;
+		border-radius: 2px;
 		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.07);
 		color: inherit;
 		&[open] {
