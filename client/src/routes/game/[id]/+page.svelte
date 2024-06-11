@@ -80,6 +80,8 @@
 		const fromPiece = fromSquare[fromSquare.length - 1];
 		const toPiece = toSquare[toSquare.length - 1];
 
+		if (DecodePieceFull(fromPiece) === 'Fortress' && toSquare.length > 1) return;
+
 		moveDialogueText = `${DecodePieceFull(fromPiece)} ${fromFile.toUpperCase()}${fromRank} to ${DecodePieceFull(toPiece)} ${toFile.toUpperCase()}${toRank}`;
 
 		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
@@ -91,7 +93,7 @@
 			attackFn = null;
 		}
 
-		if (toSquare.length !== 3) {
+		if (toSquare.length !== 3 && DecodePieceFull(fromPiece) !== 'Fortress') {
 			stackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
 				showMoveDialogue = false;

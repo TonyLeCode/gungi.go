@@ -4,7 +4,14 @@
 	import type { DraggableOptions } from '$lib/store/dragAndDrop.svelte';
 	import { getGameStore } from '$lib/store/gameState.svelte';
 	import { getSquareCoords } from '$lib/utils/historyParser';
-	import { DecodePiece, GetImage, GetPieceColor, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
+	import {
+		DecodePiece,
+		DecodePieceFull,
+		GetImage,
+		GetPieceColor,
+		PieceIsPlayerColor,
+		ReverseIndices,
+	} from '$lib/utils/utils';
 
 	type DropItem = {
 		destinationIndex: number;
@@ -32,6 +39,16 @@
 		if (!boardStore.isUserTurn) return [];
 		if (selectedSquareIndex === -1) return [];
 		if (boardStore.moveListUI[selectedSquareIndex] === undefined) return [];
+		const square = boardStore.boardUI[selectedSquareIndex];
+		if (DecodePieceFull(square[square.length - 1]) === 'Fortress') {
+			return boardStore.moveListUI[selectedSquareIndex].filter((moveIndex) => {
+				const targetSquare = boardStore.boardUI[moveIndex];
+				return (
+					targetSquare.length < 2 &&
+					GetPieceColor(targetSquare[targetSquare.length - 1]) !== GetPieceColor(square[square.length - 1])
+				);
+			});
+		}
 		return boardStore.moveListUI[selectedSquareIndex];
 	});
 	let lastMoveHighlightIndex = $derived.by(() => {
@@ -188,7 +205,7 @@
 				if (stackLength === 3 && pieceIsPlayerColor) {
 					blockDeselection();
 					selectedSquareIndex = index;
-					return
+					return;
 				}
 				if (boardStore.userColor === 'spectator') {
 					blockDeselection();
