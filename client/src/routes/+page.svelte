@@ -33,7 +33,13 @@
 		<h2>Gungi</h2>
 		<p>Gungi is a fictional strategy game in Hunter x Hunter, made by Yoshihiro Togashi. It is similar to Chess or Shogi except players can create their own formations at the start of the game, and pieces may be stacked onto each other.</p>
 		<p>Since the game is unofficial, there are various rulesets, currently we only have the revised community ruleset.</p>
-		<p>I've created this site to provide a platform for players to play correspondence games against each other. I hope you enjoy your stay.</p>
+		<p>I've created this site to provide a platform for players to play correspondence games against each other.</p>
+	</section>
+	<section class="description">
+		<h2>Features</h2>
+		<p>This server will save your games in a database and allow you to view replays</p>
+		<p>Currently, games are untimed and unranked, but we plan to add these features in the future.</p>
+		<p>We also plan to add the Universal Music ruleset, which some of you may be more familiar with.</p>
 	</section>
 </main>
 
