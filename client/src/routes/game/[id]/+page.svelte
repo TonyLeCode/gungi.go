@@ -9,8 +9,6 @@
 	import { getNotificationStore } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
 	import Modal from '$lib/components/Modal.svelte';
-	import MoveDialogue from './MoveDialogue.svelte';
-	import UndoDialogue from './UndoDialogue.svelte';
 	import { DecodePieceFull, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
 	import { Droppable } from '$lib/store/dragAndDrop.svelte';
 	let { data } = $props();
@@ -39,15 +37,15 @@
 		moveType: number;
 		toCoord: number;
 	}
-	let showMoveDialogue = $state(false);
+	let showMoveDialogue: Modal
 	let moveDialogueText = $state('');
 	let attackFn = $state<(() => void) | null>(null);
 	let stackFn = $state<(() => void) | null>(null);
 
-	let showUndoDialogue = $state(false);
+	let showUndoDialogue: Modal
 	let selectedStack = $state<number[]>([]);
-	let completedBool = $state(false);
-	let completedText = $state('');
+	let completedDialog: Modal
+	let completedText = $state(' '); // can't be empty string because of svelte bug
 
 	function changeSelectedStack(stack: number[]) {
 		const x = getWebsocketStore();
@@ -87,7 +85,8 @@
 		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
 			attackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 2);
-				showMoveDialogue = false;
+				// showMoveDialogue = false;
+				showMoveDialogue?.close()
 			};
 		} else {
 			attackFn = null;
@@ -96,14 +95,16 @@
 		if (toSquare.length !== 3 && DecodePieceFull(fromPiece) !== 'Fortress') {
 			stackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
-				showMoveDialogue = false;
+				// showMoveDialogue = false;
+				showMoveDialogue?.close()
 			};
 		} else {
 			stackFn = null;
 		}
 
 		if (attackFn || stackFn) {
-			showMoveDialogue = true;
+			// showMoveDialogue = true;
+			showMoveDialogue?.open();
 		} else {
 			attackFn = null;
 			stackFn = null;
@@ -146,7 +147,8 @@
 			payload: response,
 		};
 		websocketStore.send(msg);
-		showUndoDialogue = false;
+		// showUndoDialogue = false;
+		showUndoDialogue?.close();
 	}
 
 	function handleGameMsg(event?: MessageEvent) {
@@ -157,7 +159,8 @@
 					boardStore.updateBoard(data.payload);
 					break;
 				case 'undoRequest':
-					showUndoDialogue = true;
+					// showUndoDialogue = true;
+					showUndoDialogue?.open();
 					break;
 				case 'undoResponse':
 					if (data.payload === 'accept') {
@@ -183,15 +186,18 @@
 					break;
 				case 'gameEnd':
 					completedText = data.payload;
-					completedBool = true;
+					// completedBool = true;
+					completedDialog?.open();
 					break;
 				case 'gameResign':
 					if (data.payload === 'w/r') {
 						completedText = 'Black Resigns';
-						completedBool = true;
+						// completedBool = true;
+						completedDialog?.open();
 					} else if (data.payload === 'b/r') {
 						completedText = 'White Resigns';
-						completedBool = true;
+						// completedBool = true;
+						completedDialog?.open();
 					}
 					break;
 			}
@@ -218,7 +224,8 @@
 				const undoRequests = data.gameData.undo_requests;
 				for (let i = 0; i < undoRequests.length; i++) {
 					if (undoRequests[i].receiver_username === boardStore.username && undoRequests[i].status === 'pending') {
-						showUndoDialogue = true;
+						// showUndoDialogue = true;
+						showUndoDialogue?.open();
 					} else if (undoRequests[i].sender_username === boardStore.username && undoRequests[i].status === 'accept') {
 						const msg = {
 							type: 'completeGameUndo',
@@ -294,14 +301,24 @@
 	</section>
 	<Menu {resign} {undo} {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
 
-	<!-- TODO modal and dialogues -->
-	{#if completedBool}
-		<Modal bind:showModal={completedBool}>
-			<h2 class="completed-text completed-dialogue"><Crown />{completedText}</h2>
-		</Modal>
-	{/if}
-	<MoveDialogue bind:showModal={showMoveDialogue} text={moveDialogueText} {attackFn} {stackFn} />
-	<UndoDialogue bind:showModal={showUndoDialogue} {undoReponse} />
+
+	<Modal bind:this={completedDialog}>
+		<h2 class="completed-text completed-dialogue"><Crown />{completedText}</h2>
+	</Modal>
+	<Modal bind:this={showMoveDialogue}>
+		<p class="dialog-p">{moveDialogueText}</p>
+		<div class="button-container">
+			<button class="button-primary" onclick={attackFn} disabled={attackFn === null}>Attack</button>
+			<button class="button-primary" onclick={stackFn} disabled={stackFn === null}>Stack</button>
+		</div>
+	</Modal>
+	<Modal bind:this={showUndoDialogue}>
+		<p class="dialog-p">Your opponent has requested an undo</p>
+		<div class="button-container">
+			<button onclick={() => undoReponse('accept')} class="button-primary">Accept Undo</button>
+			<button onclick={() => undoReponse('reject')} class="button-primary">Reject Undo</button>
+		</div>
+	</Modal>
 </main>
 
 <style lang="scss">
@@ -383,5 +400,16 @@
 				height: 30px;
 			}
 		}
+	}
+
+	.dialog-p {
+		margin-bottom: 1rem;
+		text-align: center;
+	}
+
+	.button-container {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
 	}
 </style>

@@ -2,37 +2,33 @@
 	import { CircleX } from 'lucide-svelte';
 
 	// export let showModal: boolean;
-	let {
-		showModal = $bindable(),
-		class: classname,
-		children,
-	}: { showModal: boolean; class?: string; children: () => any } = $props();
+	let { class: classname, children }: { class?: string; children: () => any } = $props();
 
 	let dialog: HTMLDialogElement;
-	$effect(() => {
-		dialog && showModal ? dialog.showModal() : dialog?.close();
-	});
+
+	export function open() {
+		dialog.showModal();
+	}
+
+	export function close() {
+		dialog.close();
+	}
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === 'Escape') {
-			showModal = false;
+			close();
 		}
 	}}
 />
 
-<dialog
-	bind:this={dialog}
-	onclose={() => {
-		showModal = false;
-	}}
->
+<dialog bind:this={dialog}>
 	<div class={classname}>
 		<button
 			class="close"
 			onclick={() => {
-				dialog.close();
+				close();
 			}}
 		>
 			<CircleX />
