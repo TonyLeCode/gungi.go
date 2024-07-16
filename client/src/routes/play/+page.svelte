@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import CreateGameDialogue from './CreateGameDialogue.svelte';
-	import RoomDialogue from './RoomDialogue.svelte';
+	import CreateGameDialog from './CreateGameDialog.svelte';
+	import RoomDialog from './RoomDialog.svelte';
 	import RoomList from './RoomList.svelte';
 	import { getNotificationStore, type notificationType } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
 	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 
 	// TODO make page responsive
 	let { data } = $props();
@@ -28,8 +29,10 @@
 	let showCorrespondence = $state(true);
 	let correspondenceRoomList = $derived(sortedList.filter((room) => room.type === 'correspondence'));
 
-	let showCreateGameDialogue = $state(false);
-	let showRoomDialogue = $state(false);
+	// let showCreateGameDialogue = $state(false);
+	// let showRoomDialogue = $state(false);
+	let createGameDialog: Modal;
+	let roomDialog: Modal;
 	let roomDialogueInfo = $state<Info>({ id: '', host: '', description: '', type: '', color: '', rules: '' });
 
 	function handleRoomListMsg(event?: MessageEvent) {
@@ -103,7 +106,7 @@
 				</label> -->
 				<button
 					onclick={() => {
-						showCreateGameDialogue = true;
+						createGameDialog.open();
 					}}
 					disabled={username == null}
 					class="button-primary">Create Game</button
@@ -122,16 +125,16 @@
 		{/if} -->
 		{#if showCorrespondence}
 			<RoomList
-				bind:showRoomDialogue
 				bind:roomDialogueInfo
 				roomList={correspondenceRoomList}
 				heading="Correspondence Games"
 				{username}
 				{accept}
+				{roomDialog}
 			/>
 		{/if}
-		<CreateGameDialogue bind:showModal={showCreateGameDialogue} />
-		<RoomDialogue bind:showModal={showRoomDialogue} info={roomDialogueInfo} {accept} />
+		<CreateGameDialog bind:createGameDialog />
+		<RoomDialog bind:roomDialog info={roomDialogueInfo} {accept} />
 	{:else if websocketStore.state === 'error'}
 		<p class="status-msg fly-up-fade">Something went wrong, please refresh or try again later</p>
 	{:else if websocketStore.state === 'closed'}

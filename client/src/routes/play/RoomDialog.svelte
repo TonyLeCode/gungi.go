@@ -9,12 +9,13 @@
 		rules: string;
 	};
 
-	export let showModal: boolean;
-	export let info: Info;
-	export let accept: (roomid: string) => void;
+	// export let showModal: Modal;
+	// export let info: Info;
+	// export let accept: (roomid: string) => void;
+	let { roomDialog = $bindable(), info, accept }: { roomDialog: Modal; info: Info; accept: (roomid: string) => void } = $props();
 </script>
 
-<Modal bind:showModal>
+<Modal bind:this={roomDialog}>
 	<div class="container">
 		<h3>Challenge</h3>
 		<div class="grid">
@@ -38,9 +39,9 @@
 			</div>
 		</div>
 		<button
-			on:click={() => {
+			onclick={() => {
 				accept(info.id);
-				showModal = false;
+				roomDialog.close();
 			}}
 			class="button-primary">Accept</button
 		>

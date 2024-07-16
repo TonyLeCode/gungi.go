@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Modal from '$lib/components/Modal.svelte';
 	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 
 	type Info = {
@@ -15,14 +16,14 @@
 		username,
 		roomList,
 		heading,
-		showRoomDialogue = $bindable(),
+		roomDialog,
 		roomDialogueInfo = $bindable(),
 		accept,
 	}: {
 		username: string;
 		roomList: Info[];
 		heading: string;
-		showRoomDialogue: boolean;
+		roomDialog: Modal;
 		roomDialogueInfo: Info;
 		accept: (roomid: string) => void;
 	} = $props();
@@ -47,7 +48,7 @@
 					disabled={room.host === username || spectator ? true : false}
 					onclick={() => {
 						roomDialogueInfo = room;
-						showRoomDialogue = true;
+						roomDialog.open();
 					}}
 					class="room"
 				>

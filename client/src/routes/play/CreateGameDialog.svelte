@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
 	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
-	
-	let {showModal = $bindable()}: {showModal: boolean} = $props();
+
+	let { createGameDialog = $bindable() }: { createGameDialog: Modal } = $props();
 
 	let websocketStore = getWebsocketStore();
 
@@ -23,11 +23,11 @@
 			},
 		};
 		websocketStore.send(payload);
-		showModal = false;
+		createGameDialog.close();
 	}
 </script>
 
-<Modal bind:showModal>
+<Modal bind:this={createGameDialog}>
 	<form class="options" onsubmit={handleCreateGame}>
 		<h3>Create Game</h3>
 		<fieldset class="type">
@@ -77,7 +77,7 @@
 		<fieldset>
 			<label class="description">
 				Description:
-				<textarea bind:value={description} name="description" cols="30" rows="2" maxlength="50" ></textarea>
+				<textarea bind:value={description} name="description" cols="30" rows="2" maxlength="50"></textarea>
 			</label>
 		</fieldset>
 		<button class="button-primary">Create Challenge</button>
