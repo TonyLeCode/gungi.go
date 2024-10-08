@@ -45,9 +45,9 @@
 				piece: number;
 		  }
 		| {
-				// an enemy stack has been selected
-				// to show stack without moving
-				state: 'selectedEnemyStack';
+				// show stack details when other selections
+				// do not fit
+				state: 'stackDetails';
 				index: number;
 		  };
 
@@ -68,7 +68,7 @@
 			return boardStore.boardUI[selection.index];
 		} else if (selection.state === 'awaitingBoardPiece') {
 			return boardStore.boardUI[selection.prevIndex];
-		} else if (selection.state === 'selectedEnemyStack') {
+		} else if (selection.state === 'stackDetails') {
 			return boardStore.boardUI[selection.index];
 		}
 		return [];
@@ -291,6 +291,7 @@
 
 	function moveHandler(fromCoord: number, toCoord: number) {
 		const toSquare = boardStore.boardUI[toCoord];
+		if (!boardStore.moveListUI[fromCoord].includes(toCoord)) return;
 		if (toSquare.length === 0) {
 			const fromSquare = boardStore.boardUI[fromCoord];
 			const fromPiece = fromSquare[fromSquare.length - 1];
@@ -446,9 +447,6 @@
 
 <main>
 	<section>
-		<p>{replayStore.boardStore.current_state}</p>
-		<p>{boardStore.current_state}</p>
-		<p>{serializeFen(boardStore.boardState, boardStore.player1HandList, boardStore.player2HandList, boardStore.turnColor, boardStore.isPlayer1Ready, boardStore.isPlayer2Ready)}</p>
 		<div class="game-state">
 			{#if replayStore.isActive}
 				<div>Viewing Game History</div>
@@ -504,7 +502,13 @@
 					} else if (isEnemyStack && targetSquare.length > 0) {
 						blockDeselect = true;
 						selection = {
-							state: 'selectedEnemyStack',
+							state: 'stackDetails',
+							index: index,
+						};
+					} else if (!isEnemyStack && targetSquare.length > 0 && !boardStore.isUserTurn) {
+						blockDeselect = true;
+						selection = {
+							state: 'stackDetails',
 							index: index,
 						};
 					}
