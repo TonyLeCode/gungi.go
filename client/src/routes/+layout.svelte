@@ -33,22 +33,13 @@
 		const {
 			data: { subscription },
 		} = data.supabase.auth.onAuthStateChange((_, newSession) => {
-			if (!newSession) {
-				/**
-				 * Queue this as a task so the navigation won't prevent the
-				 * triggering function from completing
-				 */
-				setTimeout(() => {
-					goto('/', { invalidateAll: true });
-				});
-			}
 			if (newSession?.expires_at !== data.session?.expires_at) {
 				invalidate('supabase:auth');
 			}
 		});
 
 		return () => {
-			subscription.unsubscribe;
+			subscription.unsubscribe();
 		};
 	});
 </script>
