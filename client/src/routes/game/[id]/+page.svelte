@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Board from './Board.svelte';
+	import Board from '../../../lib/components/Board.svelte';
 	import { setGameStore } from '$lib/store/gameState.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
 	import Menu from './Menu.svelte';
@@ -9,8 +9,12 @@
 	import { getNotificationStore } from '$lib/store/notificationStore.svelte';
 	import { nanoid } from 'nanoid';
 	import Modal from '$lib/components/Modal.svelte';
-	import { DecodePieceFull, GetPieceColor, IndexToCoords } from '$lib/utils/utils';
-	import { Droppable } from '$lib/store/dragAndDrop.svelte';
+	import { DecodePieceFull, GetPieceColor, IndexToCoords, PieceIsPlayerColor, ReverseIndices } from '$lib/utils/utils';
+	import { Droppable, draggable, type DraggableOptions } from '$lib/store/dragAndDrop.svelte';
+	import { getSquareCoords } from '$lib/utils/historyParser';
+	import { browser } from '$app/environment';
+	import { setReplayStore } from '$lib/store/replayStore.svelte';
+	import { serializeFen } from '$lib/utils/fenParser';
 	let { data } = $props();
 
 	// 0 - move
@@ -19,9 +23,38 @@
 	// 3 - place
 	// 4 - ready
 
+	type Selection =
+		| {
+				state: 'none';
+		  }
+		| {
+				// a board piece has been selected
+				state: 'selectedBoardPiece';
+				index: number;
+		  }
+		| {
+				// a board piece had previously been selected
+				// now seeing if user drags or releases
+				state: 'awaitingBoardPiece';
+				currIndex: number;
+				prevIndex: number;
+		  }
+		| {
+				// a hand piece has been selected for dropping
+				state: 'selectedHandPiece';
+				piece: number;
+		  }
+		| {
+				// an enemy stack has been selected
+				// to show stack without moving
+				state: 'selectedEnemyStack';
+				index: number;
+		  };
+
 	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
 	const websocketStore = getWebsocketStore();
 	const notificationStore = getNotificationStore();
+	const replayStore = setReplayStore(data.gameData, data.session?.user.user_metadata.username);
 
 	type DropItem = {
 		destinationIndex: number;
@@ -29,28 +62,62 @@
 	};
 
 	const droppable = new Droppable<DropItem>();
-	let selectedHandPiece = $state(-1);
+	let selection = $state<Selection>({ state: 'none' });
+	let selectedStack = $derived.by<number[]>(() => {
+		if (selection.state === 'selectedBoardPiece') {
+			return boardStore.boardUI[selection.index];
+		} else if (selection.state === 'awaitingBoardPiece') {
+			return boardStore.boardUI[selection.prevIndex];
+		} else if (selection.state === 'selectedEnemyStack') {
+			return boardStore.boardUI[selection.index];
+		}
+		return [];
+	});
+	let highlight = $derived.by(() => {
+		const arr = [];
+		if (selection.state === 'selectedBoardPiece') {
+			arr.push(selection.index);
+		} else if (selection.state === 'awaitingBoardPiece') {
+			arr.push(selection.currIndex);
+		}
+		let lastMove = getSquareCoords(boardStore.moveHistory[boardStore.moveHistory.length - 1]);
+		lastMove = boardStore.isViewReversed ? ReverseIndices(lastMove) : lastMove;
+		lastMove.forEach((index) => arr.push(index));
+		return arr;
+	});
+	let selectedMoves = $derived.by(() => {
+		if (selection.state === 'selectedBoardPiece') {
+			return boardStore.moveListUI[selection.index];
+		} else if (selection.state === 'awaitingBoardPiece') {
+			return boardStore.moveListUI[selection.prevIndex];
+		}
+		return [];
+	});
 
-	interface MoveType {
-		fromPiece: number;
-		fromCoord: number;
-		moveType: number;
-		toCoord: number;
+	let deselectTimeout = $state<number | undefined>(undefined);
+	let blockDeselect = $state(false);
+	if (browser) {
+		window.addEventListener('mousedown', (e) => {
+			if (selection.state !== 'none' && deselectTimeout === undefined) {
+				deselectTimeout = window.setTimeout(() => {
+					if (!blockDeselect) {
+						selection = { state: 'none' };
+					}
+					deselectTimeout = undefined;
+					blockDeselect = false;
+				}, 50);
+			}
+		});
 	}
-	let showMoveDialogue: Modal
+
+	let showMoveDialogue: Modal;
 	let moveDialogueText = $state('');
 	let attackFn = $state<(() => void) | null>(null);
 	let stackFn = $state<(() => void) | null>(null);
 
-	let showUndoDialogue: Modal
-	let selectedStack = $state<number[]>([]);
-	let completedDialog: Modal
+	let showUndoDialogue: Modal;
+	let completedDialog: Modal;
 	let completedText = $state(' '); // can't be empty string because of svelte bug
-
-	function changeSelectedStack(stack: number[]) {
-		const x = getWebsocketStore();
-		selectedStack = stack;
-	}
 
 	function sendMoveMsg(fromPiece: number, fromCoord: number, toCoord: number, moveType: number) {
 		const msg = {
@@ -69,6 +136,8 @@
 
 	// Attacking and Stacking from onboard piece
 	function promptMoveDialogue(fromCoord: number, toCoord: number) {
+		if (fromCoord === toCoord) return;
+
 		const trueFromCoord = boardStore.isViewReversed ? 80 - fromCoord : fromCoord;
 		const trueToCoord = boardStore.isViewReversed ? 80 - toCoord : toCoord;
 		const [fromFile, fromRank] = IndexToCoords(trueFromCoord);
@@ -85,8 +154,7 @@
 		if (GetPieceColor(fromPiece) !== GetPieceColor(toPiece)) {
 			attackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 2);
-				// showMoveDialogue = false;
-				showMoveDialogue?.close()
+				showMoveDialogue?.close();
 			};
 		} else {
 			attackFn = null;
@@ -95,15 +163,13 @@
 		if (toSquare.length !== 3 && DecodePieceFull(fromPiece) !== 'Fortress') {
 			stackFn = () => {
 				sendMoveMsg(fromPiece, trueFromCoord, trueToCoord, 1);
-				// showMoveDialogue = false;
-				showMoveDialogue?.close()
+				showMoveDialogue?.close();
 			};
 		} else {
 			stackFn = null;
 		}
 
 		if (attackFn || stackFn) {
-			// showMoveDialogue = true;
 			showMoveDialogue?.open();
 		} else {
 			attackFn = null;
@@ -147,7 +213,6 @@
 			payload: response,
 		};
 		websocketStore.send(msg);
-		// showUndoDialogue = false;
 		showUndoDialogue?.close();
 	}
 
@@ -157,9 +222,9 @@
 			switch (data.type) {
 				case 'game':
 					boardStore.updateBoard(data.payload);
+					replayStore.boardStore.updateBoard(data.payload);
 					break;
 				case 'undoRequest':
-					// showUndoDialogue = true;
 					showUndoDialogue?.open();
 					break;
 				case 'undoResponse':
@@ -186,17 +251,14 @@
 					break;
 				case 'gameEnd':
 					completedText = data.payload;
-					// completedBool = true;
 					completedDialog?.open();
 					break;
 				case 'gameResign':
 					if (data.payload === 'w/r') {
 						completedText = 'Black Resigns';
-						// completedBool = true;
 						completedDialog?.open();
 					} else if (data.payload === 'b/r') {
 						completedText = 'White Resigns';
-						// completedBool = true;
 						completedDialog?.open();
 					}
 					break;
@@ -208,7 +270,120 @@
 	}
 
 	function selectHandPiece(piece: number) {
-		selectedHandPiece = piece;
+		blockDeselect = true;
+		if (piece === -1) {
+			selection = { state: 'none' };
+			return;
+		}
+		selection = {
+			state: 'selectedHandPiece',
+			piece: piece,
+		};
+	}
+
+	function isActive(stack: number[]): boolean {
+		if (!boardStore.isUserTurn) return false;
+		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
+		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
+
+		return isPlayerPiece && !isDraftingPhase;
+	}
+
+	function moveHandler(fromCoord: number, toCoord: number) {
+		const toSquare = boardStore.boardUI[toCoord];
+		if (toSquare.length === 0) {
+			const fromSquare = boardStore.boardUI[fromCoord];
+			const fromPiece = fromSquare[fromSquare.length - 1];
+			movePiece(fromPiece, fromCoord, toCoord);
+		} else {
+			promptMoveDialogue(fromCoord, toCoord);
+		}
+	}
+
+	function draggableOptions(index: number, stack: number[]): DraggableOptions<DropItem | null> {
+		// Should select on start
+		// If already selected, should store previous index and wait
+		// Unless new selection is not a possible move, then make new selection
+		// If drag is released, should deselect
+		// Unless dropped as a move, then prompt move
+		// If short or long pressed, should stay selected
+		// If previously selected, should reselect
+		// If selected same piece, should unselect
+		// Unless selection is a move, then prompt move
+		return {
+			startEvent: () => {
+				blockDeselect = true;
+				if (selection.state !== 'selectedBoardPiece') {
+					selection = {
+						state: 'selectedBoardPiece',
+						index: index,
+					};
+					return;
+				}
+				if (selectedMoves.includes(index) || index === selection.index) {
+					selection = {
+						state: 'awaitingBoardPiece',
+						currIndex: index,
+						prevIndex: selection.index,
+					};
+				} else {
+					selection = {
+						state: 'selectedBoardPiece',
+						index: index,
+					};
+				}
+			},
+			dragStartEvent: () => {
+				if (selection.state === 'awaitingBoardPiece') {
+					selection = {
+						state: 'selectedBoardPiece',
+						index: index,
+					};
+				}
+			},
+			shortReleaseEvent: () => {
+				if (selection.state === 'awaitingBoardPiece') {
+					if (selection.currIndex === selection.prevIndex) {
+						selection = {
+							state: 'none',
+						};
+					} else {
+						moveHandler(selection.prevIndex, selection.currIndex);
+						selection = {
+							state: 'none',
+						};
+					}
+				}
+			},
+			longReleaseEvent: () => {
+				if (selection.state === 'awaitingBoardPiece') {
+					if (selection.currIndex === selection.prevIndex) {
+						selection = {
+							state: 'none',
+						};
+					} else {
+						moveHandler(selection.prevIndex, selection.currIndex);
+						selection = {
+							state: 'none',
+						};
+					}
+				}
+			},
+			dragReleaseEvent: (hoverItem) => {
+				if (hoverItem === null || hoverItem === undefined) {
+					selection = { state: 'none' };
+					return;
+				}
+				if (selection.state === 'selectedBoardPiece') moveHandler(index, hoverItem.destinationIndex);
+
+				selection = { state: 'none' };
+			},
+			releaseEvent: (hoverItem) => {},
+			droppable: droppable,
+			active: () => {
+				return isActive(stack);
+			},
+		};
 	}
 
 	onMount(() => {
@@ -224,7 +399,6 @@
 				const undoRequests = data.gameData.undo_requests;
 				for (let i = 0; i < undoRequests.length; i++) {
 					if (undoRequests[i].receiver_username === boardStore.username && undoRequests[i].status === 'pending') {
-						// showUndoDialogue = true;
 						showUndoDialogue?.open();
 					} else if (undoRequests[i].sender_username === boardStore.username && undoRequests[i].status === 'accept') {
 						const msg = {
@@ -272,8 +446,13 @@
 
 <main>
 	<section>
+		<p>{replayStore.boardStore.current_state}</p>
+		<p>{boardStore.current_state}</p>
+		<p>{serializeFen(boardStore.boardState, boardStore.player1HandList, boardStore.player2HandList, boardStore.turnColor, boardStore.isPlayer1Ready, boardStore.isPlayer2Ready)}</p>
 		<div class="game-state">
-			{#if boardStore.completed}
+			{#if replayStore.isActive}
+				<div>Viewing Game History</div>
+			{:else if boardStore.completed && !replayStore.isActive}
 				<Crown />
 				<span class="completed-text">
 					{#if boardStore.result === 'b'}
@@ -296,11 +475,45 @@
 			{/if}
 		</div>
 		<PlayerInfo isOpposite={true} />
-		<Board {changeSelectedStack} {promptMoveDialogue} {movePiece} {droppable} />
+		{#if replayStore.isActive}
+			<!-- <p>Replaying</p> -->
+			<Board
+				boardState={replayStore.boardStore.boardUI}
+				isReversed={replayStore.boardStore.isViewReversed}
+				showCoord={true}
+			/>
+		{:else}
+			<Board
+				boardState={boardStore.boardUI}
+				isReversed={boardStore.isViewReversed}
+				showCoord={true}
+				dragAction={draggable}
+				dropAction={droppable.addDroppable.bind(droppable)}
+				{highlight}
+				{selectedMoves}
+				{draggableOptions}
+				onMouseDown={(index) => {
+					const targetSquare = boardStore.boardUI[index];
+					const isEnemyStack = !PieceIsPlayerColor(targetSquare[0], boardStore.userColor);
+					if (selectedMoves.includes(index) && selection.state === 'selectedBoardPiece') {
+						blockDeselect = true;
+						moveHandler(selection.index, index);
+						selection = {
+							state: 'none',
+						};
+					} else if (isEnemyStack && targetSquare.length > 0) {
+						blockDeselect = true;
+						selection = {
+							state: 'selectedEnemyStack',
+							index: index,
+						};
+					}
+				}}
+			/>
+		{/if}
 		<PlayerInfo isOpposite={false} />
 	</section>
 	<Menu {resign} {undo} {selectHandPiece} {selectedStack} {ready} {placeHandMove} {droppable} />
-
 
 	<Modal bind:this={completedDialog}>
 		<h2 class="completed-text completed-dialogue"><Crown />{completedText}</h2>

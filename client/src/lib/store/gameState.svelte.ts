@@ -19,7 +19,7 @@ export interface BoardState {
 	// check: string
 }
 
-class BoardStore {
+export class BoardStore {
 	completed = $state(false);
 	current_state = $state('');
 	date_finished = $state<Date | null>(null);
@@ -40,7 +40,7 @@ class BoardStore {
 	username = $state('');
 
 	player1HandList = $derived.by(() => {
-		const hand = this.hands[0].split('/')[0];
+		const hand = this.hands[0];
 		const newHand: number[] = [];
 
 		for (let i = 0; i < hand.length; i++) {
@@ -49,7 +49,7 @@ class BoardStore {
 		return newHand;
 	});
 	player2HandList = $derived.by(() => {
-		const hand = this.hands[1].split('/')[0];
+		const hand = this.hands[1];
 		const newHand: number[] = [];
 
 		for (let i = 0; i < hand.length; i++) {
@@ -65,7 +65,7 @@ class BoardStore {
 	player1HandCount = $derived(this.player1HandList.reduce((a, b) => a + b));
 	player2HandCount = $derived(this.player2HandList.reduce((a, b) => a + b));
 
-	userColor = $derived.by(() => {
+	userColor = $derived.by<'w' | 'b' | 'spectator'>(() => {
 		if (this.username === this.player1) return 'w';
 		if (this.username === this.player2) return 'b';
 		return 'spectator';
@@ -126,6 +126,10 @@ class BoardStore {
 		this.player2 = newState.player2;
 		this.ruleset = newState.ruleset;
 		this.type = newState.type;
+	}
+
+	updateCurrentState(fen: string) {
+		this.current_state = fen;
 	}
 }
 

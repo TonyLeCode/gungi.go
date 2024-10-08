@@ -63,9 +63,9 @@
 			{#each sortedOngoingGames as game}
 				<li class:your-turn={isUserTurn(game)}>
 					<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
-					<a href={`/game/${game.id}`}
-						><BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} /></a
-					>
+					<a href={`/game/${game.id}`}>
+						<BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} />
+					</a>
 					<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
 				</li>
 			{/each}

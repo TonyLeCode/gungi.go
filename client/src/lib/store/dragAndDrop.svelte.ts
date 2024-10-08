@@ -1,6 +1,13 @@
 // I attempted to make drag and drop for mobile but there
 // was no suitable support for dropping on touch devices
 
+// https://github.com/Bernardo-Castilho/dragdroptouch
+// TODO attempt to implement drag and drop for mobile
+
+// Issue is that pointerenter and touchenter doesn't really work
+
+// TODO sloppy drag, require minimum distance
+
 type dropOptions<T> = {
 	mouseEnterEvent?: () => void;
 	mouseLeaveEvent?: () => void;
@@ -66,6 +73,7 @@ export type DraggableOptions<T> = {
 	dragReleaseEvent?: (hoverItem?: T) => void;
 	// setDragItem?: T;
 	droppable?: Droppable<T>;
+	//TODO rename to guard
 	active?: boolean | ((hoverItem?: T) => boolean);
 };
 
@@ -165,7 +173,7 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		if (typeof active === 'function') {
 			if (!active()) return;
 		} else if (active === false) return;
-		
+
 		if (typeof startEvent === 'function') {
 			startEvent(droppable?.hoverItem ?? undefined);
 		}
@@ -174,14 +182,14 @@ export function draggable<T>(node: HTMLElement, options: DraggableOptions<T> = {
 		clickTimeout = window.setTimeout(() => {
 			longPress = true;
 		}, timeThreshold);
-		
+
 		const target = e.target as HTMLElement;
 		if (e.button !== 0) return;
 		initialX = e.clientX;
 		initialY = e.clientY;
 		offsetX = e.offsetX - target?.offsetWidth / 2;
 		offsetY = e.offsetY - target?.offsetHeight / 2;
-		
+
 		const onDrag = dragMoveHandler(target);
 		const onRelease = dragReleaseHandler(target);
 		node.style.pointerEvents = 'none';

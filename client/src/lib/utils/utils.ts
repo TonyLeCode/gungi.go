@@ -1,5 +1,5 @@
 export function FenToBoard(fen: string): number[][] {
-	const newBoard: number[][] = new Array(81).fill([]);
+	const newBoard: number[][] = new Array(81).fill(0).map(() => []);
 	const fields = fen.split(' ');
 	const split = fields[0].split('/');
 	if (split.length != 9) {
@@ -113,14 +113,14 @@ export function LetterToFile(str: string): number {
 }
 
 export function CoordsToSquare(file: number, rank: number): number {
-	return (file-1) + ((9 - rank) * 9)
+	return file - 1 + (9 - rank) * 9;
 }
 
 export function ReverseIndex(index: number): number {
-	return 80 - index
+	return 80 - index;
 }
 export function ReverseIndices(indices: number[]): number[] {
-	return indices.map((index) => ReverseIndex(index))
+	return indices.map((index) => ReverseIndex(index));
 }
 
 type EncodePieceEnums = {
@@ -200,6 +200,7 @@ export function DecodePiece(encodedPiece: number): string {
 	return pieceEnums[encodedPiece];
 }
 
+// Takes piece number and returns the full name of the piece
 export function DecodePieceFull(encodedPiece: number | string): string {
 	const piece = Number(encodedPiece) % 13;
 	const pieceEnums: DecodePieceEnums = {
