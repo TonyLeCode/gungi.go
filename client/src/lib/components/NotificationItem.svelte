@@ -40,7 +40,7 @@
 			{notification.title}
 		</div>
 		{#if notification.component}
-			<svelte:component this={notification.component} />
+			{notification.component}
 		{:else}
 			<div>
 				{@html notification.msg}
