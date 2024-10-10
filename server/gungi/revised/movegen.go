@@ -438,6 +438,16 @@ func (r *Revised) GetLegalMoves() (string, map[int][]int) {
 					// only the marshal can move in double check
 					continue
 				}
+				if len(r.BoardSquares[move].stack) > 1 && currSquare.GetTop()%13 == FORTRESS {
+					// fortress can't attack higher than t1
+					// fortress can't stack
+					continue
+				}
+				if !r.BoardSquares[move].IsEmpty() && getColor(r.BoardSquares[move].GetTop()) == r.TurnColor && len(r.BoardSquares[move].stack) == 3 {
+					// can't stack on t3
+					// checking same color is necessary because you can attack t3 enemy
+					continue
+				}
 				if checkStatus == "checked" {
 					// piece can move to block the check
 					// or capture attacking piece
