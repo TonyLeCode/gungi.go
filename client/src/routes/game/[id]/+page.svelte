@@ -282,10 +282,13 @@
 		};
 	}
 
-	function isActive(stack: number[]): boolean {
+	function isActive(index: number): boolean {
 		if (!boardStore.isUserTurn) return false;
+		const stack = boardStore.boardUI[index];
 		const isPlayerPiece = PieceIsPlayerColor(stack[stack.length - 1], boardStore.userColor);
 		const isDraftingPhase = !boardStore.isPlayer1Ready || !boardStore.isPlayer2Ready;
+
+		if (stack.length > 0 && !boardStore.moveListUI[index]) return false;
 
 		return isPlayerPiece && !isDraftingPhase;
 	}
@@ -383,7 +386,7 @@
 			releaseEvent: (hoverItem) => {},
 			droppable: droppable,
 			active: () => {
-				return isActive(stack);
+				return isActive(index);
 			},
 		};
 	}
@@ -513,6 +516,12 @@
 							state: 'stackDetails',
 							index: index,
 						};
+					} else if (targetSquare.length > 0 && !boardStore.moveListUI[index]) {
+						blockDeselect = true;
+						selection = {
+							state: 'stackDetails',
+							index: index,
+						}
 					}
 				}}
 			/>
