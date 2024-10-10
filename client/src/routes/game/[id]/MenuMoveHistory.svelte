@@ -12,10 +12,6 @@
 	let containerRef: HTMLOListElement;
 
 	$effect(() => {
-		replayStore.setTotalPages(boardStore.moveHistory.length);
-		// replayStore.setPage(boardStore.moveHistory.length);
-	});
-	$effect(() => {
 		const childElement = containerRef.children[replayStore.pagination.currentPage - 1];
 		if (!childElement || !(childElement instanceof HTMLLIElement)) {
 			console.error('no child element');
@@ -84,6 +80,12 @@
 		});
 	});
 
+	onMount(() => {
+		return () => {
+			replayStore.setPage(boardStore.moveHistory.length);
+		}
+	})
+	
 	function handleCopy() {
 		navigator.clipboard.writeText(fileText);
 	}

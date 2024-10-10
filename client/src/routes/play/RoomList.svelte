@@ -23,12 +23,13 @@
 		username: string;
 		roomList: Info[];
 		heading: string;
-		roomDialog: Modal;
+		roomDialog: ReturnType<typeof Modal> | undefined;
 		roomDialogueInfo: Info;
 		accept: (roomid: string) => void;
 	} = $props();
 
 	let spectator = $derived(username == null);
+	console.log(roomDialog)
 
 	function handleCancel(roomid: string) {
 		const payload = {
@@ -48,7 +49,7 @@
 					disabled={room.host === username || spectator ? true : false}
 					onclick={() => {
 						roomDialogueInfo = room;
-						roomDialog.open();
+						roomDialog?.open();
 					}}
 					class="room"
 				>

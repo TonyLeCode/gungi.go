@@ -14,7 +14,6 @@
 	import { getSquareCoords } from '$lib/utils/historyParser';
 	import { browser } from '$app/environment';
 	import { setReplayStore } from '$lib/store/replayStore.svelte';
-	import { serializeFen } from '$lib/utils/fenParser';
 	let { data } = $props();
 
 	// 0 - move
@@ -55,6 +54,9 @@
 	const websocketStore = getWebsocketStore();
 	const notificationStore = getNotificationStore();
 	const replayStore = setReplayStore(data.gameData, data.session?.user.user_metadata.username);
+	$effect(() => {
+		replayStore.setTotalPages(boardStore.moveHistory.length);
+	});
 
 	type DropItem = {
 		destinationIndex: number;
@@ -110,13 +112,13 @@
 		});
 	}
 
-	let showMoveDialogue: Modal;
+	let showMoveDialogue: ReturnType<typeof Modal>;
 	let moveDialogueText = $state('');
 	let attackFn = $state<(() => void) | null>(null);
 	let stackFn = $state<(() => void) | null>(null);
 
-	let showUndoDialogue: Modal;
-	let completedDialog: Modal;
+	let showUndoDialogue: ReturnType<typeof Modal>;
+	let completedDialog: ReturnType<typeof Modal>;
 	let completedText = $state(' '); // can't be empty string because of svelte bug
 
 	function sendMoveMsg(fromPiece: number, fromCoord: number, toCoord: number, moveType: number) {
@@ -215,7 +217,6 @@
 		websocketStore.send(msg);
 		showUndoDialogue?.close();
 	}
-
 	function handleGameMsg(event?: MessageEvent) {
 		try {
 			const data = JSON.parse(event?.data);
@@ -447,6 +448,7 @@
 
 <main>
 	<section>
+		<p>{selection.state}</p>
 		<div class="game-state">
 			{#if replayStore.isActive}
 				<div>Viewing Game History</div>
@@ -492,7 +494,7 @@
 				{draggableOptions}
 				onMouseDown={(index) => {
 					const targetSquare = boardStore.boardUI[index];
-					const isEnemyStack = !PieceIsPlayerColor(targetSquare[0], boardStore.userColor);
+					const isEnemyStack = !PieceIsPlayerColor(targetSquare[targetSquare.length - 1], boardStore.userColor);
 					if (selectedMoves.includes(index) && selection.state === 'selectedBoardPiece') {
 						blockDeselect = true;
 						moveHandler(selection.index, index);

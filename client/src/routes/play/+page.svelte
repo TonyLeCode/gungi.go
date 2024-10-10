@@ -31,8 +31,8 @@
 
 	// let showCreateGameDialogue = $state(false);
 	// let showRoomDialogue = $state(false);
-	let createGameDialog: Modal;
-	let roomDialog: Modal;
+	let createGameDialog = $state<ReturnType<typeof Modal>>();
+	let roomDialog = $state<ReturnType<typeof Modal>>();
 	let roomDialogueInfo = $state<Info>({ id: '', host: '', description: '', type: '', color: '', rules: '' });
 
 	function handleRoomListMsg(event?: MessageEvent) {
@@ -106,7 +106,7 @@
 				</label> -->
 				<button
 					onclick={() => {
-						createGameDialog.open();
+						createGameDialog?.open();
 					}}
 					disabled={username == null}
 					class="button-primary">Create Game</button
