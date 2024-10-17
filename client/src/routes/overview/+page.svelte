@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
 	import { createPaginationStore } from '$lib/store/paginationStore.svelte';
 	import type { Game } from './+page.server';
@@ -19,11 +20,28 @@
 			return 0;
 		})
 	);
-	let completedGames = $derived(data.data.completedGames);
-	let completedGamesCount = $derived(data.data.gameHistoryCount);
-	let completedGamesPages = $derived(Math.ceil(completedGamesCount / 10));
 
-	let pagination = createPaginationStore(completedGamesPages);
+	let paginationStore = createPaginationStore(Math.ceil(data.data.gameHistoryCount / 10));
+	interface completedGames {
+		[index: number]: Game[];
+	}
+	let completedGames = $state<completedGames>({ 1: data.data.completedGames });
+
+	$effect(() => {
+		if (!completedGames[paginationStore.currentPage]) {
+			const url = `/getongoinggames?offset=${10 * (paginationStore.currentPage - 1)}`;
+			const res = fetch(url);
+			res
+				.then((res) => {
+					if (res.ok) {
+						return res.json();
+					}
+				})
+				.then((data) => {
+					completedGames[paginationStore.currentPage] = data;
+				});
+		}
+	});
 
 	function isUser(playername: string) {
 		return username === playername;
@@ -54,8 +72,6 @@
 </svelte:head>
 
 <main>
-	<p>Count: {completedGamesCount}</p>
-	<p>Pages: {completedGamesPages}</p>
 	<section>
 		<h2>Current Games</h2>
 		<ul class="gameList">
@@ -77,10 +93,10 @@
 	<section>
 		<h2>Game History</h2>
 		<ul class="gameHistoryList">
-			{#if completedGames.length === 0}
+			{#if completedGames[1].length === 0}
 				<p class="empty-list-message">You currently have no completed games</p>
 			{:else}
-				{#each completedGames as game}
+				{#each completedGames[paginationStore.currentPage] as game}
 					<li class="historyItem">
 						<a href={`/game/${game.id}`}>
 							<div>{game.date_started?.toString().slice(0, 10)}</div>
@@ -99,6 +115,24 @@
 				{/each}
 			{/if}
 		</ul>
+		<div class="pagination-controls">
+			<button class="button-primary" onclick={() => paginationStore.prev()} disabled={!paginationStore.hasPrev}
+				>&lt;</button
+			>
+			<input
+				class="page-input"
+				type="number"
+				name="page"
+				min="1"
+				bind:value={paginationStore.currentPage}
+				max={paginationStore.totalPages}
+			/>
+			/
+			{paginationStore.totalPages}
+			<button class="button-primary" onclick={() => paginationStore.next()} disabled={!paginationStore.hasNext}
+				>&gt;</button
+			>
+		</div>
 	</section>
 </main>
 
@@ -121,7 +155,7 @@
 
 	.empty-list-message {
 		font-weight: 300;
-		color: rgba(var(--font), 0.8)
+		color: rgba(var(--font), 0.8);
 	}
 
 	.gameList li {
@@ -216,5 +250,20 @@
 			font-weight: 300;
 			box-shadow: none;
 		}
+	}
+	.pagination-controls {
+		margin-bottom: 2rem;
+	}
+	.page-input {
+		background-color: rgb(var(--bg-2));
+		padding: 0.25rem 0.75rem;
+	}
+	.page-input::-webkit-outer-spin-button,
+	.page-input::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+	}
+	.page-input[type='number'] {
+		-moz-appearance: textfield;
+		appearance: textfield;
 	}
 </style>

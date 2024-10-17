@@ -86,7 +86,7 @@ func main() {
 	e.GET("/game/:id", db.GetGameWithUndoRoute)
 	// verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 	verify.GET("/overview", db.GetOverview)
-	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
+	verify.GET("/getongoinggamelist", db.GetGameHistory)
 
 	e.GET("/ws", ws.WSHandler(m, &db))
 
