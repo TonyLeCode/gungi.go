@@ -1,16 +1,13 @@
 <script lang="ts">
 	import BoardSimple from '$lib/components/BoardSimple.svelte';
+	import { createPaginationStore } from '$lib/store/paginationStore.svelte';
 	import type { Game } from './+page.server';
 	//TODO make responsive
 
 	let { data } = $props();
 
-	let username = $derived(data.session?.user.user_metadata.username);
-	let ongoingGames = $derived(
-		data.data.filter((game) => {
-			return !game.completed;
-		})
-	);
+	let username = $derived(data.username as string);
+	let ongoingGames = $derived(data.data.ongoingGames);
 	let sortedOngoingGames = $derived(
 		ongoingGames.sort((game1, game2) => {
 			if (turnPlayer(game1) === turnPlayer(game2)) return 0;
@@ -22,11 +19,11 @@
 			return 0;
 		})
 	);
-	let completedGames = $derived(
-		data.data.filter((game) => {
-			return game.completed;
-		})
-	);
+	let completedGames = $derived(data.data.completedGames);
+	let completedGamesCount = $derived(data.data.gameHistoryCount);
+	let completedGamesPages = $derived(Math.ceil(completedGamesCount / 10));
+
+	let pagination = createPaginationStore(completedGamesPages);
 
 	function isUser(playername: string) {
 		return username === playername;
@@ -57,40 +54,50 @@
 </svelte:head>
 
 <main>
+	<p>Count: {completedGamesCount}</p>
+	<p>Pages: {completedGamesPages}</p>
 	<section>
 		<h2>Current Games</h2>
 		<ul class="gameList">
-			{#each sortedOngoingGames as game}
-				<li class:your-turn={isUserTurn(game)}>
-					<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
-					<a href={`/game/${game.id}`}>
-						<BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} />
-					</a>
-					<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
-				</li>
-			{/each}
+			{#if sortedOngoingGames.length === 0}
+				<p class="empty-list-message">You currently have no ongoing games</p>
+			{:else}
+				{#each sortedOngoingGames as game}
+					<li class:your-turn={isUserTurn(game)}>
+						<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
+						<a href={`/game/${game.id}`}>
+							<BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} />
+						</a>
+						<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
+					</li>
+				{/each}
+			{/if}
 		</ul>
 	</section>
 	<section>
 		<h2>Game History</h2>
 		<ul class="gameHistoryList">
-			{#each completedGames as game}
-				<li class="historyItem">
-					<a href={`/game/${game.id}`}>
-						<div>{game.date_started?.toString().slice(0, 10)}</div>
-						<div>{game.username1 !== username ? game.username1 : game.username2}</div>
-						<div>{game.type}</div>
-						<div>{game.ruleset}</div>
-						{#if game.result === 'w/r' || game.result === 'w'}
-							<div>W</div>
-						{:else if game.result === 'b/r' || game.result === 'b'}
-							<div>B</div>
-						{:else}
-							<div>Draw</div>
-						{/if}
-					</a>
-				</li>
-			{/each}
+			{#if completedGames.length === 0}
+				<p class="empty-list-message">You currently have no completed games</p>
+			{:else}
+				{#each completedGames as game}
+					<li class="historyItem">
+						<a href={`/game/${game.id}`}>
+							<div>{game.date_started?.toString().slice(0, 10)}</div>
+							<div>{game.username1 !== username ? game.username1 : game.username2}</div>
+							<div>{game.type}</div>
+							<div>{game.ruleset}</div>
+							{#if game.result === 'w/r' || game.result === 'w'}
+								<div>W</div>
+							{:else if game.result === 'b/r' || game.result === 'b'}
+								<div>B</div>
+							{:else}
+								<div>Draw</div>
+							{/if}
+						</a>
+					</li>
+				{/each}
+			{/if}
 		</ul>
 	</section>
 </main>
@@ -110,6 +117,11 @@
 
 	h2 {
 		font-size: 1.25rem;
+	}
+
+	.empty-list-message {
+		font-weight: 300;
+		color: rgba(var(--font), 0.8)
 	}
 
 	.gameList li {

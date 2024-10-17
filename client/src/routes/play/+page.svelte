@@ -13,7 +13,7 @@
 	let notificationStore = getNotificationStore();
 	let websocketStore = getWebsocketStore();
 
-	let username = $derived(data.session?.user.user_metadata.username);
+	let username = $derived(data.username as string)
 
 	type Info = {
 		id: string;

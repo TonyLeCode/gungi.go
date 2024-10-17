@@ -36,7 +36,36 @@ JOIN
 JOIN 
     profiles as users2 ON games.user_2 = users2.id
 WHERE
-    users1.id = $1 OR users2.id = $1;
+    users1.id = $1 OR users2.id = $1 AND games.completed=false;
+
+-- name: GetCompletedGames :many
+SELECT 
+    games.id, 
+    games.fen, 
+    games.completed, 
+    games.date_started, 
+    games.date_finished,
+    games.current_state,
+    games.result,
+    games.type,
+    games.ruleset,
+    users1.username as username1, 
+    users2.username as username2
+FROM
+    games 
+JOIN 
+    profiles as users1 ON games.user_1 = users1.id
+JOIN 
+    profiles as users2 ON games.user_2 = users2.id
+WHERE
+    users1.id = $1 OR users2.id = $1 AND games.completed=true
+ORDER BY games.date_finished DESC
+OFFSET $2 ROWS FETCH NEXT 10 ROWS ONLY;
+
+-- name: GetCompletedGamesCount :one
+SELECT COUNT(*) FROM games
+WHERE games.user_1 = $1 OR games.user_2 = $1
+AND games.completed=true;
 
 -- name: GetGame :one
 SELECT 
@@ -120,20 +149,6 @@ WHERE profiles.username = $1;
 -- name: GetUsernameFromId :one
 SELECT username FROM profiles
 WHERE profiles.id = $1;
-
--- name: GetOnboarding :one
-SELECT is_username_onboard_complete FROM profiles
-WHERE profiles.id = $1;
-
--- name: UpdateOnboarding :exec
-UPDATE profiles
-SET is_username_onboard_complete = true
-WHERE profiles.id = $1;
-
--- name: ChangeUsername :exec
-UPDATE profiles
-SET username = $1
-WHERE profiles.id = $2;
 
 -- name: MakeMove :exec
 UPDATE games

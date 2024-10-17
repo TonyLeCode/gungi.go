@@ -49,7 +49,7 @@
 </svelte:head>
 <Notifications />
 <TopNotification />
-<Navbar session={data.session} />
+<Navbar session={data.session} username={data.username} />
 {@render children()}
 
 <style lang="scss" global>

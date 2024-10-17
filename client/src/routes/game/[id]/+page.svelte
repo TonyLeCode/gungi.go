@@ -50,10 +50,11 @@
 				index: number;
 		  };
 
-	const boardStore = setGameStore(data.gameData, data.session?.user.user_metadata.username);
+	let username = data.username as string
+	const boardStore = setGameStore(data.gameData, username);
 	const websocketStore = getWebsocketStore();
 	const notificationStore = getNotificationStore();
-	const replayStore = setReplayStore(data.gameData, data.session?.user.user_metadata.username);
+	const replayStore = setReplayStore(data.gameData, username);
 	$effect(() => {
 		replayStore.setTotalPages(boardStore.moveHistory.length);
 	});

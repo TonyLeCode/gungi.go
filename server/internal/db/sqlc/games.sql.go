@@ -49,22 +49,6 @@ func (q *Queries) ChangeUndo(ctx context.Context, arg ChangeUndoParams) (uuid.UU
 	return sender_id, err
 }
 
-const changeUsername = `-- name: ChangeUsername :exec
-UPDATE profiles
-SET username = $1
-WHERE profiles.id = $2
-`
-
-type ChangeUsernameParams struct {
-	Username string    `json:"username"`
-	ID       uuid.UUID `json:"id"`
-}
-
-func (q *Queries) ChangeUsername(ctx context.Context, arg ChangeUsernameParams) error {
-	_, err := q.db.Exec(ctx, changeUsername, arg.Username, arg.ID)
-	return err
-}
-
 const createGame = `-- name: CreateGame :one
 INSERT INTO games (current_state, ruleset, type, user_1, user_2)
 VALUES ($1, $2, $3, $4, $5)
@@ -231,6 +215,95 @@ func (q *Queries) DeleteRoomSafe(ctx context.Context, arg DeleteRoomSafeParams) 
 	return i, err
 }
 
+const getCompletedGames = `-- name: GetCompletedGames :many
+SELECT 
+    games.id, 
+    games.fen, 
+    games.completed, 
+    games.date_started, 
+    games.date_finished,
+    games.current_state,
+    games.result,
+    games.type,
+    games.ruleset,
+    users1.username as username1, 
+    users2.username as username2
+FROM
+    games 
+JOIN 
+    profiles as users1 ON games.user_1 = users1.id
+JOIN 
+    profiles as users2 ON games.user_2 = users2.id
+WHERE
+    users1.id = $1 OR users2.id = $1 AND games.completed=true
+ORDER BY games.date_finished DESC
+OFFSET $2 ROWS FETCH NEXT 10 ROWS ONLY
+`
+
+type GetCompletedGamesParams struct {
+	ID     uuid.UUID `json:"id"`
+	Offset int32     `json:"offset"`
+}
+
+type GetCompletedGamesRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Fen          pgtype.Text        `json:"fen"`
+	Completed    bool               `json:"completed"`
+	DateStarted  pgtype.Timestamptz `json:"date_started"`
+	DateFinished pgtype.Timestamptz `json:"date_finished"`
+	CurrentState string             `json:"current_state"`
+	Result       pgtype.Text        `json:"result"`
+	Type         string             `json:"type"`
+	Ruleset      string             `json:"ruleset"`
+	Username1    string             `json:"username1"`
+	Username2    string             `json:"username2"`
+}
+
+func (q *Queries) GetCompletedGames(ctx context.Context, arg GetCompletedGamesParams) ([]GetCompletedGamesRow, error) {
+	rows, err := q.db.Query(ctx, getCompletedGames, arg.ID, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCompletedGamesRow
+	for rows.Next() {
+		var i GetCompletedGamesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fen,
+			&i.Completed,
+			&i.DateStarted,
+			&i.DateFinished,
+			&i.CurrentState,
+			&i.Result,
+			&i.Type,
+			&i.Ruleset,
+			&i.Username1,
+			&i.Username2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCompletedGamesCount = `-- name: GetCompletedGamesCount :one
+SELECT COUNT(*) FROM games
+WHERE games.user_1 = $1 OR games.user_2 = $1
+AND games.completed=true
+`
+
+func (q *Queries) GetCompletedGamesCount(ctx context.Context, user1 uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, getCompletedGamesCount, user1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getGame = `-- name: GetGame :one
 SELECT 
     games.id,
@@ -395,18 +468,6 @@ func (q *Queries) GetIdFromUsername(ctx context.Context, username string) (uuid.
 	return id, err
 }
 
-const getOnboarding = `-- name: GetOnboarding :one
-SELECT is_username_onboard_complete FROM profiles
-WHERE profiles.id = $1
-`
-
-func (q *Queries) GetOnboarding(ctx context.Context, id uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, getOnboarding, id)
-	var is_username_onboard_complete bool
-	err := row.Scan(&is_username_onboard_complete)
-	return is_username_onboard_complete, err
-}
-
 const getOngoingGames = `-- name: GetOngoingGames :many
 SELECT 
     games.id, 
@@ -484,7 +545,7 @@ JOIN
 JOIN 
     profiles as users2 ON games.user_2 = users2.id
 WHERE
-    users1.id = $1 OR users2.id = $1
+    users1.id = $1 OR users2.id = $1 AND games.completed=false
 `
 
 type GetOverviewRow struct {
@@ -705,15 +766,4 @@ func (q *Queries) ResignGame(ctx context.Context, arg ResignGameParams) (ResignG
 		&i.Player2,
 	)
 	return i, err
-}
-
-const updateOnboarding = `-- name: UpdateOnboarding :exec
-UPDATE profiles
-SET is_username_onboard_complete = true
-WHERE profiles.id = $1
-`
-
-func (q *Queries) UpdateOnboarding(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, updateOnboarding, id)
-	return err
 }

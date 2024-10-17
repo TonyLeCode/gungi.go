@@ -9,6 +9,5 @@ export const GET: RequestHandler = async ({ locals: { supabase } }) => {
 		error(500, 'something went wrong');
 	}
 
-	console.log('success');
 	redirect(303, '/');
 };

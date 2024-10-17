@@ -3,7 +3,7 @@
 	import { Menu, SunMoon, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
-	let { session }: { session: Session | null } = $props();
+	let { session, username }: { session: Session | null, username: string | null } = $props();
 
 	let isMenuOpen = $state(false);
 
@@ -57,11 +57,10 @@
 			<button class={`theme-switcher ${theme}`} class:open={isMenuOpen} onclick={switchTheme}><SunMoon /></button>
 			{#if session}
 				<!-- TODO Dropdown for: profile, settings, friends, notifications  -->
-				<a href="/username" class="name">{session.user.user_metadata.username}</a>
+				<a href="/username" class="name">{username}</a>
 				<a onclick={onClick} href="/logout">logout</a>
 			{:else}
 				<a onclick={onClick} class="a" href="/login">login</a>
-				<a onclick={onClick} class="a" href="/register">register</a>
 			{/if}
 		</ul>
 	</div>

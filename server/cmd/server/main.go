@@ -74,7 +74,7 @@ func main() {
 
 	e := echo.New()
 	m := melody.New()
-	m.Config.MaxMessageSize = 1024
+	m.Config.MaxMessageSize = 2048
 
 	// e.Use(middleware.VerifySupabaseTokenMiddleware)
 	verify := e.Group("", VerifySupabaseTokenMiddleware)
@@ -86,12 +86,15 @@ func main() {
 	e.GET("/game/:id", db.GetGameWithUndoRoute)
 	// verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 	verify.GET("/overview", db.GetOverview)
+	verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 
 	e.GET("/ws", ws.WSHandler(m, &db))
 
-	verify.GET("/user/onboarding", db.GetOnboarding)
-	verify.PUT("/user/onboarding", db.PutOnboarding)
-	verify.PUT("/user/changename", db.ChangeUsername)
+	verify.GET("/username", db.GetUsername)
+	verify.PUT("/username", db.PutUsername)
+	// verify.GET("/user/onboarding", db.GetOnboarding)
+	// verify.PUT("/user/onboarding", db.PutOnboarding)
+	// verify.PUT("/user/changename", db.ChangeUsername)
 
 	e.Logger.Fatal(e.Start(port))
 }

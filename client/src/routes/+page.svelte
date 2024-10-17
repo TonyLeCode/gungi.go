@@ -25,7 +25,6 @@
 		{:else}
 			<div>
 				<a class="button-primary" href="/login">Login</a>
-				<a class="button-primary" href="/register">Register</a>
 			</div>
 		{/if}
 	</section>

@@ -18,6 +18,12 @@ export interface Game {
 	moveList: string;
 }
 
+interface GetOverviewResponse {
+	ongoingGames: Game[];
+	completedGames: Game[];
+	gameHistoryCount: number;
+}
+
 export const load: PageServerLoad = async ({ locals: { supabase }, fetch }) => {
 	const {
 		data: { session },
@@ -38,9 +44,9 @@ export const load: PageServerLoad = async ({ locals: { supabase }, fetch }) => {
 			message: 'Internal Server Error',
 		});
 	}
-	const data: Game[] = await res.json();
+	const data: GetOverviewResponse = await res.json();
 
 	return {
-		data: data ?? ([] as Game[]),
+		data: data ?? ({ ongoingGames: [], completedGames: [], gameHistoryCount: 0 } as GetOverviewResponse),
 	};
 };

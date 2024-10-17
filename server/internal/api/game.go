@@ -6,7 +6,9 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -75,8 +77,14 @@ func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
 	return c.JSON(http.StatusOK, games)
 }
 
+type GetOverviewResponse struct {
+	OngoingGames     []db.GetOngoingGamesRow   `json:"ongoingGames"`
+	CompletedGames   []db.GetCompletedGamesRow `json:"completedGames"`
+	GameHistoryCount int64                     `json:"gameHistoryCount"`
+}
+
 func (dbConn *DBConn) GetOverview(c echo.Context) error {
-	ctx := context.Background()
+	ctx := c.Request().Context()
 
 	sub := c.Get("sub").(string)
 	subid, err := uuid.Parse(sub)
@@ -86,12 +94,97 @@ func (dbConn *DBConn) GetOverview(c echo.Context) error {
 
 	queries := db.New(dbConn.Conn)
 
-	games, err := queries.GetOverview(ctx, subid)
+	getOverviewResponse := GetOverviewResponse{}
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	errChan := make(chan error, 3)
+
+	go func() {
+		defer wg.Done()
+		onGoingGames, err := queries.GetOngoingGames(ctx, subid)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if onGoingGames == nil {
+			getOverviewResponse.OngoingGames = []db.GetOngoingGamesRow{}
+		} else {
+			getOverviewResponse.OngoingGames = onGoingGames
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		completedGameParams := db.GetCompletedGamesParams{
+			ID:     subid,
+			Offset: 0,
+		}
+		completedGames, err := queries.GetCompletedGames(ctx, completedGameParams)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if completedGames == nil {
+			getOverviewResponse.CompletedGames = []db.GetCompletedGamesRow{}
+		} else {
+			getOverviewResponse.CompletedGames = completedGames
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		gameHistoryCount, err := queries.GetCompletedGamesCount(ctx, subid)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		getOverviewResponse.GameHistoryCount = gameHistoryCount
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, "Internal server error")
+		}
+	}
+
+	return c.JSON(http.StatusOK, getOverviewResponse)
+}
+
+func (dbConn *DBConn) GetGameHistory(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	sub := c.Get("sub").(string)
+	subid, err := uuid.Parse(sub)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+
+	offsetParam := c.QueryParam("offset")
+	offset64, err := strconv.ParseInt(offsetParam, 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "bad request")
+	}
+	offset := int32(offset64)
+
+	queries := db.New(dbConn.Conn)
+
+	completedGameParams := db.GetCompletedGamesParams{
+		ID:     subid,
+		Offset: offset,
+	}
+
+	completedGames, err := queries.GetCompletedGames(ctx, completedGameParams)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
-	return c.JSON(http.StatusOK, games)
+	return c.JSON(http.StatusOK, completedGames)
 }
 
 type GameWithMoves struct {

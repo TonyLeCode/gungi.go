@@ -62,9 +62,8 @@ type Game struct {
 }
 
 type Profile struct {
-	ID                        uuid.UUID `json:"id"`
-	Username                  string    `json:"username"`
-	IsUsernameOnboardComplete bool      `json:"is_username_onboard_complete"`
+	ID       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
 }
 
 type RoomList struct {

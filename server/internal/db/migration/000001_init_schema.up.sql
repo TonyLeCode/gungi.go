@@ -49,7 +49,6 @@ create table
   public.profiles (
     id uuid not null,
     username text not null,
-    is_username_onboard_complete boolean not null default false,
     constraint profiles_pkey primary key (id),
     constraint profiles_username_key unique (username),
     constraint profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade
