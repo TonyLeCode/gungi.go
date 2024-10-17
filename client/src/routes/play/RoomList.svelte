@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
+	import { createPaginationStore } from '$lib/store/paginationStore.svelte';
 	import { getWebsocketStore } from '$lib/store/websocketStore.svelte';
 
 	type Info = {
@@ -28,8 +29,20 @@
 		accept: (roomid: string) => void;
 	} = $props();
 
+	let totalPages = $derived.by(() => {
+		const pages = Math.ceil(roomList.length / 10)
+		if (pages < 1) return 1
+		return pages
+	});
+	const paginationStore = createPaginationStore(totalPages);
+
+	$effect(() => {
+		let pages = totalPages
+		if (pages < 1) pages = 1
+		paginationStore.setTotalPages(pages);
+	});
+
 	let spectator = $derived(username == null);
-	console.log(roomDialog)
 
 	function handleCancel(roomid: string) {
 		const payload = {
@@ -43,7 +56,7 @@
 <h2 class="fly-up-fade">{heading}</h2>
 {#if roomList.length != 0}
 	<ul class="room-list">
-		{#each roomList ?? [] as room, index (room.id)}
+		{#each roomList.slice((paginationStore.currentPage - 1) * 10, paginationStore.currentPage * 10) as room, index (room.id)}
 			<li class="room-item fly-up-fade" style={`animation-delay:${String((index + 1) * 25)}ms;`}>
 				<button
 					disabled={room.host === username || spectator ? true : false}
@@ -77,6 +90,24 @@
 			</li>
 		{/each}
 	</ul>
+	<div class="pagination-controls">
+		<button class="button-primary" onclick={() => paginationStore.prev()} disabled={!paginationStore.hasPrev}
+			>&lt;</button
+		>
+		<input
+			class="page-input"
+			type="number"
+			name="page"
+			min="1"
+			bind:value={paginationStore.currentPage}
+			max={paginationStore.totalPages}
+		/>
+		/
+		{paginationStore.totalPages}
+		<button class="button-primary" onclick={() => paginationStore.next()} disabled={!paginationStore.hasNext}
+			>&gt;</button
+		>
+	</div>
 {:else}
 	<p class="empty fly-up-fade">Looks like there are no {heading.toLowerCase()} available</p>
 {/if}
@@ -100,7 +131,6 @@
 		gap: 0.5rem;
 		margin-bottom: 1.5rem;
 		@media (min-width: 767px) {
-			
 		}
 	}
 	.room {
@@ -151,5 +181,20 @@
 		margin-right: 0;
 		height: min-content;
 		width: 5.5rem;
+	}
+	.pagination-controls {
+		margin-bottom: 2rem;
+	}
+	.page-input {
+		background-color: rgb(var(--bg-2));
+		padding: 0.25rem 0.75rem;
+	}
+	.page-input::-webkit-outer-spin-button,
+	.page-input::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+	}
+	.page-input[type='number'] {
+		-moz-appearance: textfield;
+		appearance: textfield;
 	}
 </style>
