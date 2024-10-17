@@ -17,6 +17,9 @@ export class PaginationStore {
 	}
   setTotalPages(totalPages: number) {
     this.totalPages = totalPages;
+		if (this.currentPage > totalPages) {
+			this.currentPage = totalPages;
+		}
   }
 	prev() {
 		if (this.hasPrev) {
