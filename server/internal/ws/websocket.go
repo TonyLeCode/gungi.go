@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/olahol/melody"
 
@@ -107,8 +106,8 @@ func WSHandler(m *melody.Melody, dbConn *api.DBConn) echo.HandlerFunc {
 	}
 }
 
-func getGame(dbs *api.DBConn, gameID uuid.UUID) (api.GameWithUndo, error) {
-	game, err := dbs.GetGame(gameID)
+func getGame(dbs *api.DBConn, GamePublicID string) (api.GameWithUndo, error) {
+	game, err := dbs.GetGame(GamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return api.GameWithUndo{}, err

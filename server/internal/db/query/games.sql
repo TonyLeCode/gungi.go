@@ -1,6 +1,6 @@
 -- name: GetOngoingGames :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -18,7 +18,7 @@ WHERE
 
 -- name: GetOverview :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -40,7 +40,7 @@ WHERE
 
 -- name: GetCompletedGames :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -69,7 +69,7 @@ AND games.completed=true;
 
 -- name: GetGame :one
 SELECT 
-    games.id,
+    games.public_id,
     games.fen,
     games.history,
     games.completed,
@@ -90,11 +90,11 @@ JOIN
 JOIN 
     profiles AS user2 ON user2.id = games.user_2
 WHERE
-    games.id = $1;
+    games.public_id = $1;
 
 -- name: GetGameWithUndo :one
 SELECT 
-    games.id,
+    games.public_id,
     games.fen,
     games.history,
     games.completed,
@@ -109,7 +109,7 @@ SELECT
     user1.username AS player1,
     user2.username AS player2,
     CASE
-        WHEN COUNT(undo_request.game_id) > 0 THEN
+        WHEN COUNT(undo_request.game_public_id) > 0 THEN
             json_agg(
                 json_build_object(
                     'sender_username', sender.username,
@@ -127,20 +127,19 @@ JOIN
 JOIN 
     profiles AS user2 ON user2.id = games.user_2
 LEFT JOIN
-    undo_request ON undo_request.game_id = games.id
+    undo_request ON undo_request.game_public_id = games.public_id
 LEFT JOIN 
     profiles AS sender ON sender.id = undo_request.sender_id
 LEFT JOIN 
     profiles AS receiver ON receiver.id = undo_request.receiver_id
 WHERE
-    games.id = $1
+    games.public_id = $1
 GROUP BY
     games.id, user1.username, user2.username;
 
--- name: CreateGame :one
-INSERT INTO games (current_state, ruleset, type, user_1, user_2)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id;
+-- name: CreateGame :exec
+INSERT INTO games (public_id, current_state, ruleset, type, user_1, user_2)
+VALUES ($1, $2, $3, $4, $5, $6);
 
 -- name: GetIdFromUsername :one
 SELECT id FROM profiles
@@ -153,12 +152,12 @@ WHERE profiles.id = $1;
 -- name: MakeMove :exec
 UPDATE games
 SET current_state = $2, history = $3
-WHERE id = $1;
+WHERE games.public_id = $1;
 
 -- name: ChangeGameResult :exec
 UPDATE games
-SET completed = $2, result = $3
-WHERE games.id = $1;
+SET completed = $2, result = $3, date_finished = now()
+WHERE games.public_id = $1;
 
 -- name: ResignGame :one
 WITH updated_game AS (
@@ -169,12 +168,13 @@ WITH updated_game AS (
             WHEN user_1 = $2 THEN 'b/r'
             WHEN user_2 = $2 THEN 'w/r'
             ELSE result
-        END
-    WHERE games.id = $1 AND (user_1 = $2 OR user_2 = $2)
-    RETURNING games.id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
+        END,
+        date_finished = now()
+    WHERE games.public_id = $1 AND (user_1 = $2 OR user_2 = $2)
+    RETURNING games.public_id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
 )
 SELECT 
-    ug.id,
+    ug.public_id,
     ug.fen,
     ug.history,
     ug.completed,
@@ -197,7 +197,7 @@ JOIN
 
 
 -- name: CreateUndo :one
-INSERT INTO undo_request (game_id, sender_id, receiver_id)
+INSERT INTO undo_request (game_public_id, sender_id, receiver_id)
 VALUES (
     $1,
     $2,
@@ -210,19 +210,19 @@ VALUES (
         FROM
             games
         WHERE
-            games.id = $1 AND games.completed = false
+            games.public_id = $1 AND games.completed = false
     )
 )
 RETURNING receiver_id;
 
 -- name: RemoveUndo :exec
 DELETE FROM undo_request
-WHERE sender_id = $1 AND game_id = $2;
+WHERE sender_id = $1 AND game_public_id = $2;
 
 -- name: ChangeUndo :one
 UPDATE undo_request
 SET status = $1
-WHERE receiver_id = $2 AND game_id = $3
+WHERE receiver_id = $2 AND game_public_id = $3
 RETURNING undo_request.sender_id;
 
 -- name: CreateRoom :exec

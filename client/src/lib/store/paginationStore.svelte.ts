@@ -22,8 +22,10 @@ export class PaginationStore {
 		}
   }
 	prev() {
+		console.log(this.currentPage)
 		if (this.hasPrev) {
 			this.currentPage -= 1;
+			console.log(this.currentPage)
 		}
 	}
 	next() {

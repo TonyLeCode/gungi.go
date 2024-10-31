@@ -38,6 +38,7 @@ class ReplayStore {
 	}
 
 	prev() {
+		console.log(this.pagination.currentPage)
 		if (!this.pagination.hasPrev) return;
 		const prevMove = this.boardStore.moveHistory[this.pagination.currentPage - 1];
 		const parsedPrevMove = parseMove(prevMove);

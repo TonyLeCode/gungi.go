@@ -47,7 +47,8 @@ type AuthUser struct {
 }
 
 type Game struct {
-	ID           uuid.UUID          `json:"id"`
+	ID           int64              `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -77,9 +78,9 @@ type RoomList struct {
 }
 
 type UndoRequest struct {
-	ID         int64     `json:"id"`
-	GameID     uuid.UUID `json:"game_id"`
-	SenderID   uuid.UUID `json:"sender_id"`
-	ReceiverID uuid.UUID `json:"receiver_id"`
-	Status     string    `json:"status"`
+	ID           int64     `json:"id"`
+	GamePublicID string    `json:"game_public_id"`
+	SenderID     uuid.UUID `json:"sender_id"`
+	ReceiverID   uuid.UUID `json:"receiver_id"`
+	Status       string    `json:"status"`
 }

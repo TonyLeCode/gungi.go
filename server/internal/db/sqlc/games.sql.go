@@ -14,48 +14,48 @@ import (
 
 const changeGameResult = `-- name: ChangeGameResult :exec
 UPDATE games
-SET completed = $2, result = $3
-WHERE games.id = $1
+SET completed = $2, result = $3, date_finished = now()
+WHERE games.public_id = $1
 `
 
 type ChangeGameResultParams struct {
-	ID        uuid.UUID   `json:"id"`
+	PublicID  string      `json:"public_id"`
 	Completed bool        `json:"completed"`
 	Result    pgtype.Text `json:"result"`
 }
 
 func (q *Queries) ChangeGameResult(ctx context.Context, arg ChangeGameResultParams) error {
-	_, err := q.db.Exec(ctx, changeGameResult, arg.ID, arg.Completed, arg.Result)
+	_, err := q.db.Exec(ctx, changeGameResult, arg.PublicID, arg.Completed, arg.Result)
 	return err
 }
 
 const changeUndo = `-- name: ChangeUndo :one
 UPDATE undo_request
 SET status = $1
-WHERE receiver_id = $2 AND game_id = $3
+WHERE receiver_id = $2 AND game_public_id = $3
 RETURNING undo_request.sender_id
 `
 
 type ChangeUndoParams struct {
-	Status     string    `json:"status"`
-	ReceiverID uuid.UUID `json:"receiver_id"`
-	GameID     uuid.UUID `json:"game_id"`
+	Status       string    `json:"status"`
+	ReceiverID   uuid.UUID `json:"receiver_id"`
+	GamePublicID string    `json:"game_public_id"`
 }
 
 func (q *Queries) ChangeUndo(ctx context.Context, arg ChangeUndoParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, changeUndo, arg.Status, arg.ReceiverID, arg.GameID)
+	row := q.db.QueryRow(ctx, changeUndo, arg.Status, arg.ReceiverID, arg.GamePublicID)
 	var sender_id uuid.UUID
 	err := row.Scan(&sender_id)
 	return sender_id, err
 }
 
-const createGame = `-- name: CreateGame :one
-INSERT INTO games (current_state, ruleset, type, user_1, user_2)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id
+const createGame = `-- name: CreateGame :exec
+INSERT INTO games (public_id, current_state, ruleset, type, user_1, user_2)
+VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type CreateGameParams struct {
+	PublicID     string    `json:"public_id"`
 	CurrentState string    `json:"current_state"`
 	Ruleset      string    `json:"ruleset"`
 	Type         string    `json:"type"`
@@ -63,17 +63,16 @@ type CreateGameParams struct {
 	User2        uuid.UUID `json:"user_2"`
 }
 
-func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createGame,
+func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) error {
+	_, err := q.db.Exec(ctx, createGame,
+		arg.PublicID,
 		arg.CurrentState,
 		arg.Ruleset,
 		arg.Type,
 		arg.User1,
 		arg.User2,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	return err
 }
 
 const createRoom = `-- name: CreateRoom :exec
@@ -101,7 +100,7 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 }
 
 const createUndo = `-- name: CreateUndo :one
-INSERT INTO undo_request (game_id, sender_id, receiver_id)
+INSERT INTO undo_request (game_public_id, sender_id, receiver_id)
 VALUES (
     $1,
     $2,
@@ -114,19 +113,19 @@ VALUES (
         FROM
             games
         WHERE
-            games.id = $1 AND games.completed = false
+            games.public_id = $1 AND games.completed = false
     )
 )
 RETURNING receiver_id
 `
 
 type CreateUndoParams struct {
-	GameID   uuid.UUID `json:"game_id"`
-	SenderID uuid.UUID `json:"sender_id"`
+	GamePublicID string    `json:"game_public_id"`
+	SenderID     uuid.UUID `json:"sender_id"`
 }
 
 func (q *Queries) CreateUndo(ctx context.Context, arg CreateUndoParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createUndo, arg.GameID, arg.SenderID)
+	row := q.db.QueryRow(ctx, createUndo, arg.GamePublicID, arg.SenderID)
 	var receiver_id uuid.UUID
 	err := row.Scan(&receiver_id)
 	return receiver_id, err
@@ -217,7 +216,7 @@ func (q *Queries) DeleteRoomSafe(ctx context.Context, arg DeleteRoomSafeParams) 
 
 const getCompletedGames = `-- name: GetCompletedGames :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -246,7 +245,7 @@ type GetCompletedGamesParams struct {
 }
 
 type GetCompletedGamesRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
@@ -269,7 +268,7 @@ func (q *Queries) GetCompletedGames(ctx context.Context, arg GetCompletedGamesPa
 	for rows.Next() {
 		var i GetCompletedGamesRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.PublicID,
 			&i.Fen,
 			&i.Completed,
 			&i.DateStarted,
@@ -306,7 +305,7 @@ func (q *Queries) GetCompletedGamesCount(ctx context.Context, user1 uuid.UUID) (
 
 const getGame = `-- name: GetGame :one
 SELECT 
-    games.id,
+    games.public_id,
     games.fen,
     games.history,
     games.completed,
@@ -327,11 +326,11 @@ JOIN
 JOIN 
     profiles AS user2 ON user2.id = games.user_2
 WHERE
-    games.id = $1
+    games.public_id = $1
 `
 
 type GetGameRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -347,11 +346,11 @@ type GetGameRow struct {
 	Player2      string             `json:"player2"`
 }
 
-func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error) {
-	row := q.db.QueryRow(ctx, getGame, id)
+func (q *Queries) GetGame(ctx context.Context, publicID string) (GetGameRow, error) {
+	row := q.db.QueryRow(ctx, getGame, publicID)
 	var i GetGameRow
 	err := row.Scan(
-		&i.ID,
+		&i.PublicID,
 		&i.Fen,
 		&i.History,
 		&i.Completed,
@@ -371,7 +370,7 @@ func (q *Queries) GetGame(ctx context.Context, id uuid.UUID) (GetGameRow, error)
 
 const getGameWithUndo = `-- name: GetGameWithUndo :one
 SELECT 
-    games.id,
+    games.public_id,
     games.fen,
     games.history,
     games.completed,
@@ -386,7 +385,7 @@ SELECT
     user1.username AS player1,
     user2.username AS player2,
     CASE
-        WHEN COUNT(undo_request.game_id) > 0 THEN
+        WHEN COUNT(undo_request.game_public_id) > 0 THEN
             json_agg(
                 json_build_object(
                     'sender_username', sender.username,
@@ -404,19 +403,19 @@ JOIN
 JOIN 
     profiles AS user2 ON user2.id = games.user_2
 LEFT JOIN
-    undo_request ON undo_request.game_id = games.id
+    undo_request ON undo_request.game_public_id = games.public_id
 LEFT JOIN 
     profiles AS sender ON sender.id = undo_request.sender_id
 LEFT JOIN 
     profiles AS receiver ON receiver.id = undo_request.receiver_id
 WHERE
-    games.id = $1
+    games.public_id = $1
 GROUP BY
     games.id, user1.username, user2.username
 `
 
 type GetGameWithUndoRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -433,11 +432,11 @@ type GetGameWithUndoRow struct {
 	UndoRequests []byte             `json:"undo_requests"`
 }
 
-func (q *Queries) GetGameWithUndo(ctx context.Context, id uuid.UUID) (GetGameWithUndoRow, error) {
-	row := q.db.QueryRow(ctx, getGameWithUndo, id)
+func (q *Queries) GetGameWithUndo(ctx context.Context, publicID string) (GetGameWithUndoRow, error) {
+	row := q.db.QueryRow(ctx, getGameWithUndo, publicID)
 	var i GetGameWithUndoRow
 	err := row.Scan(
-		&i.ID,
+		&i.PublicID,
 		&i.Fen,
 		&i.History,
 		&i.Completed,
@@ -470,7 +469,7 @@ func (q *Queries) GetIdFromUsername(ctx context.Context, username string) (uuid.
 
 const getOngoingGames = `-- name: GetOngoingGames :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -488,7 +487,7 @@ WHERE
 `
 
 type GetOngoingGamesRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
@@ -507,7 +506,7 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 	for rows.Next() {
 		var i GetOngoingGamesRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.PublicID,
 			&i.Fen,
 			&i.Completed,
 			&i.DateStarted,
@@ -527,7 +526,7 @@ func (q *Queries) GetOngoingGames(ctx context.Context, id uuid.UUID) ([]GetOngoi
 
 const getOverview = `-- name: GetOverview :many
 SELECT 
-    games.id, 
+    games.public_id, 
     games.fen, 
     games.completed, 
     games.date_started, 
@@ -549,7 +548,7 @@ WHERE
 `
 
 type GetOverviewRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	Completed    bool               `json:"completed"`
 	DateStarted  pgtype.Timestamptz `json:"date_started"`
@@ -572,7 +571,7 @@ func (q *Queries) GetOverview(ctx context.Context, id uuid.UUID) ([]GetOverviewR
 	for rows.Next() {
 		var i GetOverviewRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.PublicID,
 			&i.Fen,
 			&i.Completed,
 			&i.DateStarted,
@@ -659,32 +658,32 @@ func (q *Queries) GetUsernameFromId(ctx context.Context, id uuid.UUID) (string, 
 const makeMove = `-- name: MakeMove :exec
 UPDATE games
 SET current_state = $2, history = $3
-WHERE id = $1
+WHERE games.public_id = $1
 `
 
 type MakeMoveParams struct {
-	ID           uuid.UUID `json:"id"`
-	CurrentState string    `json:"current_state"`
-	History      string    `json:"history"`
+	PublicID     string `json:"public_id"`
+	CurrentState string `json:"current_state"`
+	History      string `json:"history"`
 }
 
 func (q *Queries) MakeMove(ctx context.Context, arg MakeMoveParams) error {
-	_, err := q.db.Exec(ctx, makeMove, arg.ID, arg.CurrentState, arg.History)
+	_, err := q.db.Exec(ctx, makeMove, arg.PublicID, arg.CurrentState, arg.History)
 	return err
 }
 
 const removeUndo = `-- name: RemoveUndo :exec
 DELETE FROM undo_request
-WHERE sender_id = $1 AND game_id = $2
+WHERE sender_id = $1 AND game_public_id = $2
 `
 
 type RemoveUndoParams struct {
-	SenderID uuid.UUID `json:"sender_id"`
-	GameID   uuid.UUID `json:"game_id"`
+	SenderID     uuid.UUID `json:"sender_id"`
+	GamePublicID string    `json:"game_public_id"`
 }
 
 func (q *Queries) RemoveUndo(ctx context.Context, arg RemoveUndoParams) error {
-	_, err := q.db.Exec(ctx, removeUndo, arg.SenderID, arg.GameID)
+	_, err := q.db.Exec(ctx, removeUndo, arg.SenderID, arg.GamePublicID)
 	return err
 }
 
@@ -697,12 +696,13 @@ WITH updated_game AS (
             WHEN user_1 = $2 THEN 'b/r'
             WHEN user_2 = $2 THEN 'w/r'
             ELSE result
-        END
-    WHERE games.id = $1 AND (user_1 = $2 OR user_2 = $2)
-    RETURNING games.id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
+        END,
+        date_finished = now()
+    WHERE games.public_id = $1 AND (user_1 = $2 OR user_2 = $2)
+    RETURNING games.public_id, fen, history, completed, date_started, date_finished, current_state, ruleset, type, result, user_1, user_2
 )
 SELECT 
-    ug.id,
+    ug.public_id,
     ug.fen,
     ug.history,
     ug.completed,
@@ -725,12 +725,12 @@ JOIN
 `
 
 type ResignGameParams struct {
-	ID    uuid.UUID `json:"id"`
-	User1 uuid.UUID `json:"user_1"`
+	PublicID string    `json:"public_id"`
+	User1    uuid.UUID `json:"user_1"`
 }
 
 type ResignGameRow struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -747,10 +747,10 @@ type ResignGameRow struct {
 }
 
 func (q *Queries) ResignGame(ctx context.Context, arg ResignGameParams) (ResignGameRow, error) {
-	row := q.db.QueryRow(ctx, resignGame, arg.ID, arg.User1)
+	row := q.db.QueryRow(ctx, resignGame, arg.PublicID, arg.User1)
 	var i ResignGameRow
 	err := row.Scan(
-		&i.ID,
+		&i.PublicID,
 		&i.Fen,
 		&i.History,
 		&i.Completed,

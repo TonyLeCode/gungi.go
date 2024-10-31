@@ -68,7 +68,7 @@
 
 	onMount(() => {
 		$effect(() => {
-			const headings = `[game_id : ${boardStore.id}]\n[ruleset : ${boardStore.ruleset}]\n[type : ${boardStore.type}]\n[date_started : ${boardStore.date_started}]\n[white : ${boardStore.player1}]\n[black : ${boardStore.player2}]\n\n`;
+			const headings = `[game_id : ${boardStore.public_id}]\n[ruleset : ${boardStore.ruleset}]\n[type : ${boardStore.type}]\n[date_started : ${boardStore.date_started}]\n[white : ${boardStore.player1}]\n[black : ${boardStore.player2}]\n\n`;
 			fileText = headings + boardStore.moveHistory.join(' ');
 			url = URL.createObjectURL(new Blob([fileText], { type: 'text/plain' }));
 			const date = new Date(boardStore.date_started as Date);

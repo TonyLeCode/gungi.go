@@ -21,6 +21,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/labstack/gommon v0.4.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/matoous/go-nanoid v1.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

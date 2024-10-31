@@ -83,7 +83,7 @@ func main() {
 		return c.String(http.StatusOK, "Hello, world")
 	})
 
-	e.GET("/game/:id", db.GetGameWithUndoRoute)
+	e.GET("/game/:public_id", db.GetGameWithUndoRoute)
 	// verify.GET("/getongoinggamelist", db.GetOngoingGameList)
 	verify.GET("/overview", db.GetOverview)
 	verify.GET("/getongoinggamelist", db.GetGameHistory)

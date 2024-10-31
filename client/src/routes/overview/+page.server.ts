@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { dev } from '$app/environment';
 
 export interface Game {
-	id: string;
+	public_id: string;
 	fen: string;
 	history: string;
 	completed: boolean;

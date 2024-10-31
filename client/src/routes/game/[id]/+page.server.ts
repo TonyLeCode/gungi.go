@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 
 type GameData = {
-	id: string;
+	public_id: string;
 	fen: string | null;
 	history: string;
 	completed: boolean;
@@ -24,6 +24,7 @@ export async function load({ fetch, params }) {
 		: `https://${import.meta.env.VITE_API_URL}/game/${params.id}`;
 	const res = await fetch(url);
 	if (!res.ok) {
+		console.log("errrr")
 		error(500, {
 			message: 'Internal Server Error',
 		});

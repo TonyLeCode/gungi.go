@@ -21,7 +21,7 @@
 		})
 	);
 
-	let paginationStore = createPaginationStore(Math.ceil(data.data.gameHistoryCount / 10));
+	let paginationStore = createPaginationStore(Math.max(Math.ceil(data.data.gameHistoryCount / 10), 1));
 	interface completedGames {
 		[index: number]: Game[];
 	}
@@ -81,7 +81,7 @@
 				{#each sortedOngoingGames as game}
 					<li class:your-turn={isUserTurn(game)}>
 						<div class="name name-1" class:is-user={isUser(game.username1)}>{game.username1}</div>
-						<a href={`/game/${game.id}`}>
+						<a href={`/game/${game.public_id}`}>
 							<BoardSimple gameData={game} userColor={getUserColor(game.username1, game.username2)} />
 						</a>
 						<div class="name name-2" class:is-user={isUser(game.username2)}>{game.username2}</div>
@@ -98,7 +98,7 @@
 			{:else}
 				{#each completedGames[paginationStore.currentPage] as game}
 					<li class="historyItem">
-						<a href={`/game/${game.id}`}>
+						<a href={`/game/${game.public_id}`}>
 							<div>{game.date_started?.toString().slice(0, 10)}</div>
 							<div>{game.username1 !== username ? game.username1 : game.username2}</div>
 							<div>{game.type}</div>
@@ -115,24 +115,26 @@
 				{/each}
 			{/if}
 		</ul>
-		<div class="pagination-controls">
-			<button class="button-primary" onclick={() => paginationStore.prev()} disabled={!paginationStore.hasPrev}
-				>&lt;</button
-			>
-			<input
-				class="page-input"
-				type="number"
-				name="page"
-				min="1"
-				bind:value={paginationStore.currentPage}
-				max={paginationStore.totalPages}
-			/>
-			/
-			{paginationStore.totalPages}
-			<button class="button-primary" onclick={() => paginationStore.next()} disabled={!paginationStore.hasNext}
-				>&gt;</button
-			>
-		</div>
+		{#if completedGames[1].length > 0}
+			<div class="pagination-controls">
+				<button class="button-primary" onclick={() => paginationStore.prev()} disabled={!paginationStore.hasPrev}
+					>&lt;</button
+				>
+				<input
+					class="page-input"
+					type="number"
+					name="page"
+					min="1"
+					bind:value={paginationStore.currentPage}
+					max={paginationStore.totalPages}
+				/>
+				/
+				{paginationStore.totalPages}
+				<button class="button-primary" onclick={() => paginationStore.next()} disabled={!paginationStore.hasNext}
+					>&gt;</button
+				>
+			</div>
+		{/if}
 	</section>
 </main>
 

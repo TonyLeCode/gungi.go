@@ -83,40 +83,36 @@ func (ss *SessionHandlers) handleAuth(s *melody.Session) {
 func (ss *SessionHandlers) handleJoinGame(s *melody.Session) {
 	// log.Println("-----------------------------------------")
 	log.Println("handleJoinGame")
-	var gameID string
-	err := json.Unmarshal(ss.ClientMsg.Payload, &gameID)
+	var gamePublicID string
+	err := json.Unmarshal(ss.ClientMsg.Payload, &gamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return
 	}
-	if gameUUID, err := uuid.Parse(gameID); err == nil {
-		unsub := ss.Listeners.AddListenerGame(s, gameUUID)
-		ss.Sessions.ChangeGame(s, gameUUID)
-		ss.Sessions.ChangeUnsub(s, unsub)
-		log.Println("Joined Game")
-		log.Println("Connections for Game", gameUUID, ": ")
-		// for _, v := range ss.Listeners.listeners["game-"+gameUUID.String()] {
-		// 	log.Println("-user: ", (*ss.Sessions)[v])
-		// }
-		// log.Println("-----------------------------------------")
-	}
+	unsub := ss.Listeners.AddListenerGame(s, gamePublicID)
+	ss.Sessions.ChangeGame(s, gamePublicID)
+	ss.Sessions.ChangeUnsub(s, unsub)
+	log.Println("Joined Game")
+	log.Println("Connections for Game", gamePublicID, ": ")
+	// for _, v := range ss.Listeners.listeners["game-"+gameUUID.String()] {
+	// 	log.Println("-user: ", (*ss.Sessions)[v])
+	// }
+	// log.Println("-----------------------------------------")
 }
 func (ss *SessionHandlers) handleLeaveGame(s *melody.Session) {
 	log.Println("-----------------------------------------")
 	log.Println("handleLeaveGame")
-	var gameID string
-	err := json.Unmarshal(ss.ClientMsg.Payload, &gameID)
+	var gamePublicID string
+	err := json.Unmarshal(ss.ClientMsg.Payload, &gamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return
 	}
-	if gameUUID, err := uuid.Parse(gameID); err == nil {
-		ss.Sessions.ChangeGame(s, uuid.Nil)
-		ss.Listeners.RemoveListenerGame(s, gameUUID)
-		ss.Sessions.Unsub(s)
-		log.Println("Left Game: ", gameUUID)
-		log.Println("Conns: ", ss.Listeners.listeners)
-	}
+	ss.Sessions.ChangeGame(s, "")
+	ss.Listeners.RemoveListenerGame(s, gamePublicID)
+	ss.Sessions.Unsub(s)
+	log.Println("Left Game: ", gamePublicID)
+	log.Println("Conns: ", ss.Listeners.listeners)
 	log.Println("-----------------------------------------")
 }
 func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
@@ -124,7 +120,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 	x := (*ss.Sessions)[s]
 	log.Println(x)
 
-	if (*ss.Sessions)[s].GameID == uuid.Nil || (*ss.Sessions)[s].ID == uuid.Nil {
+	if (*ss.Sessions)[s].GamePublicID == "" || (*ss.Sessions)[s].ID == uuid.Nil {
 		return
 	}
 
@@ -135,7 +131,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 		return
 	}
 
-	game, err := getGame(ss.DBConn, (*ss.Sessions)[s].GameID)
+	game, err := getGame(ss.DBConn, (*ss.Sessions)[s].GamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return
@@ -171,7 +167,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 	game.History = board.SerializeHistory()
 
 	makeMoveParams := db.MakeMoveParams{
-		ID:           game.ID,
+		PublicID:     game.PublicID,
 		CurrentState: game.CurrentState,
 		History:      game.History,
 	}
@@ -214,7 +210,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 		}
 
 		changeGameParams := db.ChangeGameResultParams{
-			ID:        game.ID,
+			PublicID:  game.PublicID,
 			Completed: true,
 			Result:    result,
 		}
@@ -240,7 +236,7 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 	}
 	// log.Println(correctedLegalMoves)
 
-	ss.Listeners.EmitGameMsg(b, game.ID)
+	ss.Listeners.EmitGameMsg(b, game.PublicID)
 
 	m = ServerMsg{
 		Type:    "gameEnd",
@@ -252,20 +248,20 @@ func (ss *SessionHandlers) handleMakeGameMove(s *melody.Session) {
 		return
 	}
 	if gameEndString != "" {
-		ss.Listeners.EmitGameMsg(b, game.ID)
+		ss.Listeners.EmitGameMsg(b, game.PublicID)
 	}
 }
 func (ss *SessionHandlers) handleGameResign(s *melody.Session) {
 	ctx := context.Background()
-	gameID := (*ss.Sessions)[s].GameID
-	if gameID == uuid.Nil || (*ss.Sessions)[s].ID == uuid.Nil {
+	gamePublicID := (*ss.Sessions)[s].GamePublicID
+	if gamePublicID == "" || (*ss.Sessions)[s].ID == uuid.Nil {
 		return
 	}
 	userID := (*ss.Sessions)[s].ID
 
 	resignParams := db.ResignGameParams{
-		ID:    gameID,
-		User1: userID,
+		PublicID: gamePublicID,
+		User1:    userID,
 	}
 
 	queries := db.New(ss.DBConn.Conn)
@@ -286,7 +282,7 @@ func (ss *SessionHandlers) handleGameResign(s *melody.Session) {
 		return
 	}
 
-	ss.Listeners.EmitGameMsg(b, game.ID)
+	ss.Listeners.EmitGameMsg(b, game.PublicID)
 
 	m = ServerMsg{
 		Type:    "gameResign",
@@ -299,17 +295,17 @@ func (ss *SessionHandlers) handleGameResign(s *melody.Session) {
 		return
 	}
 
-	ss.Listeners.EmitGameMsgFilter(b, game.ID, func(s2 *melody.Session) bool {
+	ss.Listeners.EmitGameMsgFilter(b, game.PublicID, func(s2 *melody.Session) bool {
 		return s2 != s
 	})
 }
 func (ss *SessionHandlers) handleRequestGameUndo(s *melody.Session) {
-	gameID := (*ss.Sessions)[s].GameID
-	if gameID == uuid.Nil || (*ss.Sessions)[s].ID == uuid.Nil {
+	gamePublicID := (*ss.Sessions)[s].GamePublicID
+	if gamePublicID == "" || (*ss.Sessions)[s].ID == uuid.Nil {
 		return
 	}
 
-	receiverID, err := ss.DBConn.RequestGameUndo(gameID, (*ss.Sessions)[s].ID)
+	receiverID, err := ss.DBConn.RequestGameUndo(gamePublicID, (*ss.Sessions)[s].ID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return
@@ -324,13 +320,13 @@ func (ss *SessionHandlers) handleRequestGameUndo(s *melody.Session) {
 		log.Println("Error: ", err)
 		return
 	}
-	ss.Listeners.EmitGameMsgFilter(b, gameID, func(s *melody.Session) bool {
+	ss.Listeners.EmitGameMsgFilter(b, gamePublicID, func(s *melody.Session) bool {
 		return (*ss.Sessions)[s].ID == receiverID
 	})
 }
 func (ss *SessionHandlers) handleResponseGameUndo(s *melody.Session) {
 	ctx := context.Background()
-	if (*ss.Sessions)[s].GameID == uuid.Nil || (*ss.Sessions)[s].ID == uuid.Nil {
+	if (*ss.Sessions)[s].GamePublicID == "" || (*ss.Sessions)[s].ID == uuid.Nil {
 		return
 	}
 
@@ -346,7 +342,7 @@ func (ss *SessionHandlers) handleResponseGameUndo(s *melody.Session) {
 
 	if undoResponse == "accept" {
 		//TODO undo logic here
-		game, err := getGame(ss.DBConn, (*ss.Sessions)[s].GameID)
+		game, err := getGame(ss.DBConn, (*ss.Sessions)[s].GamePublicID)
 		if err != nil {
 			log.Println("Error: ", err)
 			return
@@ -378,7 +374,7 @@ func (ss *SessionHandlers) handleResponseGameUndo(s *melody.Session) {
 		game.MoveList = correctedLegalMoves
 		//TODO, update database
 		makeMoveParams := db.MakeMoveParams{
-			ID:           game.ID,
+			PublicID:     game.PublicID,
 			CurrentState: game.CurrentState,
 			History:      game.History,
 		}
@@ -400,10 +396,10 @@ func (ss *SessionHandlers) handleResponseGameUndo(s *melody.Session) {
 			return
 		}
 
-		ss.Listeners.EmitGameMsg(b, (*ss.Sessions)[s].GameID)
+		ss.Listeners.EmitGameMsg(b, (*ss.Sessions)[s].GamePublicID)
 	}
 
-	sender_id, err := ss.DBConn.ResponseGameUndo(undoResponse, (*ss.Sessions)[s].ID, (*ss.Sessions)[s].GameID)
+	sender_id, err := ss.DBConn.ResponseGameUndo(undoResponse, (*ss.Sessions)[s].ID, (*ss.Sessions)[s].GamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return
@@ -419,16 +415,16 @@ func (ss *SessionHandlers) handleResponseGameUndo(s *melody.Session) {
 		return
 	}
 
-	ss.Listeners.EmitGameMsgFilter(b, (*ss.Sessions)[s].GameID, func(s *melody.Session) bool {
+	ss.Listeners.EmitGameMsgFilter(b, (*ss.Sessions)[s].GamePublicID, func(s *melody.Session) bool {
 		return (*ss.Sessions)[s].ID == sender_id
 	})
 }
 func (ss *SessionHandlers) handleCompleteGameUndo(s *melody.Session) {
-	if (*ss.Sessions)[s].GameID == uuid.Nil || (*ss.Sessions)[s].ID == uuid.Nil {
+	if (*ss.Sessions)[s].GamePublicID == "" || (*ss.Sessions)[s].ID == uuid.Nil {
 		return
 	}
 
-	err := ss.DBConn.CompleteGameUndo((*ss.Sessions)[s].ID, (*ss.Sessions)[s].GameID)
+	err := ss.DBConn.CompleteGameUndo((*ss.Sessions)[s].ID, (*ss.Sessions)[s].GamePublicID)
 	if err != nil {
 		log.Println("Error: ", err)
 		return

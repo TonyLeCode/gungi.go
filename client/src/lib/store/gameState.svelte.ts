@@ -10,7 +10,7 @@ export interface BoardState {
 	fen: string | null;
 	result: string | null;
 	history: string;
-	id: string;
+	public_id: string;
 	moveList: { [key: string]: number[] };
 	player1: string;
 	player2: string;
@@ -27,7 +27,7 @@ export class BoardStore {
 	fen = $state<string | null>(null);
 	result = $state<string | null>('');
 	history = $state('');
-	id = $state('');
+	public_id = $state('');
 	moveList = $state({} as { [key: string]: number[] });
 	player1 = $state('');
 	player2 = $state('');
@@ -102,7 +102,7 @@ export class BoardStore {
 		this.fen = initState.fen;
 		this.result = initState.result;
 		this.history = initState.history;
-		this.id = initState.id;
+		this.public_id = initState.public_id;
 		this.moveList = initState.moveList;
 		this.player1 = initState.player1;
 		this.player2 = initState.player2;
@@ -120,7 +120,7 @@ export class BoardStore {
 		this.fen = newState.fen;
 		this.result = newState.result;
 		this.history = newState.history;
-		this.id = newState.id;
+		this.public_id = newState.public_id;
 		this.moveList = newState.moveList;
 		this.player1 = newState.player1;
 		this.player2 = newState.player2;

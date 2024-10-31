@@ -55,9 +55,11 @@
 	const websocketStore = getWebsocketStore();
 	const notificationStore = getNotificationStore();
 	const replayStore = setReplayStore(data.gameData, username);
-	$effect(() => {
-		replayStore.setTotalPages(boardStore.moveHistory.length);
-	});
+	replayStore.setTotalPages(boardStore.moveHistory.length);
+	// $effect(() => {
+	// 	replayStore.setTotalPages(boardStore.moveHistory.length);
+	// 	console.log("setting total pages")
+	// });
 
 	type DropItem = {
 		destinationIndex: number;
@@ -126,7 +128,7 @@
 		const msg = {
 			type: 'makeGameMove',
 			payload: {
-				gameID: boardStore.id,
+				// gamePublicID: boardStore.public_id,
 				fromPiece,
 				fromCoord,
 				moveType,
@@ -225,6 +227,7 @@
 				case 'game':
 					boardStore.updateBoard(data.payload);
 					replayStore.boardStore.updateBoard(data.payload);
+					replayStore.setTotalPages(boardStore.moveHistory.length);
 					break;
 				case 'undoRequest':
 					showUndoDialogue?.open();
@@ -398,7 +401,7 @@
 				websocketStore.addMsgListener(handleGameMsg);
 				const msg = {
 					type: 'joinGame',
-					payload: boardStore.id,
+					payload: boardStore.public_id,
 				};
 				websocketStore.send(msg);
 
@@ -439,7 +442,7 @@
 			websocketStore.removeMsgListener(handleGameMsg);
 			const msg = {
 				type: 'leaveGame',
-				payload: boardStore.id,
+				payload: boardStore.public_id,
 			};
 			websocketStore.send(msg);
 		};

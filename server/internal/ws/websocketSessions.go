@@ -12,10 +12,10 @@ const ROOM_KEY = "roomlist"
 
 type Sessions map[*melody.Session]*User
 type User struct {
-	ID        uuid.UUID
-	GameID    uuid.UUID
-	Spectator bool
-	Unsub     func()
+	ID           uuid.UUID
+	GamePublicID string
+	Spectator    bool
+	Unsub        func()
 }
 
 func (ss *Sessions) AddUser(s *melody.Session, id uuid.UUID) {
@@ -24,10 +24,10 @@ func (ss *Sessions) AddUser(s *melody.Session, id uuid.UUID) {
 }
 func (ss *Sessions) AddSpectator(s *melody.Session) {
 	(*ss)[s] = &User{
-		ID:        uuid.Nil,
-		Unsub:     nil,
-		GameID:    uuid.Nil,
-		Spectator: true,
+		ID:           uuid.Nil,
+		Unsub:        nil,
+		GamePublicID: "",
+		Spectator:    true,
 	}
 }
 
@@ -51,13 +51,13 @@ func (ss *Sessions) Unsub(s *melody.Session) {
 	(*ss)[s].Unsub = nil
 }
 
-func (ss *Sessions) ChangeGame(s *melody.Session, gameID uuid.UUID) {
-	log.Println("changing gameid to: ", gameID)
+func (ss *Sessions) ChangeGame(s *melody.Session, gamePublicID string) {
+	log.Println("changing gameid to: ", gamePublicID)
 	if _, ok := (*ss)[s]; !ok {
 		log.Println("not okay")
 		return
 	}
-	(*ss)[s].GameID = gameID
+	(*ss)[s].GamePublicID = gamePublicID
 }
 
 func (ss *Sessions) RemoveUser(s *melody.Session) {
@@ -124,14 +124,14 @@ func (l *Listeners) RemoveListenerRooms(s *melody.Session) {
 	l.removeListener(ROOM_KEY, s)
 }
 
-func (l *Listeners) AddListenerGame(s *melody.Session, gameID uuid.UUID) func() {
-	eventKey := "game-" + gameID.String()
+func (l *Listeners) AddListenerGame(s *melody.Session, gamePublicID string) func() {
+	eventKey := "game-" + gamePublicID
 	unsub := l.addListener(eventKey, s)
 	return unsub
 }
 
-func (l *Listeners) RemoveListenerGame(s *melody.Session, gameID uuid.UUID) {
-	eventKey := "game-" + gameID.String()
+func (l *Listeners) RemoveListenerGame(s *melody.Session, gamePublicID string) {
+	eventKey := "game-" + gamePublicID
 	l.removeListener(eventKey, s)
 }
 
@@ -158,8 +158,8 @@ func (l *Listeners) EmitMsgFilter(msg []byte, eventKey string, fn func(s *melody
 	return nil
 }
 
-func (l *Listeners) EmitGameMsg(msg []byte, gameID uuid.UUID) error {
-	eventKey := "game-" + gameID.String()
+func (l *Listeners) EmitGameMsg(msg []byte, gamePublicID string) error {
+	eventKey := "game-" + gamePublicID
 	err := l.EmitMsg(msg, eventKey)
 	if err != nil {
 		return err
@@ -167,8 +167,8 @@ func (l *Listeners) EmitGameMsg(msg []byte, gameID uuid.UUID) error {
 	return nil
 }
 
-func (l *Listeners) EmitGameMsgFilter(msg []byte, gameID uuid.UUID, fn func(s *melody.Session) bool) error {
-	eventKey := "game-" + gameID.String()
+func (l *Listeners) EmitGameMsgFilter(msg []byte, gamePublicID string, fn func(s *melody.Session) bool) error {
+	eventKey := "game-" + gamePublicID
 	err := l.EmitMsgFilter(msg, eventKey, fn)
 	if err != nil {
 		return err

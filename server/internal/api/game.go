@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	gonanoid "github.com/matoous/go-nanoid"
 	"github.com/whitemonarch/gungi-server/server/gungi"
 	db "github.com/whitemonarch/gungi-server/server/internal/db/sqlc"
 
@@ -24,38 +25,6 @@ type SerializedGame struct {
 	CheckStatus string        `json:"checkStatus"`
 	Ruleset     string        `json:"ruleset"`
 	MoveList    map[int][]int `json:"moveList"`
-}
-
-func (dbConn *DBConn) GetOngoingGame(c echo.Context) error {
-	board := gungi.CreateBoard("revised")
-	serializedGame := SerializedGame{}
-
-	//get fen from database
-	board.SetBoardFromFen("")
-	// get history from database
-	// serializedGame.History =
-
-	checkStatus, moves := board.GetLegalMoves()
-
-	serializedGame.CheckStatus = checkStatus
-	serializedGame.MoveList = moves
-
-	// if inCheck && !inDoubleCheck {
-	// 	inbetween := []int{}
-	// 	if len(enemyXRaySquares.Path) != 0 {
-	// 		for _, move := range enemyXRaySquares.Path {
-	// 			if move.InBetween {
-	// 				inbetween = append(inbetween, move.Coordinate)
-	// 			}
-	// 		}
-	// 		inbetween = append(inbetween, enemyXRaySquares.Coordinate)
-	// 		serializedGame.PawnDrop = inbetween
-	// 	} else if attackPiece != -1 {
-	// 		serializedGame.PawnDrop[0] = attackPiece
-	// 	}
-	// }
-
-	return nil
 }
 
 func (dbConn *DBConn) GetOngoingGameList(c echo.Context) error {
@@ -84,7 +53,7 @@ type GetOverviewResponse struct {
 }
 
 func (dbConn *DBConn) GetOverview(c echo.Context) error {
-	ctx := c.Request().Context()
+	ctx := context.Background()
 
 	sub := c.Get("sub").(string)
 	subid, err := uuid.Parse(sub)
@@ -188,7 +157,7 @@ func (dbConn *DBConn) GetGameHistory(c echo.Context) error {
 }
 
 type GameWithMoves struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -204,7 +173,7 @@ type GameWithMoves struct {
 }
 
 type GameWithUndo struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -221,12 +190,12 @@ type GameWithUndo struct {
 	MoveList     map[int][]int      `json:"moveList"`
 }
 
-func (dbConn *DBConn) GetGame(id uuid.UUID) (GameWithUndo, error) {
+func (dbConn *DBConn) GetGame(publicID string) (GameWithUndo, error) {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.Conn)
 
-	game, err := queries.GetGame(ctx, id)
+	game, err := queries.GetGame(ctx, publicID)
 	if err != nil {
 		return GameWithUndo{}, err
 	}
@@ -249,7 +218,7 @@ func (dbConn *DBConn) GetGame(id uuid.UUID) (GameWithUndo, error) {
 		}
 	}
 	gameWithUndo := GameWithUndo{
-		ID:           game.ID,
+		PublicID:     game.PublicID,
 		Fen:          game.Fen,
 		History:      game.History,
 		Completed:    game.Completed,
@@ -272,15 +241,11 @@ func (dbConn *DBConn) GetGame(id uuid.UUID) (GameWithUndo, error) {
 func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	ctx := context.Background()
 
-	id := c.Param("id")
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Internal server error")
-	}
+	publicID := c.Param("public_id")
 
 	queries := db.New(dbConn.Conn)
 
-	game, err := queries.GetGame(ctx, uuid)
+	game, err := queries.GetGame(ctx, publicID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
@@ -304,7 +269,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 	log.Println(correctedLegalMoves)
 	log.Println("fen: ", newBoard.BoardToFen())
 	gameWithMoves := GameWithMoves{
-		ID:           game.ID,
+		PublicID:     game.PublicID,
 		Fen:          game.Fen,
 		History:      game.History,
 		Completed:    game.Completed,
@@ -323,7 +288,7 @@ func (dbConn *DBConn) GetGameRoute(c echo.Context) error {
 }
 
 type GameWithUndoRowAndMoves struct {
-	ID           uuid.UUID          `json:"id"`
+	PublicID     string             `json:"public_id"`
 	Fen          pgtype.Text        `json:"fen"`
 	History      string             `json:"history"`
 	Completed    bool               `json:"completed"`
@@ -348,16 +313,14 @@ type UndoRequests struct {
 func (dbConn *DBConn) GetGameWithUndoRoute(c echo.Context) error {
 	ctx := context.Background()
 
-	id := c.Param("id")
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Internal server error")
-	}
+	publicID := c.Param("public_id")
+	log.Println("publicID: ", publicID)
 
 	queries := db.New(dbConn.Conn)
 
-	game, err := queries.GetGameWithUndo(ctx, uuid)
+	game, err := queries.GetGameWithUndo(ctx, publicID)
 	if err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, "Internal server error")
 	}
 
@@ -395,7 +358,7 @@ func (dbConn *DBConn) GetGameWithUndoRoute(c echo.Context) error {
 	}
 
 	gameWithMoves := GameWithUndoRowAndMoves{
-		ID:           game.ID,
+		PublicID:     game.PublicID,
 		Fen:          game.Fen,
 		History:      game.History,
 		Completed:    game.Completed,
@@ -414,27 +377,34 @@ func (dbConn *DBConn) GetGameWithUndoRoute(c echo.Context) error {
 	return c.JSON(http.StatusOK, gameWithMoves)
 }
 
-func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType string, user1 uuid.UUID, user2 uuid.UUID) (string, error) {
-	ctx := context.Background()
+// func (dbConn *DBConn) CreateGame(currentState string, ruleset string, gameType string, user1 uuid.UUID, user2 uuid.UUID) (string, error) {
+// 	ctx := context.Background()
 
-	queries := db.New(dbConn.Conn)
+// 	queries := db.New(dbConn.Conn)
 
-	gameQuery := db.CreateGameParams{
-		CurrentState: currentState,
-		Ruleset:      ruleset,
-		Type:         gameType,
-		User1:        user1,
-		User2:        user2,
-	}
+// 	public_id, err := gonanoid.ID(14)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return "", err
+// 	}
 
-	gameID, err := queries.CreateGame(ctx, gameQuery)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
+// 	gameQuery := db.CreateGameParams{
+// 		PublicID:     public_id,
+// 		CurrentState: currentState,
+// 		Ruleset:      ruleset,
+// 		Type:         gameType,
+// 		User1:        user1,
+// 		User2:        user2,
+// 	}
 
-	return gameID.String(), nil
-}
+// 	err = queries.CreateGame(ctx, gameQuery)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return "", err
+// 	}
+
+// 	return public_id, nil
+// }
 
 func (dbConn *DBConn) CreateGameFromRoom(room db.DeleteRoomRow, acceptingUser uuid.UUID) (string, error) {
 	ctx := context.Background()
@@ -477,7 +447,14 @@ func (dbConn *DBConn) CreateGameFromRoom(room db.DeleteRoomRow, acceptingUser uu
 	default:
 		currentState = "9/9/9/9/9/9/9/9/9 9446222122211/9446222122211 w 00"
 	}
+
+	public_id, err := gonanoid.ID(14)
+	if err != nil {
+		return "", err
+	}
+
 	queriesParams := db.CreateGameParams{
+		PublicID:     public_id,
 		CurrentState: currentState,
 		Ruleset:      room.Rules,
 		Type:         room.Type,
@@ -485,11 +462,11 @@ func (dbConn *DBConn) CreateGameFromRoom(room db.DeleteRoomRow, acceptingUser uu
 		User2:        user2,
 	}
 	queries := db.New(dbConn.Conn)
-	gameID, err := queries.CreateGame(ctx, queriesParams)
+	err = queries.CreateGame(ctx, queriesParams)
 	if err != nil {
 		return "", err
 	}
-	return gameID.String(), nil
+	return public_id, nil
 }
 
 func (dbConn *DBConn) CreateRoom(hostID uuid.UUID, description string, rules string, roomType string, color string) error {
@@ -554,14 +531,14 @@ func (dbConn *DBConn) DeleteRoom(roomID uuid.UUID) (db.DeleteRoomRow, error) {
 	return room, nil
 }
 
-func (dbConn *DBConn) RequestGameUndo(gameID uuid.UUID, senderID uuid.UUID) (uuid.UUID, error) {
+func (dbConn *DBConn) RequestGameUndo(gamePublicID string, senderID uuid.UUID) (uuid.UUID, error) {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.Conn)
 
 	createUndoParams := db.CreateUndoParams{
-		GameID:   gameID,
-		SenderID: senderID,
+		GamePublicID: gamePublicID,
+		SenderID:     senderID,
 	}
 
 	receiver_id, err := queries.CreateUndo(ctx, createUndoParams)
@@ -572,15 +549,15 @@ func (dbConn *DBConn) RequestGameUndo(gameID uuid.UUID, senderID uuid.UUID) (uui
 	return receiver_id, nil
 }
 
-func (dbConn *DBConn) ResponseGameUndo(status string, receiverID uuid.UUID, gameID uuid.UUID) (uuid.UUID, error) {
+func (dbConn *DBConn) ResponseGameUndo(status string, receiverID uuid.UUID, gamePublicID string) (uuid.UUID, error) {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.Conn)
 
 	ChangeUndoParams := db.ChangeUndoParams{
-		Status:     status,
-		ReceiverID: receiverID,
-		GameID:     gameID,
+		Status:       status,
+		ReceiverID:   receiverID,
+		GamePublicID: gamePublicID,
 	}
 
 	sender_id, err := queries.ChangeUndo(ctx, ChangeUndoParams)
@@ -591,14 +568,14 @@ func (dbConn *DBConn) ResponseGameUndo(status string, receiverID uuid.UUID, game
 	return sender_id, nil
 }
 
-func (dbConn *DBConn) CompleteGameUndo(senderID uuid.UUID, gameID uuid.UUID) error {
+func (dbConn *DBConn) CompleteGameUndo(senderID uuid.UUID, gamePublicID string) error {
 	ctx := context.Background()
 
 	queries := db.New(dbConn.Conn)
 
 	ChangeUndoParams := db.RemoveUndoParams{
-		SenderID: senderID,
-		GameID:   gameID,
+		SenderID:     senderID,
+		GamePublicID: gamePublicID,
 	}
 
 	err := queries.RemoveUndo(ctx, ChangeUndoParams)
