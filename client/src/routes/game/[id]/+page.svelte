@@ -455,7 +455,6 @@
 
 <main>
 	<section>
-		<p>{selection.state}</p>
 		<div class="game-state">
 			{#if replayStore.isActive}
 				<div>Viewing Game History</div>
